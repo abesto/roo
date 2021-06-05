@@ -1,4 +1,4 @@
 me = db:create()
 me.name = "a player"
-db:move(me.uuid, void.uuid)
+me:move(void)
 return me.uuid
