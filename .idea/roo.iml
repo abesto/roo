@@ -8,6 +8,15 @@
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/mlua-e4ee0e9c119b7077/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/num-traits-b0770f0a094daf5c/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/serde-17aac2f33e306c6d/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/libc-45b38109d3776f94/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/log-2eb3ebe33a32724d/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/memchr-a89d4d978bc64558/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/mlua-023bb3966e268540/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/ntapi-42faa7b3446cc3eb/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/proc-macro2-4f32320b5ed7623e/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/syn-ca5ff0d07d445de2/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/tokio-55c70ce06166a6a5/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/winapi-ae709ef3513be775/out" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

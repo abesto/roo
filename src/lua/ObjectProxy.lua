@@ -1,9 +1,9 @@
 ObjectProxy = {}
-
 function ObjectProxy:new(uuid)
     p = {
         uuid = uuid
     }
+    p.__index = self
     setmetatable(p, ObjectProxyMT)
     return p
 end
@@ -15,5 +15,6 @@ ObjectProxyMT = {
 
     __index = function(t, k)
         return db:get_property(t.uuid, k)
-    end
+    end,
 }
+

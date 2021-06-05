@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 // TODO maybe switch to parking_lot::Mutex
 use std::sync::{Arc, RwLock};
 
@@ -6,9 +6,12 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 #[derive(Clone)]
-struct Object {
+pub struct Object {
     uuid: Uuid,
-    properties: HashMap<String, String>,
+    pub name: String,
+    pub properties: HashMap<String, String>,
+    location: Option<Uuid>,
+    contents: HashSet<Uuid>,
 }
 
 impl Object {
@@ -16,14 +19,29 @@ impl Object {
     fn new(uuid: Uuid) -> Self {
         Object {
             uuid,
+            name: String::new(),
             properties: HashMap::new(),
+            location: None,
+            contents: HashSet::new(),
         }
+    }
+
+    pub fn uuid(&self) -> &Uuid {
+        &self.uuid
+    }
+
+    pub fn location(&self) -> Option<&Uuid> {
+        self.location.as_ref()
+    }
+
+    pub fn contents(&self) -> &HashSet<Uuid> {
+        &self.contents
     }
 }
 
 impl LuaUserData for Object {}
 
-struct Database {
+pub struct Database {
     objects: HashMap<Uuid, Object>,
 }
 
@@ -34,10 +52,43 @@ impl Database {
             objects: HashMap::new(),
         }
     }
+
+    pub fn create(&mut self) -> Uuid {
+        let uuid = Uuid::new_v4();
+        self.objects.insert(uuid, Object::new(uuid));
+        uuid
+    }
+
+    pub fn get(&self, uuid: &Uuid) -> Option<&Object> {
+        self.objects.get(uuid)
+    }
+
+    pub fn get_mut(&mut self, uuid: &Uuid) -> Option<&mut Object> {
+        self.objects.get_mut(uuid)
+    }
+
+    // TODO error reporting :)
+    pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Option<()> {
+        // Remove from contents of the old location, if any
+        if let Some(old_location) = self.objects.get(what_uuid)?.location {
+            self.objects
+                .get_mut(&old_location)?
+                .contents
+                .remove(what_uuid);
+        }
+
+        // Set new location
+        self.objects.get_mut(what_uuid)?.location = Some(*to_uuid);
+
+        // Add to contents of new location
+        self.objects.get_mut(to_uuid)?.contents.insert(*what_uuid);
+
+        Some(())
+    }
 }
 
 #[derive(Clone)]
-struct DatabaseProxy {
+pub struct DatabaseProxy {
     db: Arc<RwLock<Database>>,
 }
 
@@ -47,16 +98,17 @@ impl DatabaseProxy {
         Self { db }
     }
 
-    fn parse_uuid(uuid: &str) -> LuaResult<Uuid> {
+    pub fn parse_uuid(uuid: &str) -> LuaResult<Uuid> {
         Uuid::parse_str(&uuid).map_err(|e| LuaError::RuntimeError(e.to_string()))
+    }
+
+    fn err_no_object(uuid: &str) -> LuaError {
+        LuaError::RuntimeError(format!("No object found with UUID {}", uuid))
     }
 
     fn make_object_proxy<'lua>(&self, lua: &'lua Lua, uuid: &Uuid) -> LuaResult<LuaTable<'lua>> {
         if !self.db.read().unwrap().objects.contains_key(uuid) {
-            return Err(LuaError::RuntimeError(format!(
-                "No object found with UUID {}",
-                uuid
-            )));
+            return Err(Self::err_no_object(&uuid.to_string()));
         }
         let object_proxy: LuaTable = lua.globals().get("ObjectProxy")?;
         let o: LuaTable = object_proxy.call_method("new", (uuid.to_string(),))?;
@@ -67,13 +119,10 @@ impl DatabaseProxy {
 impl LuaUserData for DatabaseProxy {
     fn add_methods<'lua, M: LuaUserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method_mut("create", |lua, this, ()| {
-            let uuid = Uuid::new_v4();
-
-            {
+            let uuid = {
                 let mut lock = this.db.write().unwrap();
-                lock.objects.insert(uuid, Object::new(uuid));
-            }
-
+                lock.create()
+            };
             this.make_object_proxy(lua, &uuid)
         });
 
@@ -84,10 +133,7 @@ impl LuaUserData for DatabaseProxy {
                     let mut lock = this.db.write().unwrap();
                     lock.objects
                         .get_mut(&Self::parse_uuid(&uuid)?)
-                        .ok_or(LuaError::RuntimeError(format!(
-                            "No object found with UUID {}",
-                            uuid
-                        )))?
+                        .ok_or_else(|| Self::err_no_object(&uuid))?
                         .properties
                         .insert(key, value);
                 }
@@ -99,13 +145,19 @@ impl LuaUserData for DatabaseProxy {
             "get_property",
             |lua, this, (uuid, key): (String, String)| {
                 let lock = this.db.read().unwrap();
-                let object =
-                    lock.objects
-                        .get(&Self::parse_uuid(&uuid)?)
-                        .ok_or(LuaError::RuntimeError(format!(
-                            "No object found with UUID {}",
-                            uuid
-                        )))?;
+                let object = lock
+                    .objects
+                    .get(&Self::parse_uuid(&uuid)?)
+                    .ok_or_else(|| Self::err_no_object(&uuid))?;
+
+                if key == "location" {
+                    return Ok(if let Some(location) = object.location {
+                        location.to_string().to_lua(lua)?
+                    } else {
+                        LuaValue::Nil
+                    });
+                }
+
                 if let Some(value) = object.properties.get(&key) {
                     value.clone().to_lua(lua)
                 } else {
@@ -113,6 +165,12 @@ impl LuaUserData for DatabaseProxy {
                 }
             },
         );
+
+        methods.add_method("move", |_lua, this, (what, to): (String, String)| {
+            let mut lock = this.db.write().unwrap();
+            lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?);
+            Ok(LuaValue::Nil)
+        });
 
         methods.add_meta_method(LuaMetaMethod::Index, |lua, this, (uuid,): (String,)| {
             this.make_object_proxy(lua, &Self::parse_uuid(&uuid)?)
@@ -149,7 +207,18 @@ impl World {
             .exec()
             .unwrap();
 
+        // RooCore
+        lua.load(include_str!("lua/core.lua"))
+            .set_name("core")
+            .unwrap()
+            .exec()
+            .unwrap();
+
         lua
+    }
+
+    pub fn db(&self) -> Arc<RwLock<Database>> {
+        self.db.clone()
     }
 }
 
@@ -162,7 +231,7 @@ mod tests {
         let world = World::new();
         let lua = world.lua();
         let globals = lua.globals();
-        let db = world.db;
+        let db = world.db();
 
         // Step 1: create an object and set a property on it
         lua.load("o1 = db:create(); o1.x = \"test-1\"")

@@ -1,6 +1,10 @@
+use crate::database::{Object, World};
+
+mod command;
 mod database;
 mod server;
 
 fn main() {
-    server::run_server().unwrap();
+    let world = World::new();
+    server::run_server(world).unwrap();
 }
