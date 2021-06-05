@@ -52,6 +52,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::database::Property;
 
     #[test]
     fn set_properties() {
@@ -73,7 +74,10 @@ mod tests {
             let uuid =
                 DatabaseProxy::parse_uuid(&o1_proxy.get::<&str, String>("uuid").unwrap()).unwrap();
             let o1 = db.get(&uuid).unwrap();
-            assert_eq!("test-1", o1.properties.get("x").unwrap());
+            assert_eq!(
+                &Property::String("test-1".to_string()),
+                o1.properties.get("x").unwrap()
+            );
         };
 
         // Step 2: get another reference to the same object, verify property

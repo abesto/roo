@@ -1,12 +1,12 @@
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Command {
-    Verb { verb: String },
+    VerbNoArgs { verb: String },
 }
 
 impl Command {
     pub fn verb(&self) -> &str {
         match self {
-            Command::Verb { verb } => verb,
+            Command::VerbNoArgs { verb } => verb,
         }
     }
 }
@@ -17,7 +17,7 @@ pub fn parse_command(input: &str) -> Option<Command> {
         return None;
     }
 
-    Some(Command::Verb {
+    Some(Command::VerbNoArgs {
         verb: trimmed.to_string(),
     })
 }
@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn parse_plain_verb() {
         assert_eq!(
-            Some(Command::Verb {
+            Some(Command::VerbNoArgs {
                 verb: "look".to_string()
             }),
             parse_command("  look ")
