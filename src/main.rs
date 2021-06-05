@@ -1,4 +1,4 @@
-use crate::database::{Object, World};
+use crate::database::World;
 
 mod command;
 mod database;
