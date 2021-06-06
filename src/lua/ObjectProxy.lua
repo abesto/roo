@@ -1,11 +1,23 @@
-ObjectProxy = {}
+ObjectProxy = {
+    compiled_verbs = {}
+}
 
 ObjectProxy.__index = function(t, k)
     local opv = rawget(ObjectProxy, k)
     if opv ~= nil then
         return opv
     end
-    return db:get_property(t.uuid, k)
+
+    local v = db:get_property(t.uuid, k)
+    if type(v) == "function" then
+        this = t
+        if this.location ~= nil then
+            location = db[this.location]
+        else
+            location = nil
+        end
+    end
+    return v
 end
 
 ObjectProxy.__newindex = function(t, k, v)

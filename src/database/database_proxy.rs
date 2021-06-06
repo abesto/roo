@@ -137,6 +137,8 @@ impl LuaUserData for DatabaseProxy {
 
                 if let Some(value) = object.properties.get(&key) {
                     value.clone().to_lua(lua)
+                } else if let Some(verb) = object.verbs.get(&key) {
+                    verb.to_lua(lua)
                 } else {
                     Ok(LuaValue::Nil)
                 }
@@ -178,6 +180,7 @@ impl LuaUserData for DatabaseProxy {
 
                 if let Some(verb) = object.verbs.get_mut(&name) {
                     verb.code = code;
+
                     Ok(LuaValue::Nil)
                 } else {
                     Err(LuaError::RuntimeError(format!(

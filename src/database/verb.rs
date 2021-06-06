@@ -1,5 +1,7 @@
 use std::convert::TryFrom;
 
+use mlua::ToLua;
+
 #[derive(Clone, Debug)]
 pub enum VerbSignature {
     NoArgs { name: String },
@@ -57,5 +59,13 @@ where
 
     fn try_from(value: &Vec<S>) -> Result<Self, Self::Error> {
         Ok(Self::new(VerbSignature::try_from(value)?))
+    }
+}
+
+impl<'lua> ToLua<'lua> for &Verb {
+    fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
+        // TODO memoize
+        let code = &format!("function(args)\n{}\nend", self.code);
+        lua.load(code).eval::<mlua::Value>()
     }
 }

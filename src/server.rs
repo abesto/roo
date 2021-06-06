@@ -48,8 +48,8 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
             let (read, mut write) = socket.into_split();
 
             let uuid_str = lua
-                .load(include_str!("lua/spawn_player.lua"))
-                .set_name("spawn_player")
+                .load("system:do_login_command()")
+                .set_name("system:do_login_command()")
                 .unwrap()
                 .eval::<String>()
                 .unwrap();
@@ -128,25 +128,22 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                                 vec![Some(player), location],
                                             )
                                             .ok_or_else(|| "Unknown verb".to_string())?;
-                                            // TODO report if verb is not found instead of just "didn't understand"
 
                                             let code = format!(
-                                                "(function()
-                                    local self = db[\"{}\"]
-                                    local player = db[\"{}\"]
-                                    local location = {}
-                                    {}
-                                    end)()",
+                                                "
+                                    this = db[\"{}\"]
+                                    player = db[\"{}\"]
+                                    location = {}
+                                    this.{}()",
                                                 this.uuid(),
                                                 player.uuid(),
                                                 location.map_or_else(
                                                     || "nil".to_string(),
                                                     |l| format!("db[\"{}\"]", l.uuid())
                                                 ),
-                                                verb.code
+                                                verb.name()
                                             );
 
-                                            // TODO set a descriptive name with uuids and verb name and args
                                             lua.load(&code).exec().map_err(|e| e.to_string())
                                         })
                                 }
@@ -163,4 +160,6 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
             });
         });
     }
+
+    // TODO notify players when a player in the same room disconnects
 }

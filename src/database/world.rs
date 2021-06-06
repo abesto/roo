@@ -112,4 +112,11 @@ mod tests {
             lua2.load("system.uuid").eval::<String>().unwrap(),
         );
     }
+
+    #[test]
+    fn do_login_command() {
+        let world = World::new();
+        let lua = world.lua();
+        lua.load("system.do_login_command()").exec().unwrap();
+    }
 }

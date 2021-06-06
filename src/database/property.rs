@@ -5,6 +5,7 @@ pub enum Property {
     String(String),
     Integer(LuaInteger),
     // TODO add Uuid, Vec<Uuid>; collapse all built-in properties into here
+    // TODO maybe collapse verb storage into here
 }
 
 impl<'lua> FromLua<'lua> for Property {
