@@ -1,24 +1,24 @@
-me = db:create()
-me.name = "a player"
-me:move(void)
+player = db:create()
+player.name = "a player"
+player:move(system.starting_room)
 
-me:add_verb{"wave"}
-me:set_verb_code("wave", [[
+player:add_verb{"wave"}
+player:set_verb_code("wave", [[
     local also_here = {}
 
     for k, other_uuid in ipairs(location.contents) do
-        if other_uuid ~= me.uuid then
+        if other_uuid ~= player.uuid then
             local other = db[other_uuid]
             table.insert(also_here, other.name)
-            other:notify(me.name .. " waves at you")
+            other:notify(player.name .. " waves at you")
         end
     end
 
     if next(also_here) ~= nil then
-        me:notify("You wave at " .. table.concat(also_here, ", "))
+        player:notify("You wave at " .. table.concat(also_here, ", "))
     else
-        me:notify("You wave at empty space")
+        player:notify("You wave at empty space")
     end
 ]])
 
-return me.uuid
+return player.uuid

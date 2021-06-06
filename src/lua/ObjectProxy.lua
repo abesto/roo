@@ -12,6 +12,10 @@ ObjectProxy.__newindex = function(t, k, v)
     return db:set_property(t.uuid, k, v)
 end
 
+ObjectProxy.__eq = function(a, b)
+    return a.uuid == b.uuid
+end
+
 function ObjectProxy:new(uuid)
     local p = {
         uuid = uuid
@@ -21,7 +25,10 @@ function ObjectProxy:new(uuid)
 end
 
 function ObjectProxy:move(where)
-    db:move(self.uuid, where.uuid)
+    if type(where) == "table" then
+        where = where.uuid
+    end
+    db:move(self.uuid, where)
 end
 
 function ObjectProxy:add_verb(signature)

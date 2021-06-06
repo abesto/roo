@@ -84,7 +84,7 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
             tokio::spawn(async move {
                 while let Some(msg) = rx.recv().await {
                     write
-                        .write_all(format!("{}\r\n$ ", msg).as_bytes())
+                        .write_all(format!("{}\r\n", msg).as_bytes())
                         .await
                         .unwrap();
                 }

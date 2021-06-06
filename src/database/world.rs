@@ -4,9 +4,11 @@ use std::sync::{Arc, RwLock};
 use mlua::prelude::*;
 
 use crate::database::{Database, DatabaseProxy};
+use uuid::Uuid;
 
 pub struct World {
     db: Arc<RwLock<Database>>,
+    system: Uuid,
 }
 
 impl World {
@@ -14,8 +16,15 @@ impl World {
     pub fn new() -> Self {
         let db = Database::new();
         let db_lock = Arc::new(RwLock::new(db));
+        let system = {
+            let mut lock = db_lock.write().unwrap();
+            lock.create()
+        };
 
-        Self { db: db_lock }
+        Self {
+            db: db_lock,
+            system,
+        }
     }
 
     pub fn lua(&self) -> Lua {
@@ -25,6 +34,7 @@ impl World {
         {
             let globals = lua.globals();
             globals.set("db", dbproxy).unwrap();
+            globals.set("system_uuid", self.system.to_string()).unwrap();
         }
 
         // API
@@ -89,5 +99,17 @@ mod tests {
         lua.load("o1.x = \"test-2\"").exec().unwrap();
         let o2_proxy: LuaTable = globals.get("o2").unwrap();
         assert_eq!("test-2", o2_proxy.get::<&str, String>("x").unwrap());
+    }
+
+    #[test]
+    fn starting_room() {
+        let world = World::new();
+        let lua1 = world.lua();
+        let lua2 = world.lua();
+
+        assert_eq!(
+            lua1.load("system.uuid").eval::<String>().unwrap(),
+            lua2.load("system.uuid").eval::<String>().unwrap(),
+        );
     }
 }
