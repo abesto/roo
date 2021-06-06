@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use mlua::ToLua;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum VerbSignature {
     NoArgs { name: String },
 }
@@ -31,7 +31,7 @@ where
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Verb {
     pub(super) signature: VerbSignature,
     pub code: String,

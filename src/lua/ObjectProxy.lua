@@ -37,10 +37,11 @@ function ObjectProxy:new(uuid)
 end
 
 function ObjectProxy:move(where)
-    if type(where) == "table" then
-        where = where.uuid
-    end
-    db:move(self.uuid, where)
+    db:move(self.uuid, to_uuid(where))
+end
+
+function ObjectProxy:chparent(new_parent)
+    db:chparent(self.uuid, to_uuid(new_parent))
 end
 
 function ObjectProxy:add_verb(signature)
@@ -53,4 +54,13 @@ end
 
 function ObjectProxy:notify(msg)
     notify(self.uuid, msg)
+end
+
+-- TODO break out into separate "global Lua functions" module
+function to_uuid(what)
+    if type(what) == "table" then
+        return what.uuid
+    else
+        return what
+    end
 end

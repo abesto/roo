@@ -62,7 +62,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::Property;
+    use crate::database::PropertyValue;
 
     #[test]
     fn set_properties() {
@@ -85,8 +85,8 @@ mod tests {
                 DatabaseProxy::parse_uuid(&o1_proxy.get::<&str, String>("uuid").unwrap()).unwrap();
             let o1 = db.get(&uuid).unwrap();
             assert_eq!(
-                &Property::String("test-1".to_string()),
-                o1.properties.get("x").unwrap()
+                &PropertyValue::String("test-1".to_string()),
+                o1.get_property("x").unwrap()
             );
         };
 
@@ -118,5 +118,18 @@ mod tests {
         let world = World::new();
         let lua = world.lua();
         lua.load("system.do_login_command()").exec().unwrap();
+    }
+
+    #[test]
+    fn call_parent() {
+        let world = World::new();
+        let lua = world.lua();
+        assert_eq!(
+            lua.load("db[system.starting_room].look")
+                .eval::<LuaValue>()
+                .unwrap()
+                .type_name(),
+            "function"
+        );
     }
 }

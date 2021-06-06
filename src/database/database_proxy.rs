@@ -4,7 +4,7 @@ use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use mlua::prelude::*;
 use uuid::Uuid;
 
-use crate::database::{Database, Object, Property, Verb};
+use crate::database::{Database, Object, PropertyValue, Verb};
 use std::convert::TryFrom;
 
 #[derive(Clone)]
@@ -26,13 +26,14 @@ impl DatabaseProxy {
         LuaError::RuntimeError(format!("No object found with UUID {}", uuid))
     }
 
+    #[allow(dead_code)]
     fn get_object<'a>(
         &self,
         lock: &'a RwLockReadGuard<Database>,
         uuid: &str,
     ) -> LuaResult<&'a Object> {
         lock.get(&Self::parse_uuid(&uuid)?)
-            .ok_or_else(|| Self::err_no_object(&uuid))
+            .map_err(LuaError::RuntimeError)
     }
 
     fn get_object_mut<'a>(
@@ -41,7 +42,7 @@ impl DatabaseProxy {
         uuid: &str,
     ) -> LuaResult<&'a mut Object> {
         lock.get_mut(&Self::parse_uuid(&uuid)?)
-            .ok_or_else(|| Self::err_no_object(&uuid))
+            .map_err(LuaError::RuntimeError)
     }
 
     fn make_object_proxy<'lua>(&self, lua: &'lua Lua, uuid: &Uuid) -> LuaResult<LuaTable<'lua>> {
@@ -88,24 +89,7 @@ impl LuaUserData for DatabaseProxy {
                 {
                     let mut lock = this.db.write().unwrap();
                     let object = this.get_object_mut(&mut lock, &uuid)?;
-
-                    if key == "location" {
-                        match value {
-                            LuaValue::String(s) => {
-                                object.location = Some(Self::parse_uuid(s.to_str()?)?)
-                            }
-                            _ => {
-                                return Err(LuaError::RuntimeError(
-                                    "location property must be set to a string (containing a UUID)"
-                                        .to_string(),
-                                ))
-                            }
-                        }
-                    } else {
-                        object
-                            .properties
-                            .insert(key, Property::from_lua(value, lua)?);
-                    }
+                    object.set_property(&key, PropertyValue::from_lua(value, lua)?);
                 }
                 Ok(LuaValue::Nil)
             },
@@ -115,30 +99,12 @@ impl LuaUserData for DatabaseProxy {
             "get_property",
             |lua, this, (uuid, key): (String, String)| {
                 let lock = this.db.read().unwrap();
-                let object = this.get_object(&lock, &uuid)?;
 
-                if key == "location" {
-                    return Ok(if let Some(location) = object.location {
-                        location.to_string().to_lua(lua)?
-                    } else {
-                        LuaValue::Nil
-                    });
-                }
-
-                if key == "contents" {
-                    return object
-                        .contents()
-                        .iter()
-                        .cloned()
-                        .map(|uuid| uuid.to_string())
-                        .collect::<Vec<_>>()
-                        .to_lua(lua);
-                }
-
-                if let Some(value) = object.properties.get(&key) {
+                if let Some(value) = lock
+                    .get_property(&Self::parse_uuid(&uuid)?, &key)
+                    .map_err(LuaError::RuntimeError)?
+                {
                     value.clone().to_lua(lua)
-                } else if let Some(verb) = object.verbs.get(&key) {
-                    verb.to_lua(lua)
                 } else {
                     Ok(LuaValue::Nil)
                 }
@@ -147,9 +113,19 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method("move", |_lua, this, (what, to): (String, String)| {
             let mut lock = this.db.write().unwrap();
-            lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?);
+            lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
+                .map_err(LuaError::RuntimeError)?;
             Ok(LuaValue::Nil)
         });
+
+        methods.add_method(
+            "chparent",
+            |_lua, this, (child, new_parent): (String, String)| {
+                let mut lock = this.db.write().unwrap();
+                lock.chparent(&Self::parse_uuid(&child)?, &Self::parse_uuid(&new_parent)?)
+                    .map_err(LuaError::RuntimeError)
+            },
+        );
 
         methods.add_method(
             "add_verb",
@@ -159,7 +135,7 @@ impl LuaUserData for DatabaseProxy {
 
                 let verb = Verb::try_from(&signature).map_err(LuaError::RuntimeError)?;
 
-                if object.verbs.contains_key(verb.name()) {
+                if object.contains_verb(verb.name()) {
                     return Err(LuaError::RuntimeError(format!(
                         "Verb {} already exists on {}",
                         verb.name(),
@@ -167,7 +143,7 @@ impl LuaUserData for DatabaseProxy {
                     )));
                 }
 
-                object.verbs.insert(verb.name().to_string(), verb);
+                object.set_property(verb.name(), verb.clone());
                 Ok(LuaValue::Nil)
             },
         );
@@ -178,7 +154,7 @@ impl LuaUserData for DatabaseProxy {
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut(&mut lock, &uuid)?;
 
-                if let Some(verb) = object.verbs.get_mut(&name) {
+                if let Some(PropertyValue::Verb(verb)) = object.get_property_mut(&name) {
                     verb.code = code;
 
                     Ok(LuaValue::Nil)

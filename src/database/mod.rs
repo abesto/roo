@@ -8,6 +8,6 @@ pub mod world;
 pub use database::Database;
 pub use database_proxy::DatabaseProxy;
 pub use object::Object;
-pub use property::Property;
+pub use property::{Property, PropertyValue};
 pub use verb::Verb;
 pub use world::World;

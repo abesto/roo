@@ -4,9 +4,9 @@ use tokio::net::TcpListener;
 use uuid::Uuid;
 
 use crate::command::{parse_command, Command};
-use crate::database::{DatabaseProxy, Object, Verb, World};
+use crate::database::{Database, DatabaseProxy, Object, Verb, World};
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 
@@ -20,17 +20,18 @@ tokio::task_local! {
 }
 
 fn first_matching_verb<'a, 'b>(
+    lock: &'b RwLockReadGuard<Database>,
     command: &'a Command,
     objects: Vec<Option<&'b Object>>,
-) -> Option<(&'b Object, &'b Verb)> {
+) -> Result<Option<(&'b Object, &'b Verb)>, String> {
     for object_opt in objects {
         if let Some(object) = object_opt {
-            if let Some(verb) = object.matching_verb(command) {
-                return Some((object, verb));
+            if let Some(verb) = lock.matching_verb(object.uuid(), command)? {
+                return Ok(Some((object, verb)));
             }
         }
     }
-    None
+    Ok(None)
 }
 
 #[tokio::main]
@@ -116,17 +117,15 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                     parse_command(&line)
                                         .ok_or("Failed to parse command".to_string())
                                         .and_then(|command| -> Result<(), String> {
-                                            let player: &Object = lock
-                                                .get(&CONNDATA.get().player_object)
-                                                .ok_or_else(|| {
-                                                    "Failed to find player object".to_string()
-                                                })?;
+                                            let player: &Object =
+                                                lock.get(&CONNDATA.get().player_object)?;
                                             let location: Option<&Object> =
-                                                player.location().and_then(|l| lock.get(l));
+                                                player.location().and_then(|l| lock.get(l).ok());
                                             let (this, verb) = first_matching_verb(
+                                                &lock,
                                                 &command,
                                                 vec![Some(player), location],
-                                            )
+                                            )?
                                             .ok_or_else(|| "Unknown verb".to_string())?;
 
                                             let code = format!(

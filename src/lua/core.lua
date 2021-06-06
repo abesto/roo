@@ -1,31 +1,56 @@
 system = db[system_uuid]
 
-if system.starting_room == nil then
-    void = db:create()
-    void.name = "The Void"
-    void.description = "You float in nothing."
+local Player = db:create()
+Player.name = "Prototype:Player"
 
-    void:add_verb{"look"}
-    void:set_verb_code("look", [[
+local Room = db:create()
+Room.name = "Prototype:Room"
+Room.description = "A nondescript room"
+
+Room:add_verb{"describe"}
+Room:set_verb_code("describe", [[
     local name = this.name
     if name == "" then
         name = this.uuid
     end
+    local msg = "= " .. name .. " ="
 
     local description = this.description
-    if description == nil then
-        player:notify("(No description set for " .. name .. ")")
-    else
-        player:notify("= " .. name .. " =\r\n" .. description)
+    if description then
+        msg = msg .. "\r\n" .. description
     end
-    ]])
+
+    local seen = {}
+    for k, uuid in ipairs(this.contents) do
+        if uuid ~= player.uuid then
+            local other = db[uuid]
+            table.insert(seen, other.name)
+        end
+    end
+
+    if #seen > 0 then
+        msg = msg .. "\r\nYou see here: " .. table.concat(seen, ", ")
+    end
+
+    return msg
+]])
+
+Room:add_verb{"look"}
+Room:set_verb_code("look", [[
+    player:notify(this.describe())
+]])
+
+if system.starting_room == nil then
+    local void = db:create()
+    void.name = "The Void"
+    void.description = "You float in nothing."
+    void:chparent(Room)
 
     system.starting_room = void.uuid
 
     system:add_verb{"do_login_command"}
     system:set_verb_code("do_login_command", [=[
     player = db:create()
-    player.name = "a player"
     player:move(system.starting_room)
 
     player:add_verb{"wave"}
