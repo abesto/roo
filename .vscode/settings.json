@@ -3,6 +3,7 @@
         "CONNDATA",
         "chparent",
         "dbproxy",
+        "dobj",
         "eval",
         "mlua"
     ]

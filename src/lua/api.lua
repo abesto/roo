@@ -3,20 +3,31 @@ ObjectProxy = {
 }
 
 ObjectProxy.__index = function(t, k)
+    -- First check if this is a normal field on ObjectProxy
     local opv = rawget(ObjectProxy, k)
     if opv ~= nil then
         return opv
     end
 
+    -- Wrap verb calls so that they have all the right variables
     local v = db:get_property(t.uuid, k)
     if type(v) == "function" then
-        this = t
-        if this.location ~= nil then
-            location = db[this.location]
-        else
-            location = nil
+        return (function(args)
+            return v(t, args)
+        end)
+    end
+
+    -- Unpack UUIDs into ObjectProxies
+    if type(v) == "string" then
+        local status, result = pcall(function()
+            return db[v]
+        end)
+        if status and result ~= nil then
+            return result
         end
     end
+
+    -- Everything else goes back as is
     return v
 end
 
@@ -64,3 +75,5 @@ function to_uuid(what)
         return what
     end
 end
+
+system = db[system_uuid]

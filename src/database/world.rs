@@ -21,10 +21,20 @@ impl World {
             lock.create()
         };
 
-        Self {
+        let o = Self {
             db: db_lock,
             system,
-        }
+        };
+
+        // RooCore
+        o.lua()
+            .load(include_str!("../lua/core.lua"))
+            .set_name("core")
+            .unwrap()
+            .exec()
+            .unwrap();
+
+        o
     }
 
     pub fn lua(&self) -> Lua {
@@ -38,15 +48,8 @@ impl World {
         }
 
         // API
-        lua.load(include_str!("../lua/ObjectProxy.lua"))
-            .set_name("ObjectProxy")
-            .unwrap()
-            .exec()
-            .unwrap();
-
-        // RooCore
-        lua.load(include_str!("../lua/core.lua"))
-            .set_name("core")
+        lua.load(include_str!("../lua/api.lua"))
+            .set_name("api")
             .unwrap()
             .exec()
             .unwrap();
@@ -125,7 +128,7 @@ mod tests {
         let world = World::new();
         let lua = world.lua();
         assert_eq!(
-            lua.load("db[system.starting_room].look")
+            lua.load("system.starting_room.look")
                 .eval::<LuaValue>()
                 .unwrap()
                 .type_name(),

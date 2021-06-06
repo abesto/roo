@@ -150,9 +150,12 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method(
             "set_verb_code",
-            |_lua, this, (uuid, name, code): (String, String, String)| {
+            |lua, this, (uuid, name, code): (String, String, String)| {
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut(&mut lock, &uuid)?;
+
+                // Verify the code is at least mostly sane
+                lua.load(&code).set_name(&name)?.into_function()?;
 
                 if let Some(PropertyValue::Verb(verb)) = object.get_property_mut(&name) {
                     verb.code = code;

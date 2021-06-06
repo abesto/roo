@@ -4,7 +4,6 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::command::Command;
-use crate::database::verb::VerbSignature;
 use crate::database::Property;
 
 use super::PropertyValue;
@@ -127,10 +126,10 @@ impl Object {
         if let Some(PropertyValue::Verb(matching_verb)) =
             self.get_property(self.verbs.get(command.verb())?)
         {
-            match (command, &matching_verb.signature) {
-                (Command::VerbNoArgs { verb: _ }, VerbSignature::NoArgs { name: _ }) => {
-                    Some(matching_verb)
-                } // _ => None,
+            if matching_verb.signature.matches(command) {
+                Some(matching_verb)
+            } else {
+                None
             }
         } else {
             unreachable!()

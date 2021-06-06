@@ -34,6 +34,12 @@ fn first_matching_verb<'a, 'b>(
     Ok(None)
 }
 
+fn get_object_proxy<'lua>(lua: &'lua Lua, uuid: &Uuid) -> LuaValue<'lua> {
+    lua.load(&format!("db[\"{}\"]", uuid.to_string()))
+        .eval::<LuaValue>()
+        .unwrap()
+}
+
 #[tokio::main]
 pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("127.0.0.1:8888").await?;
@@ -101,8 +107,8 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                         let mut lines = BufReader::new(read).lines();
                         tx.send("Hai!".to_string()).await.unwrap();
                         while let Some(line) = lines.next_line().await? {
-                            let maybe_msg = if let Some(stripped) = line.strip_prefix('>') {
-                                // If it starts with a ">", run it as Lua
+                            let maybe_msg = if let Some(stripped) = line.strip_prefix(';') {
+                                // If it starts with a ";", run it as Lua
                                 match lua.load(stripped).eval::<LuaValue>() {
                                     Err(e) => Some(e.to_string()),
                                     Ok(LuaValue::String(s)) => {
@@ -117,6 +123,7 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                     parse_command(&line)
                                         .ok_or("Failed to parse command".to_string())
                                         .and_then(|command| -> Result<(), String> {
+                                            // Find who does what
                                             let player: &Object =
                                                 lock.get(&CONNDATA.get().player_object)?;
                                             let location: Option<&Object> =
@@ -128,22 +135,20 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                             )?
                                             .ok_or_else(|| "Unknown verb".to_string())?;
 
-                                            let code = format!(
-                                                "
-                                    this = db[\"{}\"]
-                                    player = db[\"{}\"]
-                                    location = {}
-                                    this.{}()",
-                                                this.uuid(),
-                                                player.uuid(),
-                                                location.map_or_else(
-                                                    || "nil".to_string(),
-                                                    |l| format!("db[\"{}\"]", l.uuid())
-                                                ),
-                                                verb.name()
-                                            );
+                                            // Set up arguments
+                                            let lua_player = get_object_proxy(&lua, player.uuid());
+                                            lua.globals().set("player", lua_player).unwrap();
+                                            let args = command.to_args().to_lua(&lua);
 
-                                            lua.load(&code).exec().map_err(|e| e.to_string())
+                                            // Execute verb
+                                            let cmd =
+                                                &format!("db[\"{}\"].{}", this.uuid(), verb.name());
+                                            lua.load(cmd)
+                                                .set_name(cmd)
+                                                .unwrap()
+                                                .eval::<LuaFunction>()
+                                                .and_then(|f| f.call(args))
+                                                .map_err(|e| e.to_string())
                                         })
                                 }
                                 .map_or_else(|e| Some(e.to_string()), |_| None)
