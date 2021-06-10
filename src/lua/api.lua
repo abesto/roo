@@ -1,8 +1,21 @@
--- TODO rewrite with pl.class
+pl = require 'pl.import_into'()
+
+-- Selective imports from pl into the global namespace, these are part of the ROO API
+map = pl.tablex.map
+imap = pl.tablex.imap
+
+--- Minimal check for these proxy objects
+local function class_of(klass, obj)
+    if type(obj) ~= "table" then
+        return false
+    end
+    return getmetatable(obj) == klass
+end
+
 -- TODO make internals safer by explicitly annotating properties, maybe bringing in PropertyValue as userdata
-ObjectProxy = {
-    compiled_verbs = {}
-}
+--      .contents is especially problematic
+ObjectProxy = {}
+ObjectProxy.class_of = class_of
 
 function ObjectProxy.__index(t, k)
     -- First check if this is a normal field on ObjectProxy
@@ -87,6 +100,7 @@ end
 -- end of ObjectProxy
 
 VerbProxy = {}
+VerbProxy.class_of = class_of
 
 function VerbProxy.__call(p, args)
     if args == nil then
@@ -110,6 +124,7 @@ end
 -- end of VerbProxy
 
 ListProxy = {}
+ListProxy.class_of = class_of
 
 function ListProxy.path_and(t, n)
     local new_path = {table.unpack(t._path)}
@@ -122,7 +137,7 @@ function ListProxy.__index(t, k)
     if type(v) == "string" then
         v = inflate_uuid(v)
     end
-    if type(v) == "table" and v.uuid == nil then
+    if type(v) == "table" and not ObjectProxy:class_of(v) then
         return ListProxy:new(t._uuid, t._prop, ListProxy.path_and(t, k - 1), v)
     end
     return v
@@ -153,12 +168,14 @@ end
 
 -- TODO break out into separate "global Lua functions" module
 
+--- Helpers for the above classes, should be private
+
 function to_uuid(what)
     if type(what) == "table" then
-        if what.uuid ~= nil then
+        if ObjectProxy:class_of(what) then
             return what.uuid
         else
-            return map(what, to_uuid)
+            return imap(to_uuid, what)
         end
     else
         return what
@@ -173,11 +190,13 @@ function inflate_uuid(x)
         if status and result ~= nil then
             return result
         end
-    elseif type(x) == "table" then
-        return map(x, inflate_uuid)
+    elseif type(x) == "table" and not ObjectProxy:class_of(x) then
+        return imap(inflate_uuid, x)
     end
     return x
 end
+
+--- Equivalents for the MOO built-in functions
 
 function setremove(haystack, needle)
     -- Return haystack (a table) without needle in it
@@ -190,16 +209,8 @@ function setremove(haystack, needle)
     return retval
 end
 
-function map(t, f)
-    local r = {}
-    for i, x in ipairs(t) do
-        table.insert(r, i, f(x))
-    end
-    return r
-end
-
 function tostr(args)
-    local strings = map(args, tostring)
+    local strings = imap(tostring, args)
     return table.concat(strings, "")
 end
 

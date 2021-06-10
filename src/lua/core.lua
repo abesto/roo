@@ -30,14 +30,14 @@
 
     Room:add_verb({system.uuid, "r", {"announce"}}, {"any"})
     Room:set_verb_code("announce", [[
-        for i, target in pairs(setremove(this.contents, player)) do
+        for i, target in ipairs(setremove(this.contents, player)) do
             pcall(target.tell, args)
         end
     ]])
 
     Room:add_verb({system.uuid, "r", {"announce_all"}}, {"any"})
     Room:set_verb_code("announce_all", [[
-        for i, target in pairs(this.contents) do
+        for i, target in ipairs(this.contents) do
             pcall(target.tell, args)
         end
     ]])
@@ -70,16 +70,11 @@
             msg = msg .. "\r\n" .. description
         end
 
-        local seen = {}
-        for k, uuid in ipairs(this.contents) do
-            if uuid ~= player.uuid then
-                local other = db[uuid]
-                table.insert(seen, other.name)
-            end
-        end
+        local seen = setremove(this.contents, player)
 
         if #seen > 0 then
-            msg = msg .. "\r\nYou see here: " .. table.concat(seen, ", ")
+            local seen_names = imap(function (o) return o.name end, seen)
+            msg = msg .. "\r\nYou see here: " .. table.concat(seen_names, ", ")
         end
 
         return msg
