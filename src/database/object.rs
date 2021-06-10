@@ -12,7 +12,7 @@ use super::Verb;
 #[derive(Clone)]
 pub struct Object {
     properties: HashMap<String, Property>,
-    verbs: HashMap<String, String>, // verb name -> property key
+    verbs: Vec<Verb>,
 }
 
 impl Object {
@@ -20,7 +20,7 @@ impl Object {
     pub(crate) fn new(uuid: Uuid) -> Self {
         let mut o = Object {
             properties: HashMap::new(),
-            verbs: HashMap::new(),
+            verbs: vec![],
         };
 
         o.properties
@@ -28,6 +28,10 @@ impl Object {
         o.properties.insert(
             "location".to_string(),
             Property::from(PropertyValue::UuidOpt(None)),
+        );
+        o.properties.insert(
+            "name".to_string(),
+            Property::from(PropertyValue::String(String::new())),
         );
         o.properties.insert(
             "contents".to_string(),
@@ -45,11 +49,21 @@ impl Object {
         o
     }
 
+    // TODO this needs refactoring
+
     pub fn uuid(&self) -> &Uuid {
         if let PropertyValue::Uuid(uuid) = &self.properties.get("uuid").unwrap().value {
             uuid
         } else {
             unreachable!(".uuid is always set to a Uuid");
+        }
+    }
+
+    pub fn name(&self) -> &String {
+        if let PropertyValue::String(name) = &self.properties.get("name").unwrap().value {
+            name
+        } else {
+            unreachable!(".name is always set to a String");
         }
     }
 
@@ -72,6 +86,14 @@ impl Object {
     pub fn insert_content(&mut self, uuid: Uuid) {
         if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property_mut("contents") {
             uuids.insert(uuid);
+        } else {
+            unreachable!(".contents is always set to a HashSet<Uuid>")
+        }
+    }
+
+    pub fn contents(&self) -> &HashSet<Uuid> {
+        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property("contents") {
+            uuids
         } else {
             unreachable!(".contents is always set to a HashSet<Uuid>")
         }
@@ -114,30 +136,52 @@ impl Object {
         T: Into<PropertyValue>,
     {
         let value = from_value.into();
-        if let PropertyValue::Verb(_verb) = &value {
-            // TODO add alias support
-            self.verbs.insert(key.to_string(), key.to_string());
-        }
         self.properties
             .insert(key.to_string(), Property::from(value));
     }
 
-    pub fn matching_verb(&self, command: &Command) -> Option<&Verb> {
-        if let Some(PropertyValue::Verb(matching_verb)) =
-            self.get_property(self.verbs.get(command.verb())?)
-        {
-            if matching_verb.signature.matches(command) {
-                Some(matching_verb)
-            } else {
-                None
+    pub fn add_verb(&mut self, verb: Verb) -> Result<(), String> {
+        for existing_verb in self.verbs.iter() {
+            for existing_name in existing_verb.names() {
+                if verb.names().contains(existing_name) {
+                    // TODO allow multiple verbs for same name but different arity
+                    return Err(format!(
+                        "{} already contains verb {}",
+                        self.name(),
+                        verb.names().join("/")
+                    ));
+                }
             }
-        } else {
-            unreachable!()
         }
+
+        self.verbs.push(verb);
+        Ok(())
     }
 
-    pub fn contains_verb(&self, verb: &str) -> bool {
-        self.verbs.contains_key(verb)
+    pub fn matching_verb(&self, command: &Command) -> Option<&Verb> {
+        self.verbs.iter().find(|v| v.matches(&self, command))
+    }
+
+    pub fn resolve_verb(&self, name: &str) -> Option<&Verb> {
+        self.verbs.iter().find(|v| v.name_matches(name))
+    }
+
+    pub fn has_verb_with_name(&self, name: &str) -> bool {
+        self.resolve_verb(name).is_some()
+    }
+
+    pub fn set_verb_code(&mut self, verb_name: &String, code: String) -> Result<(), String> {
+        let verb_opt = self
+            .verbs
+            .iter_mut()
+            .find(|v| v.names().iter().any(|name| name == verb_name));
+
+        if let Some(verb) = verb_opt {
+            verb.code = code;
+            Ok(())
+        } else {
+            Err(format!("Verb {} not found on {}", verb_name, self.uuid()))
+        }
     }
 }
 

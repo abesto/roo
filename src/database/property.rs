@@ -3,8 +3,6 @@ use std::collections::HashSet;
 use mlua::prelude::*;
 use uuid::Uuid;
 
-use super::Verb;
-
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum PropertyValue {
     String(String),
@@ -12,7 +10,6 @@ pub enum PropertyValue {
     Uuid(Uuid),
     UuidOpt(Option<Uuid>),
     Uuids(HashSet<Uuid>),
-    Verb(Verb),
 }
 
 impl From<Uuid> for PropertyValue {
@@ -24,12 +21,6 @@ impl From<Uuid> for PropertyValue {
 impl From<Option<Uuid>> for PropertyValue {
     fn from(uuid: Option<Uuid>) -> Self {
         Self::UuidOpt(uuid)
-    }
-}
-
-impl From<Verb> for PropertyValue {
-    fn from(verb: Verb) -> Self {
-        Self::Verb(verb)
     }
 }
 
@@ -63,7 +54,6 @@ impl<'lua> ToLua<'lua> for PropertyValue {
                 .map(|x| x.to_string())
                 .collect::<Vec<_>>()
                 .to_lua(lua),
-            PropertyValue::Verb(verb) => verb.to_lua(lua),
             PropertyValue::UuidOpt(o) => o
                 .map(|uuid| uuid.to_string().to_lua(lua))
                 .unwrap_or(Ok(LuaValue::Nil)),

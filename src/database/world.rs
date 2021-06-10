@@ -105,6 +105,29 @@ mod tests {
     }
 
     #[test]
+    fn get_parent_property() {
+        let world = World::new();
+        let lua = world.lua();
+
+        let retval = lua
+            .load(
+                "
+        root = db:create()
+        root.x = 3
+
+        sub = db:create()
+        sub:chparent(root)
+
+        return sub.x
+        ",
+            )
+            .eval::<LuaInteger>()
+            .unwrap();
+
+        assert_eq!(3, retval);
+    }
+
+    #[test]
     fn starting_room() {
         let world = World::new();
         let lua1 = world.lua();
@@ -113,6 +136,14 @@ mod tests {
         assert_eq!(
             lua1.load("system.uuid").eval::<String>().unwrap(),
             lua2.load("system.uuid").eval::<String>().unwrap(),
+        );
+        assert_eq!(
+            lua1.load("system.starting_room.uuid")
+                .eval::<String>()
+                .unwrap(),
+            lua2.load("system.starting_room.uuid")
+                .eval::<String>()
+                .unwrap(),
         );
     }
 
@@ -128,11 +159,11 @@ mod tests {
         let world = World::new();
         let lua = world.lua();
         assert_eq!(
-            lua.load("system.starting_room.look")
+            lua.load("system.starting_room.tell{\"whee\"}")
                 .eval::<LuaValue>()
                 .unwrap()
                 .type_name(),
-            "function"
+            "nil"
         );
     }
 }

@@ -2,32 +2,27 @@ ObjectProxy = {
     compiled_verbs = {}
 }
 
-ObjectProxy.__index = function(t, k)
+function ObjectProxy.__index(t, k)
     -- First check if this is a normal field on ObjectProxy
     local opv = rawget(ObjectProxy, k)
     if opv ~= nil then
         return opv
     end
 
-    -- Wrap verb calls so that they have all the right variables
+    -- Read the value from the DB
     local v = db:get_property(t.uuid, k)
-    if type(v) == "function" then
-        return (function(args)
-            return v(t, args)
-        end)
+
+    -- Wrap verbs so that the DB can do arg matching at invocation time
+    if db:has_verb_with_name(t.uuid, k) then
+        return VerbProxy:new(t, k)
     end
 
-    -- Unpack UUIDs into ObjectProxies
-    if type(v) == "string" then
-        local status, result = pcall(function()
-            return db[v]
-        end)
-        if status and result ~= nil then
-            return result
-        end
+    -- Unpack UUIDs into ObjectProxies, unless we're actually trying to
+    -- read the UUID
+    if k ~= "uuid" then
+        v = inflate_uuid(v)
     end
 
-    -- Everything else goes back as is
     return v
 end
 
@@ -55,25 +50,95 @@ function ObjectProxy:chparent(new_parent)
     db:chparent(self.uuid, to_uuid(new_parent))
 end
 
-function ObjectProxy:add_verb(signature)
-    db:add_verb(self.uuid, signature)
+function ObjectProxy:add_verb(info, args)
+    db:add_verb(self.uuid, info, args)
 end
 
 function ObjectProxy:set_verb_code(name, code)
     db:set_verb_code(self.uuid, name, code)
 end
 
-function ObjectProxy:notify(msg)
-    notify(self.uuid, msg)
+function ObjectProxy:resolve_verb(name, arity)
+    return db:resolve_verb(self.uuid, name, arity)
 end
 
+function ObjectProxy:call_verb(verb, args)
+    local f = self:resolve_verb(verb)
+    return f(self, args)
+end
+
+function ObjectProxy:notify(msg)
+    if notify ~= nil then
+        notify(self.uuid, msg)
+    end
+end
+-- end of ObjectProxy
+
+VerbProxy = {}
+
+function VerbProxy.__call(p, args)
+    if args == nil then
+        args = {}
+    end
+    return p.this:call_verb(p.verb, args)
+end
+
+function VerbProxy:new(this, name)
+    local p = {
+        this = this,
+        verb = name
+    }
+    setmetatable(p, self)
+    return p
+end
+-- end of VerbProxy
+
 -- TODO break out into separate "global Lua functions" module
+
 function to_uuid(what)
     if type(what) == "table" then
         return what.uuid
     else
         return what
     end
+end
+
+function inflate_uuid(x)
+    if type(x) == "string" then
+        local status, result = pcall(function()
+            return db[x]
+        end)
+        if status and result ~= nil then
+            return result
+        end
+    elseif type(x) == "table" then
+        return map(x, inflate_uuid)
+    end
+    return x
+end
+
+function setremove(haystack, needle)
+    -- Return haystack (a table) without needle in it
+    local retval = {}
+    for i, candidate in ipairs(haystack) do
+        if candidate ~= needle then
+            table.insert(retval, candidate)
+        end
+    end
+    return retval
+end
+
+function map(t, f)
+    local r = {}
+    for i, x in pairs(t) do
+        table.insert(r, i, f(x))
+    end
+    return r
+end
+
+function tostr(args)
+    local strings = map(args, tostring)
+    return table.concat(strings, "")
 end
 
 system = db[system_uuid]

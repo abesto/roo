@@ -40,6 +40,42 @@ impl Database {
         self.objects.contains_key(uuid)
     }
 
+    pub fn resolve_object(&self, player_uuid: &Uuid, input: &str) -> Option<&Object> {
+        let player = self.get(player_uuid).ok()?;
+        let candidate_lists = vec![
+            // Inventory
+            Some(player.contents()),
+            // Objects in the location of the player
+            player
+                .location()
+                .and_then(|uuid| self.get(uuid).ok())
+                .map_or_else(|| None, |location| Some(location.contents())),
+        ];
+
+        let input_uuid = Uuid::parse_str(input).ok();
+
+        for candidate_list_opt in candidate_lists {
+            if let Some(candidate_list) = candidate_list_opt {
+                for candidate_uuid in candidate_list {
+                    if let Ok(candidate) = self.get(candidate_uuid) {
+                        if Some(candidate_uuid) == input_uuid.as_ref() {
+                            return Some(candidate);
+                        }
+                        match candidate.get_property("name") {
+                            // TODO add alias support, probably through a method on Object
+                            Some(PropertyValue::String(name)) if name == input => {
+                                return Some(candidate)
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
     pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), String> {
         // Remove from contents of the old location, if any
         if let Some(PropertyValue::Uuid(old_location)) =
@@ -91,6 +127,30 @@ impl Database {
             Ok(Some(value))
         } else if let Some(parent_uuid) = object.parent() {
             self.get_property(parent_uuid, key)
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn has_verb_with_name(&self, uuid: &Uuid, name: &str) -> Result<bool, String> {
+        let object = self.get(uuid)?;
+
+        if object.has_verb_with_name(name) {
+            Ok(true)
+        } else if let Some(parent_uuid) = object.parent() {
+            self.has_verb_with_name(parent_uuid, name)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub fn resolve_verb(&self, uuid: &Uuid, name: &str) -> Result<Option<&Verb>, String> {
+        let object = self.get(uuid)?;
+
+        if let Some(verb) = object.resolve_verb(name) {
+            Ok(Some(verb))
+        } else if let Some(parent_uuid) = object.parent() {
+            self.resolve_verb(parent_uuid, name)
         } else {
             Ok(None)
         }

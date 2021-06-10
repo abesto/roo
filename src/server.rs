@@ -3,7 +3,7 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpListener;
 use uuid::Uuid;
 
-use crate::command::{parse_command, Command};
+use crate::command::Command;
 use crate::database::{Database, DatabaseProxy, Object, Verb, World};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
@@ -120,12 +120,13 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                 // Otherwise, as a ROO command
                                 {
                                     let lock = db.read().unwrap();
-                                    parse_command(&line)
+                                    let player: &Object =
+                                        lock.get(&CONNDATA.get().player_object).unwrap();
+                                    Command::parse(&line, player.uuid(), &lock)
                                         .ok_or("Failed to parse command".to_string())
                                         .and_then(|command| -> Result<(), String> {
+                                            println!("{:?}", command);
                                             // Find who does what
-                                            let player: &Object =
-                                                lock.get(&CONNDATA.get().player_object)?;
                                             let location: Option<&Object> =
                                                 player.location().and_then(|l| lock.get(l).ok());
                                             let (this, verb) = first_matching_verb(
@@ -137,17 +138,28 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
 
                                             // Set up arguments
                                             let lua_player = get_object_proxy(&lua, player.uuid());
+                                            let lua_this = get_object_proxy(&lua, this.uuid());
                                             lua.globals().set("player", lua_player).unwrap();
-                                            let args = command.to_args().to_lua(&lua);
+                                            lua.globals()
+                                                .set("dobjstr", command.dobjstr())
+                                                .unwrap();
+                                            lua.globals()
+                                                .set("argstr", command.argstr().clone())
+                                                .unwrap();
+                                            let args = command.args().clone().to_lua(&lua).unwrap();
 
                                             // Execute verb
-                                            let cmd =
-                                                &format!("db[\"{}\"].{}", this.uuid(), verb.name());
+                                            let cmd = &format!(
+                                                "db[\"{}\"]:resolve_verb(\"{}\", {})",
+                                                this.uuid(),
+                                                verb.names()[0],
+                                                verb.arity()
+                                            );
                                             lua.load(cmd)
                                                 .set_name(cmd)
                                                 .unwrap()
                                                 .eval::<LuaFunction>()
-                                                .and_then(|f| f.call(args))
+                                                .and_then(|f| f.call((lua_this, args)))
                                                 .map_err(|e| e.to_string())
                                         })
                                 }

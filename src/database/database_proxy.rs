@@ -7,6 +7,8 @@ use uuid::Uuid;
 use crate::database::{Database, Object, PropertyValue, Verb};
 use std::convert::TryFrom;
 
+use super::verb::{VerbArgs, VerbInfo, VerbPermissions};
+
 #[derive(Clone)]
 pub struct DatabaseProxy {
     db: Arc<RwLock<Database>>,
@@ -18,6 +20,7 @@ impl DatabaseProxy {
         Self { db }
     }
 
+    // TODO move this function out of DatabaseProxy, it is used widely
     pub fn parse_uuid(uuid: &str) -> LuaResult<Uuid> {
         Uuid::parse_str(&uuid).map_err(|e| LuaError::RuntimeError(e.to_string()))
     }
@@ -129,22 +132,21 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method(
             "add_verb",
-            |_lua, this, (uuid, signature): (String, Vec<String>)| {
+            |_lua, this, (uuid, info, args): (String, VerbInfo, VerbArgs)| {
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut(&mut lock, &uuid)?;
-
-                let verb = Verb::try_from(&signature).map_err(LuaError::RuntimeError)?;
-
-                if object.contains_verb(verb.name()) {
-                    return Err(LuaError::RuntimeError(format!(
-                        "Verb {} already exists on {}",
-                        verb.name(),
-                        uuid
-                    )));
-                }
-
-                object.set_property(verb.name(), verb.clone());
+                let verb = Verb::new(info, args);
+                object.add_verb(verb).map_err(LuaError::RuntimeError)?;
                 Ok(LuaValue::Nil)
+            },
+        );
+
+        methods.add_method(
+            "has_verb_with_name",
+            |_lua, this, (uuid, name): (String, String)| {
+                let lock = this.db.read().unwrap();
+                lock.has_verb_with_name(&Self::parse_uuid(&uuid)?, &name)
+                    .map_err(LuaError::RuntimeError)
             },
         );
 
@@ -157,16 +159,21 @@ impl LuaUserData for DatabaseProxy {
                 // Verify the code is at least mostly sane
                 lua.load(&code).set_name(&name)?.into_function()?;
 
-                if let Some(PropertyValue::Verb(verb)) = object.get_property_mut(&name) {
-                    verb.code = code;
+                // And write it
+                object
+                    .set_verb_code(&name, code)
+                    .map_err(LuaError::RuntimeError)
+            },
+        );
 
-                    Ok(LuaValue::Nil)
-                } else {
-                    Err(LuaError::RuntimeError(format!(
-                        "No verb {}_on {}",
-                        name, uuid
-                    )))
-                }
+        methods.add_method(
+            "resolve_verb",
+            |lua, this, (uuid, name): (String, String)| {
+                let lock = this.db.read().unwrap();
+                let verb = lock
+                    .resolve_verb(&Self::parse_uuid(&uuid)?, &name)
+                    .map_err(LuaError::RuntimeError)?;
+                verb.to_lua(lua)
             },
         );
 
