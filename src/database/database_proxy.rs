@@ -177,6 +177,17 @@ impl LuaUserData for DatabaseProxy {
             },
         );
 
+        methods.add_method(
+            "set_into_list",
+            |_lua, this, (uuid, key, path, value): (String, String, Vec<usize>, PropertyValue)| {
+                let mut lock = this.db.write().unwrap();
+                let object = this.get_object_mut(&mut lock, &uuid)?;
+                object
+                    .set_into_list(&key, path, value)
+                    .map_err(LuaError::RuntimeError)
+            },
+        );
+
         methods.add_meta_method(LuaMetaMethod::Index, |lua, this, (uuid,): (String,)| {
             this.make_object_proxy(lua, &Self::parse_uuid(&uuid)?)
         });

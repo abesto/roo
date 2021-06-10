@@ -1,3 +1,5 @@
+-- TODO rewrite with pl.class
+-- TODO make internals safer by explicitly annotating properties, maybe bringing in PropertyValue as userdata
 ObjectProxy = {
     compiled_verbs = {}
 }
@@ -17,21 +19,31 @@ function ObjectProxy.__index(t, k)
         return VerbProxy:new(t, k)
     end
 
+    -- Spawn list wrapper so that we can do syntactically nice updates into
+    -- nested lists
+    if type(v) == "table" then
+        return ListProxy:new(t.uuid, k, {}, v)
+    end
+
     -- Unpack UUIDs into ObjectProxies, unless we're actually trying to
     -- read the UUID
-    if k ~= "uuid" then
+    if k ~= "uuid" and type(v) == "string" then
         v = inflate_uuid(v)
     end
 
     return v
 end
 
-ObjectProxy.__newindex = function(t, k, v)
-    return db:set_property(t.uuid, k, v)
+function ObjectProxy.__newindex(t, k, v)
+    return db:set_property(t.uuid, k, to_uuid(v))
 end
 
-ObjectProxy.__eq = function(a, b)
+function ObjectProxy.__eq(a, b)
     return a.uuid == b.uuid
+end
+
+function ObjectProxy:__tostring()
+    return "ObjectProxy(" .. self.uuid .. ")"
 end
 
 function ObjectProxy:new(uuid)
@@ -83,6 +95,10 @@ function VerbProxy.__call(p, args)
     return p.this:call_verb(p.verb, args)
 end
 
+function VerbProxy:__tostring()
+    return "VerbProxy(" .. self.this.uuid .. ":" .. self.verb .. ")"
+end
+
 function VerbProxy:new(this, name)
     local p = {
         this = this,
@@ -93,11 +109,57 @@ function VerbProxy:new(this, name)
 end
 -- end of VerbProxy
 
+ListProxy = {}
+
+function ListProxy.path_and(t, n)
+    local new_path = {table.unpack(t._path)}
+    table.insert(new_path, n)
+    return new_path
+end
+
+function ListProxy.__index(t, k)
+    local v = t._inner[k]
+    if type(v) == "string" then
+        v = inflate_uuid(v)
+    end
+    if type(v) == "table" and v.uuid == nil then
+        return ListProxy:new(t._uuid, t._prop, ListProxy.path_and(t, k - 1), v)
+    end
+    return v
+end
+
+function ListProxy.__newindex(t, k, v)
+    return db:set_into_list(t._uuid, t._prop, ListProxy.path_and(t, k - 1), to_uuid(v))
+end
+
+function ListProxy.__len(t)
+    return #t._inner
+end
+
+function ListProxy:__tostring()
+    return "ListProxy(" .. self._uuid .. "." .. self._prop .. "[" .. table.concat(self._path, "][") .. "])"
+end
+
+function ListProxy:new(uuid, prop, path, inner)
+    local p = {
+        _uuid = uuid,
+        _prop = prop,
+        _path = path,
+        _inner = inner
+    }
+    setmetatable(p, self)
+    return p
+end
+
 -- TODO break out into separate "global Lua functions" module
 
 function to_uuid(what)
     if type(what) == "table" then
-        return what.uuid
+        if what.uuid ~= nil then
+            return what.uuid
+        else
+            return map(what, to_uuid)
+        end
     else
         return what
     end
@@ -130,7 +192,7 @@ end
 
 function map(t, f)
     local r = {}
-    for i, x in pairs(t) do
+    for i, x in ipairs(t) do
         table.insert(r, i, f(x))
     end
     return r
@@ -139,6 +201,14 @@ end
 function tostr(args)
     local strings = map(args, tostring)
     return table.concat(strings, "")
+end
+
+function keyset(t)
+    local keyset = {}
+    for k, v in pairs(t) do
+        table.insert(keyset, k)
+    end
+    return keyset
 end
 
 system = db[system_uuid]

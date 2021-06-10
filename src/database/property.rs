@@ -10,6 +10,7 @@ pub enum PropertyValue {
     Uuid(Uuid),
     UuidOpt(Option<Uuid>),
     Uuids(HashSet<Uuid>),
+    List(Vec<PropertyValue>),
 }
 
 impl From<Uuid> for PropertyValue {
@@ -31,10 +32,25 @@ impl From<HashSet<Uuid>> for PropertyValue {
 }
 
 impl<'lua> FromLua<'lua> for PropertyValue {
-    fn from_lua(lua_value: LuaValue<'lua>, _lua: &'lua Lua) -> LuaResult<Self> {
+    fn from_lua(lua_value: LuaValue<'lua>, lua: &'lua Lua) -> LuaResult<Self> {
         match lua_value {
-            LuaValue::String(s) => s.to_str().map(|s| PropertyValue::String(s.to_string())),
+            LuaValue::String(s) => s.to_str().map(|s| {
+                if let Some(uuid) = Uuid::parse_str(s).ok() {
+                    PropertyValue::Uuid(uuid)
+                } else {
+                    PropertyValue::String(s.to_string())
+                }
+            }),
             LuaValue::Integer(n) => Ok(PropertyValue::Integer(n)),
+            LuaValue::Table(t) => {
+                let mut values: Vec<PropertyValue> = vec![];
+                for i in 1..=t.len()? {
+                    let v_lua = t.get(i)?;
+                    let v = PropertyValue::from_lua(v_lua, &lua)?;
+                    values.push(v);
+                }
+                Ok(PropertyValue::List(values))
+            }
             _ => Err(LuaError::RuntimeError(format!(
                 "Unsupported type for value {:?}",
                 lua_value
@@ -57,6 +73,11 @@ impl<'lua> ToLua<'lua> for PropertyValue {
             PropertyValue::UuidOpt(o) => o
                 .map(|uuid| uuid.to_string().to_lua(lua))
                 .unwrap_or(Ok(LuaValue::Nil)),
+            PropertyValue::List(ps) => ps
+                .iter()
+                .map(|p| p.clone().to_lua(lua))
+                .collect::<LuaResult<Vec<LuaValue>>>()?
+                .to_lua(lua),
         }
     }
 }

@@ -38,13 +38,65 @@ impl World {
     }
 
     pub fn lua(&self) -> Lua {
-        let lua = Lua::new();
+        let lua = unsafe { Lua::unsafe_new() };
 
         let dbproxy = DatabaseProxy::new(Arc::clone(&self.db));
         {
             let globals = lua.globals();
             globals.set("db", dbproxy).unwrap();
             globals.set("system_uuid", self.system.to_string()).unwrap();
+        }
+
+        // Penlight Lua library
+        for (module, module_code) in vec![
+            ("pl.compat", include_str!("../lua/pl/compat.lua")),
+            ("pl.utils", include_str!("../lua/pl/utils.lua")),
+            ("pl.app", include_str!("../lua/pl/app.lua")),
+            ("pl.array2d", include_str!("../lua/pl/array2d.lua")),
+            ("pl.class", include_str!("../lua/pl/class.lua")),
+            (
+                "pl.comprehension",
+                include_str!("../lua/pl/comprehension.lua"),
+            ),
+            ("pl.config", include_str!("../lua/pl/config.lua")),
+            ("pl.data", include_str!("../lua/pl/data.lua")),
+            ("pl.Date", include_str!("../lua/pl/Date.lua")),
+            ("pl.dir", include_str!("../lua/pl/dir.lua")),
+            ("pl.file", include_str!("../lua/pl/file.lua")),
+            ("pl.func", include_str!("../lua/pl/func.lua")),
+            ("pl.import_into", include_str!("../lua/pl/import_into.lua")),
+            ("pl.init", include_str!("../lua/pl/init.lua")),
+            ("pl.input", include_str!("../lua/pl/input.lua")),
+            ("pl.lapp", include_str!("../lua/pl/lapp.lua")),
+            ("pl.lexer", include_str!("../lua/pl/lexer.lua")),
+            ("pl.List", include_str!("../lua/pl/List.lua")),
+            ("pl.luabalanced", include_str!("../lua/pl/luabalanced.lua")),
+            ("pl.Map", include_str!("../lua/pl/Map.lua")),
+            ("pl.MultiMap", include_str!("../lua/pl/MultiMap.lua")),
+            ("pl.operator", include_str!("../lua/pl/operator.lua")),
+            ("pl.OrderedMap", include_str!("../lua/pl/OrderedMap.lua")),
+            ("pl.path", include_str!("../lua/pl/path.lua")),
+            ("pl.permute", include_str!("../lua/pl/permute.lua")),
+            ("pl.pretty", include_str!("../lua/pl/pretty.lua")),
+            ("pl.seq", include_str!("../lua/pl/seq.lua")),
+            ("pl.Set", include_str!("../lua/pl/Set.lua")),
+            ("pl.sip", include_str!("../lua/pl/sip.lua")),
+            ("pl.strict", include_str!("../lua/pl/strict.lua")),
+            ("pl.stringio", include_str!("../lua/pl/stringio.lua")),
+            ("pl.stringx", include_str!("../lua/pl/stringx.lua")),
+            ("pl.tablex", include_str!("../lua/pl/tablex.lua")),
+            ("pl.template", include_str!("../lua/pl/template.lua")),
+            ("pl.test", include_str!("../lua/pl/test.lua")),
+            ("pl.text", include_str!("../lua/pl/text.lua")),
+            ("pl.types", include_str!("../lua/pl/types.lua")),
+            ("pl.url", include_str!("../lua/pl/url.lua")),
+            ("pl.xml", include_str!("../lua/pl/xml.lua")),
+        ] {
+            let code = format!(
+                "package.preload[\"{}\"] = function () {} end",
+                module, module_code
+            );
+            lua.load(&code).set_name(module).unwrap().exec().unwrap();
         }
 
         // API
@@ -164,6 +216,54 @@ mod tests {
                 .unwrap()
                 .type_name(),
             "nil"
+        );
+    }
+
+    #[test]
+    fn set_into_list() {
+        let world = World::new();
+        let lua = world.lua();
+
+        let uuid_str = lua
+            .load("return db:create().uuid")
+            .eval::<String>()
+            .unwrap();
+        let uuid = Uuid::parse_str(&uuid_str).unwrap();
+
+        let retval = lua
+            .load(
+                &("local o = db[\"".to_string()
+                    + &uuid_str
+                    + "\"]
+        o.l = {1, 2, {3, 4}}
+        o.l[1] = 'foo'
+        o.l[3][1] = 'bar'
+        o.l[4] = 5
+        table.insert(o.l, 6)
+        table.insert(o.l[3], o)
+        table.insert(o.l[3], o.uuid)
+        return o.l._inner
+        "),
+            )
+            .set_name("set_into_list-test")
+            .unwrap()
+            .eval::<PropertyValue>()
+            .unwrap();
+
+        assert_eq!(
+            PropertyValue::List(vec![
+                PropertyValue::String("foo".to_string()),
+                PropertyValue::Integer(2),
+                PropertyValue::List(vec![
+                    PropertyValue::String("bar".to_string()),
+                    PropertyValue::Integer(4),
+                    PropertyValue::Uuid(uuid.clone()),
+                    PropertyValue::Uuid(uuid.clone())
+                ]),
+                PropertyValue::Integer(5),
+                PropertyValue::Integer(6),
+            ]),
+            retval
         );
     }
 }

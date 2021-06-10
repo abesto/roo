@@ -140,6 +140,53 @@ impl Object {
             .insert(key.to_string(), Property::from(value));
     }
 
+    pub fn set_into_list<T>(
+        &mut self,
+        key: &str,
+        path: Vec<usize>,
+        from_value: T,
+    ) -> Result<(), String>
+    where
+        T: Into<PropertyValue>,
+    {
+        let mut path_so_far = format!("{}.{}", self.uuid(), key);
+        let value: PropertyValue = from_value.into();
+
+        let property = match self.get_property_mut(key) {
+            Some(p) => p,
+            None => return Err(format!("{} has no property {}", self.uuid(), key)),
+        };
+
+        let mut this_list = match property {
+            PropertyValue::List(l) => l,
+            _ => return Err(format!("{}.{} is not a list", self.uuid(), key)),
+        };
+
+        for &index in &path[..path.len() - 1] {
+            let next_value = match this_list.get_mut(index) {
+                Some(v) => v,
+                None => return Err(format!("{} has no index {}", path_so_far, index)),
+            };
+
+            path_so_far = format!("{}[{}]", path_so_far, index);
+            this_list = match next_value {
+                PropertyValue::List(l) => l,
+                _ => return Err(format!("{} is not a list", path_so_far)),
+            };
+        }
+
+        let set_index = path[path.len() - 1];
+        if set_index == this_list.len() {
+            this_list.push(value);
+        } else if set_index < this_list.len() {
+            this_list[set_index] = value;
+        } else {
+            return Err(format!("{}.len() < {}", path_so_far, set_index));
+        }
+
+        Ok(())
+    }
+
     pub fn add_verb(&mut self, verb: Verb) -> Result<(), String> {
         for existing_verb in self.verbs.iter() {
             for existing_name in existing_verb.names() {

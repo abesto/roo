@@ -166,7 +166,9 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                 .map_or_else(|e| Some(e.to_string()), |_| None)
                             };
                             if let Some(msg) = maybe_msg {
-                                tx.send(msg.to_string()).await.unwrap();
+                                tx.send(msg.to_string().replace("\n", "\r\n"))
+                                    .await
+                                    .unwrap();
                             }
                         }
                         Ok::<(), std::io::Error>(())
