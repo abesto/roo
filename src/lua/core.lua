@@ -31,14 +31,14 @@
     Room:add_verb({system.uuid, "r", {"announce"}}, {"any"})
     Room:set_verb_code("announce", [[
         for i, target in ipairs(setremove(this.contents, player)) do
-            pcall(target.tell, args)
+            pcall(target.tell, target, args)
         end
     ]])
 
     Room:add_verb({system.uuid, "r", {"announce_all"}}, {"any"})
     Room:set_verb_code("announce_all", [[
         for i, target in ipairs(this.contents) do
-            pcall(target.tell, args)
+            pcall(target.tell, target, args)
         end
     ]])
 
@@ -46,15 +46,15 @@
     Room:set_verb_code("say", [[
         pcall(function()
             -- TODO player should really be caller here once implemented
-            player.tell{'You say, "', argstr, '"'}
-            this.announce{player.name, ' says, "', argstr, '"'}
+            player:tell{'You say, "', argstr, '"'}
+            this:announce{player.name, ' says, "', argstr, '"'}
         end)
     ]])
 
     Room:add_verb({system.uuid, "rx", {"emote"}}, {"any"})
     Room:set_verb_code("emote", [[
         -- TODO player should really be caller here once implemented
-        this.announce_all{player.name, ' ', argstr}
+        this:announce_all{player.name, ' ', argstr}
     ]])
 
     Room:add_verb({system.uuid, "rx", {"describe"}}, {})
@@ -82,7 +82,7 @@
 
     Room:add_verb({system.uuid, "rx", {"look"}}, {})
     Room:set_verb_code("look", [[
-        player:notify(this.describe())
+        player:notify(this:describe())
     ]])
 
     if system.starting_room == nil then

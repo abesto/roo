@@ -144,7 +144,7 @@ where
 }
 
 impl<'lua> FromLua<'lua> for VerbArgs {
-    fn from_lua(lua_value: LuaValue<'lua>, lua: &'lua Lua) -> LuaResult<Self> {
+    fn from_lua(lua_value: LuaValue<'lua>, _lua: &'lua Lua) -> LuaResult<Self> {
         if let LuaValue::Table(t) = lua_value {
             let len = t.len()?;
             if len == 0 {
@@ -185,14 +185,6 @@ impl Verb {
         &self.info.names
     }
 
-    pub fn arity(&self) -> usize {
-        match &self.args {
-            VerbArgs::NoArgs => 0,
-            VerbArgs::Direct { dobj: dobj_ } => 1,
-            _ => 3,
-        }
-    }
-
     pub fn name_matches(&self, needle: &str) -> bool {
         for name in self.names() {
             if let Ok(pattern) = glob::Pattern::new(name) {
@@ -204,15 +196,15 @@ impl Verb {
         false
     }
 
-    pub fn matches(&self, this: &Object, command: &Command) -> bool {
+    pub fn matches(&self, _this: &Object, command: &Command) -> bool {
         match &self.args {
             VerbArgs::NoArgs => {
                 matches!(command.parsed(), ParsedCommand::VerbNoArgs { verb } if self.name_matches(verb))
             }
 
-            VerbArgs::Direct { dobj } => {
+            VerbArgs::Direct { dobj: _dobj } => {
                 // TODO implement matching for dobj
-                matches!(command.parsed(), ParsedCommand::VerbDirect { verb, direct } if self.name_matches(verb))
+                matches!(command.parsed(), ParsedCommand::VerbDirect { verb, direct: _direct } if self.name_matches(verb))
             }
         }
     }
@@ -229,6 +221,8 @@ impl<'lua> ToLua<'lua> for &Verb {
     fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
         // TODO memoize
         let code = &format!("function(this, args)\n{}\nend", self.code);
-        lua.load(code).eval::<mlua::Value>()
+        lua.load(code)
+            .set_name(&self.names()[0])?
+            .eval::<mlua::Value>()
     }
 }

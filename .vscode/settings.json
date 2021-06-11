@@ -1,10 +1,20 @@
 {
     "cSpell.words": [
         "CONNDATA",
+        "argstr",
+        "arity",
         "chparent",
+        "compat",
         "dbproxy",
         "dobj",
+        "dobjstr",
         "eval",
-        "mlua"
+        "luabalanced",
+        "mlua",
+        "preload",
+        "retval",
+        "stringio",
+        "stringx",
+        "tablex"
     ]
 }

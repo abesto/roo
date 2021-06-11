@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::database::{Database, Object};
+use crate::database::Database;
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct VerbObject {
@@ -19,12 +19,10 @@ impl VerbObject {
 
     #[must_use]
     fn resolve<S: ToString>(str: S, player: &Uuid, db: &Database) -> Self {
-        Self {
-            str: str.to_string(),
-            obj: db
-                .resolve_object(player, &str.to_string())
-                .map(|o| o.uuid().clone()),
-        }
+        let obj = db
+            .resolve_object(player, &str.to_string())
+            .map(|o| o.uuid().clone());
+        Self::new(str, obj)
     }
 }
 

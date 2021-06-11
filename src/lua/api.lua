@@ -1,10 +1,56 @@
+-- Penlight "standard" library
 pl = require 'pl.import_into'()
 
 -- Selective imports from pl into the global namespace, these are part of the ROO API
 map = pl.tablex.map
 imap = pl.tablex.imap
 
---- Minimal check for these proxy objects
+--- Equivalents for the MOO built-in functions
+
+function setremove(haystack, needle)
+    -- Return haystack (a table) without needle in it
+    local retval = {}
+    for i, candidate in ipairs(haystack) do
+        if candidate ~= needle then
+            table.insert(retval, candidate)
+        end
+    end
+    return retval
+end
+
+function tostr(args)
+    local strings = imap(tostring, args)
+    return table.concat(strings, "")
+end
+
+--- Minimal check for the below proxy objects
+
+local function to_uuid(what)
+    if type(what) == "table" then
+        if ObjectProxy:class_of(what) then
+            return what.uuid
+        else
+            return imap(to_uuid, what)
+        end
+    else
+        return what
+    end
+end
+
+local function inflate_uuid(x)
+    if type(x) == "string" then
+        local status, result = pcall(function()
+            return db[x]
+        end)
+        if status and result ~= nil then
+            return result
+        end
+    elseif type(x) == "table" and not ObjectProxy:class_of(x) then
+        return imap(inflate_uuid, x)
+    end
+    return x
+end
+
 local function class_of(klass, obj)
     if type(obj) ~= "table" then
         return false
@@ -14,6 +60,8 @@ end
 
 -- TODO make internals safer by explicitly annotating properties, maybe bringing in PropertyValue as userdata
 --      .contents is especially problematic
+-- TODO use pl.List instead of raw tables for list-like properties
+-- TODO use pl.Set for .contents and .children
 ObjectProxy = {}
 ObjectProxy.class_of = class_of
 
@@ -24,13 +72,14 @@ function ObjectProxy.__index(t, k)
         return opv
     end
 
+    -- If it's a verb, return it
+    local verb = t:resolve_verb(k)
+    if verb ~= nil then
+        return verb
+    end
+
     -- Read the value from the DB
     local v = db:get_property(t.uuid, k)
-
-    -- Wrap verbs so that the DB can do arg matching at invocation time
-    if db:has_verb_with_name(t.uuid, k) then
-        return VerbProxy:new(t, k)
-    end
 
     -- Spawn list wrapper so that we can do syntactically nice updates into
     -- nested lists
@@ -83,8 +132,8 @@ function ObjectProxy:set_verb_code(name, code)
     db:set_verb_code(self.uuid, name, code)
 end
 
-function ObjectProxy:resolve_verb(name, arity)
-    return db:resolve_verb(self.uuid, name, arity)
+function ObjectProxy:resolve_verb(name)
+    return db:resolve_verb(self.uuid, name)
 end
 
 function ObjectProxy:call_verb(verb, args)
@@ -98,30 +147,6 @@ function ObjectProxy:notify(msg)
     end
 end
 -- end of ObjectProxy
-
-VerbProxy = {}
-VerbProxy.class_of = class_of
-
-function VerbProxy.__call(p, args)
-    if args == nil then
-        args = {}
-    end
-    return p.this:call_verb(p.verb, args)
-end
-
-function VerbProxy:__tostring()
-    return "VerbProxy(" .. self.this.uuid .. ":" .. self.verb .. ")"
-end
-
-function VerbProxy:new(this, name)
-    local p = {
-        this = this,
-        verb = name
-    }
-    setmetatable(p, self)
-    return p
-end
--- end of VerbProxy
 
 ListProxy = {}
 ListProxy.class_of = class_of
@@ -166,60 +191,5 @@ function ListProxy:new(uuid, prop, path, inner)
     return p
 end
 
--- TODO break out into separate "global Lua functions" module
-
---- Helpers for the above classes, should be private
-
-function to_uuid(what)
-    if type(what) == "table" then
-        if ObjectProxy:class_of(what) then
-            return what.uuid
-        else
-            return imap(to_uuid, what)
-        end
-    else
-        return what
-    end
-end
-
-function inflate_uuid(x)
-    if type(x) == "string" then
-        local status, result = pcall(function()
-            return db[x]
-        end)
-        if status and result ~= nil then
-            return result
-        end
-    elseif type(x) == "table" and not ObjectProxy:class_of(x) then
-        return imap(inflate_uuid, x)
-    end
-    return x
-end
-
---- Equivalents for the MOO built-in functions
-
-function setremove(haystack, needle)
-    -- Return haystack (a table) without needle in it
-    local retval = {}
-    for i, candidate in ipairs(haystack) do
-        if candidate ~= needle then
-            table.insert(retval, candidate)
-        end
-    end
-    return retval
-end
-
-function tostr(args)
-    local strings = imap(tostring, args)
-    return table.concat(strings, "")
-end
-
-function keyset(t)
-    local keyset = {}
-    for k, v in pairs(t) do
-        table.insert(keyset, k)
-    end
-    return keyset
-end
-
+-- Equivalent for #0 on MOO
 system = db[system_uuid]

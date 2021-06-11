@@ -125,7 +125,6 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                     Command::parse(&line, player.uuid(), &lock)
                                         .ok_or("Failed to parse command".to_string())
                                         .and_then(|command| -> Result<(), String> {
-                                            println!("{:?}", command);
                                             // Find who does what
                                             let location: Option<&Object> =
                                                 player.location().and_then(|l| lock.get(l).ok());
@@ -150,10 +149,9 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
 
                                             // Execute verb
                                             let cmd = &format!(
-                                                "db[\"{}\"]:resolve_verb(\"{}\", {})",
+                                                "db[\"{}\"]:resolve_verb(\"{}\")",
                                                 this.uuid(),
                                                 verb.names()[0],
-                                                verb.arity()
                                             );
                                             lua.load(cmd)
                                                 .set_name(cmd)

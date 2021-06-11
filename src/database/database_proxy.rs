@@ -5,9 +5,8 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
-use std::convert::TryFrom;
 
-use super::verb::{VerbArgs, VerbInfo, VerbPermissions};
+use super::verb::{VerbArgs, VerbInfo};
 
 #[derive(Clone)]
 pub struct DatabaseProxy {

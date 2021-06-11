@@ -211,7 +211,7 @@ mod tests {
         let world = World::new();
         let lua = world.lua();
         assert_eq!(
-            lua.load("system.starting_room.tell{\"whee\"}")
+            lua.load("system.starting_room:tell{\"whee\"}")
                 .eval::<LuaValue>()
                 .unwrap()
                 .type_name(),
