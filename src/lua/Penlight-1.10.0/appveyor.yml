@@ -1,0 +1,36 @@
+shallow_clone: true
+
+environment:
+  COVERALLS_REPO_TOKEN:
+    secure: /0zDn4cz8xWKQuHfzvAUwyeFSQfLSP+toDR3lRApwWoIeg9O1OvJTnXurB8cssW0
+  matrix:
+  - LUA: "lua 5.1"
+  - LUA: "lua 5.2"
+  - LUA: "lua 5.3"
+  - LUA: "lua 5.4"
+  - LUA: "luajit 2.0"
+  - LUA: "luajit 2.0 --compat 5.2"
+  - LUA: "luajit 2.1"
+  - LUA: "luajit 2.1 --compat 5.2"
+
+before_build:
+  - set PATH=C:\Python27\Scripts;%PATH%
+  - pip install hererocks
+  - hererocks here --%LUA% -rlatest
+  - call here\bin\activate
+  - luarocks install luacov-coveralls
+  - luarocks install busted
+
+build_script:
+  - luarocks make
+
+test_script:
+  - busted -c -v
+  - lua run.lua tests --luacov
+  - lua run.lua examples
+
+on_success:
+  # secure coveralls token not available on PR builds, only BRANCH builds
+  - "if not \"%COVERALLS_REPO_TOKEN%\"==\"\" (
+       luacov-coveralls
+    )"

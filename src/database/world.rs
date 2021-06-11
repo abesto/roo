@@ -49,48 +49,162 @@ impl World {
 
         // Penlight Lua library
         for (module, module_code) in vec![
-            ("pl.compat", include_str!("../lua/pl/compat.lua")),
-            ("pl.utils", include_str!("../lua/pl/utils.lua")),
-            ("pl.app", include_str!("../lua/pl/app.lua")),
-            ("pl.array2d", include_str!("../lua/pl/array2d.lua")),
-            ("pl.class", include_str!("../lua/pl/class.lua")),
+            (
+                "pl.compat",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/compat.lua"),
+            ),
+            (
+                "pl.utils",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/utils.lua"),
+            ),
+            (
+                "pl.app",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/app.lua"),
+            ),
+            (
+                "pl.array2d",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/array2d.lua"),
+            ),
+            (
+                "pl.class",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/class.lua"),
+            ),
             (
                 "pl.comprehension",
-                include_str!("../lua/pl/comprehension.lua"),
+                include_str!("../lua/Penlight-1.10.0/lua/pl/comprehension.lua"),
             ),
-            ("pl.config", include_str!("../lua/pl/config.lua")),
-            ("pl.data", include_str!("../lua/pl/data.lua")),
-            ("pl.Date", include_str!("../lua/pl/Date.lua")),
-            ("pl.dir", include_str!("../lua/pl/dir.lua")),
-            ("pl.file", include_str!("../lua/pl/file.lua")),
-            ("pl.func", include_str!("../lua/pl/func.lua")),
-            ("pl.import_into", include_str!("../lua/pl/import_into.lua")),
-            ("pl.init", include_str!("../lua/pl/init.lua")),
-            ("pl.input", include_str!("../lua/pl/input.lua")),
-            ("pl.lapp", include_str!("../lua/pl/lapp.lua")),
-            ("pl.lexer", include_str!("../lua/pl/lexer.lua")),
-            ("pl.List", include_str!("../lua/pl/List.lua")),
-            ("pl.luabalanced", include_str!("../lua/pl/luabalanced.lua")),
-            ("pl.Map", include_str!("../lua/pl/Map.lua")),
-            ("pl.MultiMap", include_str!("../lua/pl/MultiMap.lua")),
-            ("pl.operator", include_str!("../lua/pl/operator.lua")),
-            ("pl.OrderedMap", include_str!("../lua/pl/OrderedMap.lua")),
-            ("pl.path", include_str!("../lua/pl/path.lua")),
-            ("pl.permute", include_str!("../lua/pl/permute.lua")),
-            ("pl.pretty", include_str!("../lua/pl/pretty.lua")),
-            ("pl.seq", include_str!("../lua/pl/seq.lua")),
-            ("pl.Set", include_str!("../lua/pl/Set.lua")),
-            ("pl.sip", include_str!("../lua/pl/sip.lua")),
-            ("pl.strict", include_str!("../lua/pl/strict.lua")),
-            ("pl.stringio", include_str!("../lua/pl/stringio.lua")),
-            ("pl.stringx", include_str!("../lua/pl/stringx.lua")),
-            ("pl.tablex", include_str!("../lua/pl/tablex.lua")),
-            ("pl.template", include_str!("../lua/pl/template.lua")),
-            ("pl.test", include_str!("../lua/pl/test.lua")),
-            ("pl.text", include_str!("../lua/pl/text.lua")),
-            ("pl.types", include_str!("../lua/pl/types.lua")),
-            ("pl.url", include_str!("../lua/pl/url.lua")),
-            ("pl.xml", include_str!("../lua/pl/xml.lua")),
+            (
+                "pl.config",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/config.lua"),
+            ),
+            (
+                "pl.data",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/data.lua"),
+            ),
+            (
+                "pl.Date",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/Date.lua"),
+            ),
+            (
+                "pl.dir",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/dir.lua"),
+            ),
+            (
+                "pl.file",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/file.lua"),
+            ),
+            (
+                "pl.func",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/func.lua"),
+            ),
+            (
+                "pl.import_into",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/import_into.lua"),
+            ),
+            (
+                "pl.init",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/init.lua"),
+            ),
+            (
+                "pl.input",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/input.lua"),
+            ),
+            (
+                "pl.lapp",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/lapp.lua"),
+            ),
+            (
+                "pl.lexer",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/lexer.lua"),
+            ),
+            (
+                "pl.List",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/List.lua"),
+            ),
+            (
+                "pl.luabalanced",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/luabalanced.lua"),
+            ),
+            (
+                "pl.Map",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/Map.lua"),
+            ),
+            (
+                "pl.MultiMap",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/MultiMap.lua"),
+            ),
+            (
+                "pl.operator",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/operator.lua"),
+            ),
+            (
+                "pl.OrderedMap",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/OrderedMap.lua"),
+            ),
+            (
+                "pl.path",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/path.lua"),
+            ),
+            (
+                "pl.permute",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/permute.lua"),
+            ),
+            (
+                "pl.pretty",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/pretty.lua"),
+            ),
+            (
+                "pl.seq",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/seq.lua"),
+            ),
+            (
+                "pl.Set",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/Set.lua"),
+            ),
+            (
+                "pl.sip",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/sip.lua"),
+            ),
+            (
+                "pl.strict",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/strict.lua"),
+            ),
+            (
+                "pl.stringio",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/stringio.lua"),
+            ),
+            (
+                "pl.stringx",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/stringx.lua"),
+            ),
+            (
+                "pl.tablex",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/tablex.lua"),
+            ),
+            (
+                "pl.template",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/template.lua"),
+            ),
+            (
+                "pl.test",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/test.lua"),
+            ),
+            (
+                "pl.text",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/text.lua"),
+            ),
+            (
+                "pl.types",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/types.lua"),
+            ),
+            (
+                "pl.url",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/url.lua"),
+            ),
+            (
+                "pl.xml",
+                include_str!("../lua/Penlight-1.10.0/lua/pl/xml.lua"),
+            ),
         ] {
             let code = format!(
                 "package.preload[\"{}\"] = function () {} end",
