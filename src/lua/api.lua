@@ -1,24 +1,26 @@
 -- Penlight "standard" library
 pl = require 'pl.import_into'()
+require'pl.text'.format_operator() -- text templates
+pl.utils.import 'pl.func' -- argument placeholders (ie. :map(_1.name))
 
 -- Selective imports from pl into the global namespace, these are part of the ROO API
 map = pl.tablex.map
 imap = pl.tablex.imap
 
---- Equivalents for the MOO built-in functions
+-- Extensions to pl for commonly used patterns
 
-function setremove(haystack, needle)
-    -- Return haystack (a table) without needle in it
-    local retval = {}
-    for i, candidate in ipairs(haystack) do
-        if candidate ~= needle then
-            table.insert(retval, candidate)
-        end
-    end
-    return retval
+RooList = pl.class(pl.List)
+
+function RooList:without(item)
+    local l = self:clone()
+    l:remove_value(item)
+    return l
 end
 
-function tostr(args)
+--- Equivalents for the MOO built-in functions
+
+Moo = {}
+function Moo.tostr(args)
     local strings = imap(tostring, args)
     return table.concat(strings, "")
 end
@@ -58,10 +60,6 @@ local function class_of(klass, obj)
     return getmetatable(obj) == klass
 end
 
--- TODO make internals safer by explicitly annotating properties, maybe bringing in PropertyValue as userdata
---      .contents is especially problematic
--- TODO use pl.List instead of raw tables for list-like properties
--- TODO use pl.Set for .contents and .children
 ObjectProxy = {}
 ObjectProxy.class_of = class_of
 
@@ -80,6 +78,9 @@ function ObjectProxy.__index(t, k)
 
     -- Read the value from the DB
     local v = db:get_property(t.uuid, k)
+    if k == "children" or k == "contents" then
+        return RooList(inflate_uuid(v))
+    end
 
     -- Spawn list wrapper so that we can do syntactically nice updates into
     -- nested lists

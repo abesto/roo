@@ -51,7 +51,7 @@ impl<'lua> FromLua<'lua> for PropertyValue {
                 }
                 Ok(PropertyValue::List(values))
             }
-            _ => Err(LuaError::RuntimeError(format!(
+            _ => Err(LuaError::external(format!(
                 "Unsupported type for value {:?}",
                 lua_value
             ))),

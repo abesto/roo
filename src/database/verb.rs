@@ -29,7 +29,7 @@ impl TryFrom<&String> for AnyOrThis {
 impl<'lua> FromLua<'lua> for AnyOrThis {
     fn from_lua(lua_value: LuaValue<'lua>, lua: &'lua Lua) -> LuaResult<Self> {
         let s = String::from_lua(lua_value, lua)?;
-        Self::try_from(&s).map_err(LuaError::RuntimeError)
+        Self::try_from(&s).map_err(LuaError::external)
     }
 }
 
@@ -95,20 +95,18 @@ impl<'lua> FromLua<'lua> for VerbInfo {
     fn from_lua(lua_value: LuaValue<'lua>, _lua: &'lua Lua) -> LuaResult<Self> {
         if let LuaValue::Table(t) = lua_value {
             if t.len()? != 3 {
-                return Err(LuaError::RuntimeError(
+                return Err(LuaError::external(
                     "verb-info table must have exactly three elements".to_string(),
                 ));
             }
             Ok(Self {
                 owner: DatabaseProxy::parse_uuid(&t.get::<LuaInteger, String>(1)?)?,
                 perms: VerbPermissions::try_from(&t.get::<LuaInteger, String>(2)?)
-                    .map_err(LuaError::RuntimeError)?,
+                    .map_err(LuaError::external)?,
                 names: t.get::<LuaInteger, Vec<String>>(3)?,
             })
         } else {
-            Err(LuaError::RuntimeError(
-                "verb-info must be a table".to_string(),
-            ))
+            Err(LuaError::external("verb-info must be a table".to_string()))
         }
     }
 }
@@ -152,14 +150,12 @@ impl<'lua> FromLua<'lua> for VerbArgs {
             } else if len == 1 {
                 Ok(Self::Direct { dobj: t.get(1)? })
             } else {
-                Err(LuaError::RuntimeError(
+                Err(LuaError::external(
                     "only arg-less and dobj-only verbs are supported currently".to_string(),
                 ))
             }
         } else {
-            Err(LuaError::RuntimeError(
-                "verb-args must be a table".to_string(),
-            ))
+            Err(LuaError::external("verb-args must be a table".to_string()))
         }
     }
 }

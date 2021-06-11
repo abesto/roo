@@ -207,6 +207,25 @@ mod tests {
     }
 
     #[test]
+    fn look() {
+        let world = World::new();
+        let lua = world.lua();
+        lua.load(
+            "
+        player = db:create()
+        player:move(system.starting_room)
+
+        o = db:create()
+        o:move(player.location)
+
+        system.starting_room:look()
+        ",
+        )
+        .exec()
+        .unwrap();
+    }
+
+    #[test]
     fn call_parent() {
         let world = World::new();
         let lua = world.lua();

@@ -13,9 +13,18 @@
     Root.name = "root object"
     system.Root = Root.uuid
 
+    Root:add_verb({system.uuid, "r", {"title"}}, {"any"})
+    Root:set_verb_code("title", [[
+        local name = this.name
+        if type(name) == "string" and #name > 0 then
+            return name
+        end
+        return this.uuid
+    ]])
+
     Root:add_verb({system.uuid, "r", {"tell"}}, {"any"})
     Root:set_verb_code("tell", [[
-        this:notify(tostr(args))
+        this:notify(Moo.tostr(args))
     ]])
 
     local Player = db:create()
@@ -30,7 +39,7 @@
 
     Room:add_verb({system.uuid, "r", {"announce"}}, {"any"})
     Room:set_verb_code("announce", [[
-        for i, target in ipairs(setremove(this.contents, player)) do
+        for i, target in ipairs(this.contents:without(player)) do
             pcall(target.tell, target, args)
         end
     ]])
@@ -46,35 +55,26 @@
     Room:set_verb_code("say", [[
         pcall(function()
             -- TODO player should really be caller here once implemented
-            player:tell{'You say, "', argstr, '"'}
-            this:announce{player.name, ' says, "', argstr, '"'}
+            player:tell{'You say, "%s"' % {argstr}}
+            this:announce{'$name says, "$msg"' % {name = player.name, msg = argstr}}
         end)
     ]])
 
     Room:add_verb({system.uuid, "rx", {"emote"}}, {"any"})
     Room:set_verb_code("emote", [[
         -- TODO player should really be caller here once implemented
-        this:announce_all{player.name, ' ', argstr}
+        this:announce_all{'%s %s' % {player.name, argstr}}
     ]])
 
     Room:add_verb({system.uuid, "rx", {"describe"}}, {})
     Room:set_verb_code("describe", [[
-        local name = this.name
-        if name == "" then
-            name = this.uuid
-        end
-        local msg = "= " .. name .. " ="
+        local name = this:title()
+        local description = this.description or "You see nothing special."
+        local msg = '%s\n%s' % {name, description}
 
-        local description = this.description
-        if description then
-            msg = msg .. "\r\n" .. description
-        end
-
-        local seen = setremove(this.contents, player)
-
+        local seen = this.contents:without(player):map(_1.name)
         if #seen > 0 then
-            local seen_names = imap(function (o) return o.name end, seen)
-            msg = msg .. "\r\nYou see here: " .. table.concat(seen_names, ", ")
+            msg = msg .. "\nYou see here: " .. table.concat(seen, ", ")
         end
 
         return msg

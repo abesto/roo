@@ -40,6 +40,15 @@ fn get_object_proxy<'lua>(lua: &'lua Lua, uuid: &Uuid) -> LuaValue<'lua> {
         .unwrap()
 }
 
+fn format_error(e: LuaError) -> String {
+    match &e {
+        LuaError::CallbackError { cause, .. } => {
+            format!("{}\n{}", cause, e)
+        }
+        _ => e.to_string(),
+    }
+}
+
 #[tokio::main]
 pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("127.0.0.1:8888").await?;
@@ -71,9 +80,7 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                             let lock = notify_txs.read().unwrap();
                             if let Some(tx) = lock.get(&DatabaseProxy::parse_uuid(&uuid)?) {
                                 // TODO handle buffer full
-                                return tx
-                                    .try_send(msg)
-                                    .map_err(|e| LuaError::RuntimeError(e.to_string()));
+                                return tx.try_send(msg).map_err(LuaError::external);
                             }
                             Ok(())
                         })
@@ -90,10 +97,15 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
 
             tokio::spawn(async move {
                 while let Some(msg) = rx.recv().await {
-                    write
-                        .write_all(format!("{}\r\n", msg).as_bytes())
-                        .await
-                        .unwrap();
+                    let processed = {
+                        let a = msg.replace("\n", "\r\n");
+                        if !a.ends_with("\r\n") {
+                            format!("{}\r\n", a)
+                        } else {
+                            a
+                        }
+                    };
+                    write.write_all(processed.as_bytes()).await.unwrap();
                 }
             });
 
@@ -109,8 +121,13 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                         while let Some(line) = lines.next_line().await? {
                             let maybe_msg = if let Some(stripped) = line.strip_prefix(';') {
                                 // If it starts with a ";", run it as Lua
-                                match lua.load(stripped).eval::<LuaValue>() {
-                                    Err(e) => Some(e.to_string()),
+                                match lua
+                                    .load(stripped)
+                                    .set_name(";-command")
+                                    .unwrap()
+                                    .eval::<LuaValue>()
+                                {
+                                    Err(e) => Some(format_error(e)),
                                     Ok(LuaValue::String(s)) => {
                                         Some(s.to_str().unwrap().to_string())
                                     }
@@ -158,15 +175,13 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                                                 .unwrap()
                                                 .eval::<LuaFunction>()
                                                 .and_then(|f| f.call((lua_this, args)))
-                                                .map_err(|e| e.to_string())
+                                                .map_err(|e| format_error(e))
                                         })
                                 }
                                 .map_or_else(|e| Some(e.to_string()), |_| None)
                             };
                             if let Some(msg) = maybe_msg {
-                                tx.send(msg.to_string().replace("\n", "\r\n"))
-                                    .await
-                                    .unwrap();
+                                tx.send(msg.to_string()).await.unwrap();
                             }
                         }
                         Ok::<(), std::io::Error>(())

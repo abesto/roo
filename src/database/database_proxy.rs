@@ -21,11 +21,11 @@ impl DatabaseProxy {
 
     // TODO move this function out of DatabaseProxy, it is used widely
     pub fn parse_uuid(uuid: &str) -> LuaResult<Uuid> {
-        Uuid::parse_str(&uuid).map_err(|e| LuaError::RuntimeError(e.to_string()))
+        Uuid::parse_str(&uuid).map_err(LuaError::external)
     }
 
     fn err_no_object(uuid: &str) -> LuaError {
-        LuaError::RuntimeError(format!("No object found with UUID {}", uuid))
+        LuaError::external(format!("No object found with UUID {}", uuid))
     }
 
     #[allow(dead_code)]
@@ -35,7 +35,7 @@ impl DatabaseProxy {
         uuid: &str,
     ) -> LuaResult<&'a Object> {
         lock.get(&Self::parse_uuid(&uuid)?)
-            .map_err(LuaError::RuntimeError)
+            .map_err(LuaError::external)
     }
 
     fn get_object_mut<'a>(
@@ -44,7 +44,7 @@ impl DatabaseProxy {
         uuid: &str,
     ) -> LuaResult<&'a mut Object> {
         lock.get_mut(&Self::parse_uuid(&uuid)?)
-            .map_err(LuaError::RuntimeError)
+            .map_err(LuaError::external)
     }
 
     fn make_object_proxy<'lua>(&self, lua: &'lua Lua, uuid: &Uuid) -> LuaResult<LuaTable<'lua>> {
@@ -63,7 +63,7 @@ impl DatabaseProxy {
                 if type_name == "string" {
                     Ok(())
                 } else {
-                    Err(LuaError::RuntimeError(format!(
+                    Err(LuaError::external(format!(
                         "'name' property must be a string, found {}",
                         type_name
                     )))
@@ -101,7 +101,7 @@ impl LuaUserData for DatabaseProxy {
                 };
 
                 if let Some(errmsg) = errmsg_opt {
-                    return Err(LuaError::RuntimeError(errmsg.to_string()));
+                    return Err(LuaError::external(errmsg));
                 }
 
                 let mut lock = this.db.write().unwrap();
@@ -118,7 +118,7 @@ impl LuaUserData for DatabaseProxy {
 
                 if let Some(value) = lock
                     .get_property(&Self::parse_uuid(&uuid)?, &key)
-                    .map_err(LuaError::RuntimeError)?
+                    .map_err(LuaError::external)?
                 {
                     value.clone().to_lua(lua)
                 } else {
@@ -130,7 +130,7 @@ impl LuaUserData for DatabaseProxy {
         methods.add_method("move", |_lua, this, (what, to): (String, String)| {
             let mut lock = this.db.write().unwrap();
             lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
-                .map_err(LuaError::RuntimeError)?;
+                .map_err(LuaError::external)?;
             Ok(LuaValue::Nil)
         });
 
@@ -139,7 +139,7 @@ impl LuaUserData for DatabaseProxy {
             |_lua, this, (child, new_parent): (String, String)| {
                 let mut lock = this.db.write().unwrap();
                 lock.chparent(&Self::parse_uuid(&child)?, &Self::parse_uuid(&new_parent)?)
-                    .map_err(LuaError::RuntimeError)
+                    .map_err(LuaError::external)
             },
         );
 
@@ -149,7 +149,7 @@ impl LuaUserData for DatabaseProxy {
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut(&mut lock, &uuid)?;
                 let verb = Verb::new(info, args);
-                object.add_verb(verb).map_err(LuaError::RuntimeError)?;
+                object.add_verb(verb).map_err(LuaError::external)?;
                 Ok(LuaValue::Nil)
             },
         );
@@ -159,7 +159,7 @@ impl LuaUserData for DatabaseProxy {
             |_lua, this, (uuid, name): (String, String)| {
                 let lock = this.db.read().unwrap();
                 lock.has_verb_with_name(&Self::parse_uuid(&uuid)?, &name)
-                    .map_err(LuaError::RuntimeError)
+                    .map_err(LuaError::external)
             },
         );
 
@@ -175,7 +175,7 @@ impl LuaUserData for DatabaseProxy {
                 // And write it
                 object
                     .set_verb_code(&name, code)
-                    .map_err(LuaError::RuntimeError)
+                    .map_err(LuaError::external)
             },
         );
 
@@ -185,7 +185,7 @@ impl LuaUserData for DatabaseProxy {
                 let lock = this.db.read().unwrap();
                 let verb = lock
                     .resolve_verb(&Self::parse_uuid(&uuid)?, &name)
-                    .map_err(LuaError::RuntimeError)?;
+                    .map_err(LuaError::external)?;
                 verb.to_lua(lua)
             },
         );
@@ -197,7 +197,7 @@ impl LuaUserData for DatabaseProxy {
                 let object = this.get_object_mut(&mut lock, &uuid)?;
                 object
                     .set_into_list(&key, path, value)
-                    .map_err(LuaError::RuntimeError)
+                    .map_err(LuaError::external)
             },
         );
 
