@@ -88,11 +88,25 @@ impl LuaUserData for DatabaseProxy {
             "set_property",
             |lua, this, (uuid, key, value): (String, String, LuaValue)| {
                 Self::validate_property(&key, &value)?;
-                {
-                    let mut lock = this.db.write().unwrap();
-                    let object = this.get_object_mut(&mut lock, &uuid)?;
-                    object.set_property(&key, PropertyValue::from_lua(value, lua)?);
+                let errmsg_opt = match key.as_str() {
+                    "location" => Some(".location cannot be set directly. Use what:move(where)"),
+                    "contents" => Some(".contents cannot be set directly. Use what:move(where)"),
+                    "children" => {
+                        Some(".children cannot be set directly. Use child:chparent(new_parent)")
+                    }
+                    "parent" => {
+                        Some(".parent cannot be set directly. Use child:chparent(new_parent)")
+                    }
+                    _ => None,
+                };
+
+                if let Some(errmsg) = errmsg_opt {
+                    return Err(LuaError::RuntimeError(errmsg.to_string()));
                 }
+
+                let mut lock = this.db.write().unwrap();
+                let object = this.get_object_mut(&mut lock, &uuid)?;
+                object.set_property(&key, PropertyValue::from_lua(value, lua)?);
                 Ok(LuaValue::Nil)
             },
         );
