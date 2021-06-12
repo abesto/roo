@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
 
-use super::verb::{VerbArgs, VerbInfo};
+use super::verb::{VerbArgs, VerbDesc, VerbInfo};
 
 #[derive(Clone)]
 pub struct DatabaseProxy {
@@ -36,6 +36,25 @@ impl DatabaseProxy {
     ) -> LuaResult<&'a Object> {
         lock.get(&Self::parse_uuid(&uuid)?)
             .map_err(LuaError::external)
+    }
+
+    fn get_verb<'a>(
+        &self,
+        lock: &'a RwLockReadGuard<Database>,
+        uuid: &str,
+        desc: &VerbDesc,
+    ) -> LuaResult<&'a Verb> {
+        let object = self.get_object(&lock, &uuid)?;
+        match desc {
+            VerbDesc::Index(n) => {
+                let verb = object
+                    .verbs()
+                    .get(n - 1)
+                    .ok_or_else(|| LuaError::external("No such verby birby"))?;
+                Ok(&verb)
+            }
+            _ => unimplemented!(),
+        }
     }
 
     fn get_object_mut<'a>(
@@ -130,7 +149,7 @@ impl LuaUserData for DatabaseProxy {
         methods.add_method("move", |_lua, this, (what, to): (String, String)| {
             let mut lock = this.db.write().unwrap();
             lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
-                .map_err(LuaError::external)?;
+                .map_err(LuaError::RuntimeError)?;
             Ok(LuaValue::Nil)
         });
 
@@ -139,7 +158,7 @@ impl LuaUserData for DatabaseProxy {
             |_lua, this, (child, new_parent): (String, String)| {
                 let mut lock = this.db.write().unwrap();
                 lock.chparent(&Self::parse_uuid(&child)?, &Self::parse_uuid(&new_parent)?)
-                    .map_err(LuaError::external)
+                    .map_err(LuaError::RuntimeError)
             },
         );
 
@@ -149,7 +168,7 @@ impl LuaUserData for DatabaseProxy {
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut(&mut lock, &uuid)?;
                 let verb = Verb::new(info, args);
-                object.add_verb(verb).map_err(LuaError::external)?;
+                object.add_verb(verb).map_err(LuaError::RuntimeError)?;
                 Ok(LuaValue::Nil)
             },
         );
@@ -159,7 +178,7 @@ impl LuaUserData for DatabaseProxy {
             |_lua, this, (uuid, name): (String, String)| {
                 let lock = this.db.read().unwrap();
                 lock.has_verb_with_name(&Self::parse_uuid(&uuid)?, &name)
-                    .map_err(LuaError::external)
+                    .map_err(LuaError::RuntimeError)
             },
         );
 
@@ -175,7 +194,7 @@ impl LuaUserData for DatabaseProxy {
                 // And write it
                 object
                     .set_verb_code(&name, code)
-                    .map_err(LuaError::external)
+                    .map_err(LuaError::RuntimeError)
             },
         );
 
@@ -185,7 +204,7 @@ impl LuaUserData for DatabaseProxy {
                 let lock = this.db.read().unwrap();
                 let verb = lock
                     .resolve_verb(&Self::parse_uuid(&uuid)?, &name)
-                    .map_err(LuaError::external)?;
+                    .map_err(LuaError::RuntimeError)?;
                 verb.to_lua(lua)
             },
         );
@@ -197,7 +216,40 @@ impl LuaUserData for DatabaseProxy {
                 let object = this.get_object_mut(&mut lock, &uuid)?;
                 object
                     .set_into_list(&key, path, value)
-                    .map_err(LuaError::external)
+                    .map_err(LuaError::RuntimeError)
+            },
+        );
+
+        methods.add_method("valid", |_lua, this, (uuid,): (String,)| {
+            let lock = this.db.read().unwrap();
+            Ok(this.get_object(&lock, &uuid).is_ok())
+        });
+
+        methods.add_method("verbs", |_lua, this, (uuid,): (String,)| {
+            let lock = this.db.read().unwrap();
+            let object = this.get_object(&lock, &uuid)?;
+            Ok(object.verb_names())
+        });
+
+        methods.add_method(
+            "verb_info",
+            |_lua, this, (uuid, desc): (String, VerbDesc)| {
+                let lock = this.db.read().unwrap();
+                let verb = this.get_verb(&lock, &uuid, &desc)?;
+                Ok(verb.info.clone())
+            },
+        );
+
+        methods.add_method(
+            "verb_code",
+            |_lua, this, (uuid, desc): (String, VerbDesc)| {
+                let lock = this.db.read().unwrap();
+                let verb = this.get_verb(&lock, &uuid, &desc)?;
+                Ok(verb
+                    .code
+                    .lines()
+                    .map(|l| l.to_string())
+                    .collect::<Vec<String>>())
             },
         );
 

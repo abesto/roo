@@ -105,6 +105,7 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                             a
                         }
                     };
+                    print!("> {}", processed);
                     write.write_all(processed.as_bytes()).await.unwrap();
                 }
             });
@@ -119,6 +120,7 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
                         let mut lines = BufReader::new(read).lines();
                         tx.send("Hai!".to_string()).await.unwrap();
                         while let Some(line) = lines.next_line().await? {
+                            println!("< {}", line);
                             let maybe_msg = if let Some(stripped) = line.strip_prefix(';') {
                                 // If it starts with a ";", run it as Lua
                                 match lua

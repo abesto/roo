@@ -38,6 +38,10 @@ impl Object {
             Property::from(HashSet::<Uuid>::new()),
         );
         o.properties.insert(
+            "aliases".to_string(),
+            Property::from(PropertyValue::List(vec![])),
+        );
+        o.properties.insert(
             "parent".to_string(),
             Property::from(PropertyValue::UuidOpt(None)),
         );
@@ -211,6 +215,14 @@ impl Object {
 
     pub fn resolve_verb(&self, name: &str) -> Option<&Verb> {
         self.verbs.iter().find(|v| v.name_matches(name))
+    }
+
+    pub fn verb_names(&self) -> Vec<String> {
+        self.verbs.iter().map(|v| v.names()[0].clone()).collect()
+    }
+
+    pub fn verbs(&self) -> &Vec<Verb> {
+        &self.verbs
     }
 
     pub fn has_verb_with_name(&self, name: &str) -> bool {

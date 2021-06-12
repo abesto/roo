@@ -40,6 +40,7 @@ impl World {
     pub fn lua(&self) -> Lua {
         let lua = unsafe { Lua::unsafe_new() };
 
+        // globals
         let dbproxy = DatabaseProxy::new(Arc::clone(&self.db));
         {
             let globals = lua.globals();
@@ -216,6 +217,13 @@ impl World {
         // API
         lua.load(include_str!("../lua/api.lua"))
             .set_name("api")
+            .unwrap()
+            .exec()
+            .unwrap();
+
+        // Webclient interface
+        lua.load(include_str!("../lua/webclient.lua"))
+            .set_name("webclient")
             .unwrap()
             .exec()
             .unwrap();

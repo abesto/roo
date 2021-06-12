@@ -69,6 +69,41 @@ impl TryFrom<&String> for VerbPermissions {
     }
 }
 
+impl ToString for VerbPermissions {
+    fn to_string(&self) -> String {
+        let mut s = String::new();
+        if self.r {
+            s += "r";
+        }
+        if self.w {
+            s += "w";
+        }
+        if self.x {
+            s += "x";
+        }
+        s
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum VerbDesc {
+    Index(usize),
+    Name(String),
+}
+
+impl<'lua> FromLua<'lua> for VerbDesc {
+    fn from_lua(lua_value: LuaValue<'lua>, _lua: &'lua Lua) -> LuaResult<Self> {
+        match lua_value {
+            LuaValue::Integer(n) => Ok(VerbDesc::Index(n as usize)),
+            LuaValue::String(s) => Ok(VerbDesc::Name(s.to_str()?.to_string())),
+            _ => Err(LuaError::external(format!(
+                "Cannot build VerbDesc from {}",
+                lua_value.type_name()
+            ))),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VerbInfo {
     owner: Uuid,
@@ -107,6 +142,19 @@ impl<'lua> FromLua<'lua> for VerbInfo {
             })
         } else {
             Err(LuaError::external("verb-info must be a table".to_string()))
+        }
+    }
+}
+
+impl<'lua> ToLua<'lua> for VerbInfo {
+    fn to_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
+        if let LuaValue::Function(f) = lua
+            .load("function (...) return {...} end")
+            .eval::<LuaValue>()?
+        {
+            f.call((self.owner.to_string(), self.perms.to_string(), self.names))
+        } else {
+            unreachable!();
         }
     }
 }
@@ -150,9 +198,13 @@ impl<'lua> FromLua<'lua> for VerbArgs {
             } else if len == 1 {
                 Ok(Self::Direct { dobj: t.get(1)? })
             } else {
+                // TODO impl: Self::Full
+                Ok(Self::Direct { dobj: t.get(1)? })
+                /*
                 Err(LuaError::external(
                     "only arg-less and dobj-only verbs are supported currently".to_string(),
                 ))
+                */
             }
         } else {
             Err(LuaError::external("verb-args must be a table".to_string()))
