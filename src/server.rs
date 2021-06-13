@@ -7,8 +7,8 @@ use uuid::Uuid;
 use crate::command::Command;
 use crate::database::{Database, DatabaseProxy, Object, Verb, World};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock, RwLockReadGuard};
-use tokio::sync::{mpsc, oneshot};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
+use tokio::sync::mpsc;
 
 #[derive(Copy, Clone)]
 pub struct ConnData {
@@ -34,13 +34,7 @@ fn first_matching_verb<'a, 'b>(
     Ok(None)
 }
 
-fn get_object_proxy<'lua>(lua: &'lua Lua, uuid: &Uuid) -> LuaValue<'lua> {
-    lua.load(&format!("db[\"{}\"]", uuid.to_string()))
-        .eval::<LuaValue>()
-        .unwrap()
-}
-
-fn format_error(e: LuaError) -> String {
+fn format_error(e: &LuaError) -> String {
     match &e {
         LuaError::CallbackError { cause, .. } => {
             format!("{}\n{}", cause, e)
@@ -67,23 +61,50 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
             || world.lua(),
         );
 
+        let (read, write) = socket.into_split();
+
+        let uuid = do_login_command(system_uuid, &lua);
+
+        inject_notify_function(&lua, our_txs.clone());
+        let (notify_tx, notify_rx) = create_notify_channel(our_txs, uuid);
+        spawn_notify_task(notify_rx, write);
+
+        let (line_tx, line_rx) = async_channel::unbounded::<String>();
+        spawn_read_task(read, line_tx);
+        inject_read_function(&lua, line_rx.clone());
+
+        let (eval_tx, eval_rx) = mpsc::channel::<(String, String)>(100);
+        spawn_processing_task(uuid, eval_tx, notify_tx, line_rx.clone(), db);
+
         tokio::spawn(async move {
-            let (read, write) = socket.into_split();
-
-            let uuid = do_login_command(system_uuid, &lua);
-
-            inject_notify_function(&lua, our_txs.clone());
-            let (notify_tx, notify_rx) = create_notify_channel(our_txs, uuid);
-            spawn_notify_task(notify_rx, write);
-
-            let (line_tx, line_rx) = async_channel::unbounded::<String>();
-            spawn_read_task(read, line_tx);
-            inject_read_function(&lua, line_rx.clone());
-            spawn_processing_task(uuid, notify_tx, line_rx.clone(), lua, db);
+            eval_task(lua, eval_rx, notify_tx.clone()).await;
         });
     }
 
     // TODO notify players when a player in the same room disconnects
+}
+
+async fn eval_task(
+    lua: Lua,
+    mut eval_rx: mpsc::Receiver<(String, String)>,
+    notify_tx: mpsc::Sender<String>,
+) {
+    while let Some((chunk_name, lua_code)) = eval_rx.recv().await {
+        println!("{}\n{}", chunk_name, lua_code);
+        let chunk = lua.load(&lua_code).set_name(&chunk_name).unwrap();
+        let future = chunk.eval_async();
+        let lua_result = future.await;
+
+        let msg = match lua_result {
+            Err(e) => format_error(&e),
+            Ok(LuaValue::String(s)) => s.to_str().unwrap().to_string(),
+            Ok(v) => format!("{:?}", v),
+        };
+
+        if let Err(e) = notify_tx.send(msg).await {
+            println!("spawn_eval_task -> notify_tx.send: {}", e);
+        }
+    }
 }
 
 fn inject_read_function(lua: &Lua, line_rx: async_channel::Receiver<String>) {
@@ -116,60 +137,48 @@ fn spawn_read_task(read: OwnedReadHalf, line_tx: async_channel::Sender<String>) 
 
 fn spawn_processing_task(
     uuid: Uuid,
+    eval_tx: mpsc::Sender<(String, String)>,
     notify_tx: mpsc::Sender<String>,
     line_rx: async_channel::Receiver<String>,
-    lua: Lua,
     db: Arc<RwLock<Database>>,
 ) {
     tokio::spawn(async move {
         let conndata = ConnData {
             player_object: uuid,
         };
-
-        CONNDATA
-            .scope(conndata, async move {
-                notify_tx.send("Hai!".to_string()).await.unwrap();
-                loop {
-                    let line = match line_rx.recv().await {
-                        Ok(l) => l,
-                        Err(e) => {
-                            // TODO err logging
-                            println!("{}", e);
-                            break;
-                        }
-                    };
-                    println!("< {}", line);
-                    let lua_arc = Arc::new(lua);
-                    let maybe_msg = if let Some(stripped) = line.strip_prefix(';') {
-                        execute_player_lua_command(lua_arc, stripped)
-                    } else {
-                        execute_verb(lua_arc, db, line).await
-                    };
-                    if let Some(msg) = maybe_msg {
-                        notify_tx.send(msg.to_string()).await.unwrap();
-                    }
+        notify_tx.send("Hai!".to_string()).await.unwrap();
+        loop {
+            let line = match line_rx.recv().await {
+                Ok(l) => l,
+                Err(e) => {
+                    // TODO err logging
+                    println!("{}", e);
+                    break;
                 }
-                Ok::<(), std::io::Error>(())
-            })
-            .await
-            .unwrap();
+            };
+            println!("< {}", line);
+            CONNDATA
+                .scope(conndata, async {
+                    let res = if let Some(stripped) = line.strip_prefix(';') {
+                        execute_player_lua_command(stripped)
+                    } else {
+                        execute_verb(db.clone(), line)
+                    };
+                    match res {
+                        Ok(eval) => eval_tx.send(eval).await.ok(),
+                        Err(s) => notify_tx.send(s).await.ok(),
+                    }
+                })
+                .await;
+        }
     });
 }
 
-fn execute_player_lua_command(lua: Arc<Lua>, stripped: &str) -> Option<String> {
-    match lua
-        .load(stripped)
-        .set_name(";-command")
-        .unwrap()
-        .eval::<LuaValue>()
-    {
-        Err(e) => Some(format_error(e)),
-        Ok(LuaValue::String(s)) => Some(s.to_str().unwrap().to_string()),
-        Ok(v) => Some(format!("{:?}", v)),
-    }
+fn execute_player_lua_command(stripped: &str) -> Result<(String, String), String> {
+    Ok((";-command".to_string(), stripped.to_string()))
 }
 
-async fn execute_verb(lua: Arc<Lua>, db: Arc<RwLock<Database>>, line: String) -> Option<String> {
+fn execute_verb(db: Arc<RwLock<Database>>, line: String) -> Result<(String, String), String> {
     // Otherwise, as a ROO command
     let player_uuid = &CONNDATA.get().player_object;
     let command_opt = {
@@ -179,70 +188,56 @@ async fn execute_verb(lua: Arc<Lua>, db: Arc<RwLock<Database>>, line: String) ->
 
     let command = match command_opt {
         Some(cmd) => cmd,
-        None => return Some("Failed to parse command".to_string()),
+        None => return Err("Failed to parse command".to_string()),
     };
 
-    let lua_code_res = {
-        // Find where
-        let lock = db.read().unwrap();
-        let location: Option<&Object> = {
-            lock.get(player_uuid)
-                .unwrap()
-                .location()
-                .and_then(|l| lock.get(l).ok())
-        };
-        // Find what
-        let (this, verb) = {
-            first_matching_verb(
-                &lock,
-                &command,
-                vec![Some(lock.get(player_uuid).unwrap()), location],
-            )?
-            .ok_or_else(|| "Unknown verb".to_string())?
-        };
-
-        // Set up arguments
-        let lua_player = get_object_proxy(&lua, player_uuid);
-        lua.globals().set("player", lua_player).unwrap();
-        lua.globals().set("dobjstr", command.dobjstr()).unwrap();
-        lua.globals()
-            .set("argstr", command.argstr().clone())
-            .unwrap();
-
-        // Generate the Lua code to execute the requested verb
-        Ok((
-            format!(
-                "coroutine.create(function(...) db[\"{}\"]:resolve_verb(\"{}\")(...) end)",
-                this.uuid(),
-                verb.names()[0],
-            ),
-            this.uuid().clone(),
-        ))
+    // Find where
+    let lock = db.read().unwrap();
+    let location: Option<&Object> = {
+        lock.get(player_uuid)
+            .unwrap()
+            .location()
+            .and_then(|l| lock.get(l).ok())
+    };
+    // Find what
+    let (this, verb) = match first_matching_verb(
+        &lock,
+        &command,
+        vec![Some(lock.get(player_uuid).unwrap()), location],
+    ) {
+        Ok(Some(x)) => x,
+        Ok(None) => return Err("Unknown verb".to_string()),
+        Err(s) => return Err(s),
     };
 
-    let (lua_code, this_uuid) = match lua_code_res {
-        Ok(s) => s,
-        Err(s) => return Some(s),
-    };
-    let args = command.args().clone().to_lua(&lua).unwrap();
-    let lua_this = get_object_proxy(&lua, &this_uuid);
+    let dobjstr = command.dobjstr();
+    let argstr = command.argstr();
+    let this_uuid = this.uuid().to_string();
+    let verb_name = verb.names()[0].clone();
+    let args = command
+        .args()
+        .iter()
+        .map(|s| format!("{:?}", s))
+        .collect::<Vec<_>>()
+        .join(", ");
 
-    // Create the LuaThread to execute the command
-    let thread_res = lua
-        .load(&lua_code)
-        .set_name(&lua_code)
-        .unwrap()
-        .eval::<LuaThread>()
-        .map(|t| t.into_async::<_, LuaValue>((lua_this, args)))
-        .map_err(format_error);
-
-    match thread_res {
-        Ok(thread) => match thread.await {
-            Ok(_) => None,
-            Err(e) => Some(format_error(e)),
-        },
-        Err(e) => Some(e),
-    }
+    Ok((
+        format!("{}:{}({})", this.name(), verb_name, args),
+        format!(
+            "
+            player = toobj({:?}):unwrap()
+            dobjstr = {:?}
+            argstr = {:?}
+            return toobj({:?}):unwrap():{}({})
+        ",
+            player_uuid.to_string(),
+            dobjstr,
+            argstr,
+            this_uuid,
+            verb_name,
+            args
+        ),
+    ))
 }
 
 fn spawn_notify_task(
