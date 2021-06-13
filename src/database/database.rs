@@ -8,20 +8,50 @@ use super::{PropertyValue, Verb};
 
 pub struct Database {
     objects: HashMap<Uuid, Object>,
+    system_uuid: Uuid,
 }
 
 impl Database {
     #[must_use]
     pub(crate) fn new() -> Self {
-        Self {
+        let mut db = Self {
             objects: HashMap::new(),
+            system_uuid: Uuid::new_v4(), // Fake temporary value
+        };
+
+        let system_uuid = db.create_orphan();
+        db.system_uuid = system_uuid.clone();
+
+        for name in vec!["nothing", "failed_match", "ambiguous_match"] {
+            let uuid = db.create_orphan();
+            {
+                let o = db.get_mut(&uuid).unwrap();
+                o.set_property("name", format!("S.{}", name).as_str());
+            }
+            db.get_mut(&system_uuid).unwrap().set_property(name, uuid);
         }
+
+        db
     }
 
-    pub fn create(&mut self) -> Uuid {
+    pub fn create_orphan(&mut self) -> Uuid {
         let uuid = Uuid::new_v4();
-        self.objects.insert(uuid, Object::new(uuid));
+        let object = Object::new(uuid);
+        self.objects.insert(uuid, object);
         uuid
+    }
+
+    pub fn create(&mut self, parent: &Uuid, owner: &Uuid) -> Uuid {
+        let uuid = Uuid::new_v4();
+        let mut object = Object::new(uuid);
+        object.set_property("parent", Some(parent.clone()));
+        object.set_property("owner", Some(owner.clone()));
+        self.objects.insert(uuid, object);
+        uuid
+    }
+
+    pub fn system_uuid(&self) -> &Uuid {
+        &self.system_uuid
     }
 
     pub fn get(&self, uuid: &Uuid) -> Result<&Object, String> {

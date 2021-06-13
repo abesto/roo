@@ -12,7 +12,7 @@ use tokio::sync::mpsc::Sender;
 
 #[derive(Copy, Clone)]
 pub struct ConnData {
-    player_object: Uuid,
+    pub player_object: Uuid,
 }
 
 tokio::task_local! {
@@ -57,25 +57,38 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
     loop {
         let (socket, _) = listener.accept().await?;
         let our_txs = txs.clone();
-        let lua = world.lua();
         let db = world.db();
+        let system_uuid = db.read().unwrap().system_uuid().clone();
+        let lua = CONNDATA.sync_scope(
+            ConnData {
+                player_object: system_uuid,
+            },
+            || world.lua(),
+        );
 
         tokio::spawn(async move {
             let (read, mut write) = socket.into_split();
 
-            let uuid_str = lua
-                .load("system:do_login_command()")
-                .set_name("system:do_login_command()")
-                .unwrap()
-                .eval::<String>()
-                .unwrap();
-            let uuid = DatabaseProxy::parse_uuid(&uuid_str).unwrap();
+            let uuid = CONNDATA.sync_scope(
+                ConnData {
+                    player_object: system_uuid,
+                },
+                || {
+                    let uuid_str = lua
+                        .load("system:do_login_command()")
+                        .set_name("system:do_login_command()")
+                        .unwrap()
+                        .eval::<String>()
+                        .unwrap();
+                    DatabaseProxy::parse_uuid(&uuid_str).unwrap()
+                },
+            );
 
             {
                 let notify_txs = our_txs.clone();
                 lua.globals()
                     .set(
-                        "notify",
+                        "_server_notify",
                         lua.create_function(move |_lua, (uuid, msg): (String, String)| {
                             let lock = notify_txs.read().unwrap();
                             if let Some(tx) = lock.get(&DatabaseProxy::parse_uuid(&uuid)?) {
@@ -97,6 +110,7 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
 
             tokio::spawn(async move {
                 while let Some(msg) = rx.recv().await {
+                    println!("notify {:?}", msg);
                     let processed = {
                         let a = msg.replace("\n", "\r\n");
                         if !a.ends_with("\r\n") {

@@ -5,12 +5,19 @@ use uuid::Uuid;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum PropertyValue {
+    Boolean(bool),
     String(String),
     Integer(LuaInteger),
     Uuid(Uuid),
     UuidOpt(Option<Uuid>),
     Uuids(HashSet<Uuid>),
     List(Vec<PropertyValue>),
+}
+
+impl From<bool> for PropertyValue {
+    fn from(value: bool) -> Self {
+        PropertyValue::Boolean(value)
+    }
 }
 
 impl From<Uuid> for PropertyValue {
@@ -31,16 +38,20 @@ impl From<HashSet<Uuid>> for PropertyValue {
     }
 }
 
+impl From<&str> for PropertyValue {
+    fn from(value: &str) -> Self {
+        if let Some(uuid) = Uuid::parse_str(value).ok() {
+            PropertyValue::Uuid(uuid)
+        } else {
+            PropertyValue::String(value.to_string())
+        }
+    }
+}
+
 impl<'lua> FromLua<'lua> for PropertyValue {
     fn from_lua(lua_value: LuaValue<'lua>, lua: &'lua Lua) -> LuaResult<Self> {
         match lua_value {
-            LuaValue::String(s) => s.to_str().map(|s| {
-                if let Some(uuid) = Uuid::parse_str(s).ok() {
-                    PropertyValue::Uuid(uuid)
-                } else {
-                    PropertyValue::String(s.to_string())
-                }
-            }),
+            LuaValue::String(s) => s.to_str().map(PropertyValue::from),
             LuaValue::Integer(n) => Ok(PropertyValue::Integer(n)),
             LuaValue::Table(t) => {
                 let mut values: Vec<PropertyValue> = vec![];
@@ -51,7 +62,8 @@ impl<'lua> FromLua<'lua> for PropertyValue {
                 }
                 Ok(PropertyValue::List(values))
             }
-            _ => Err(LuaError::external(format!(
+            LuaValue::Boolean(b) => Ok(PropertyValue::from(b)),
+            _ => Err(LuaError::RuntimeError(format!(
                 "Unsupported type for value {:?}",
                 lua_value
             ))),
@@ -78,6 +90,7 @@ impl<'lua> ToLua<'lua> for PropertyValue {
                 .map(|p| p.clone().to_lua(lua))
                 .collect::<LuaResult<Vec<LuaValue>>>()?
                 .to_lua(lua),
+            PropertyValue::Boolean(b) => b.to_lua(lua),
         }
     }
 }

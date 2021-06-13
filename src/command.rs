@@ -154,7 +154,7 @@ mod tests {
     #[test]
     fn parse_plain_verb() {
         let mut db = Database::new();
-        let player = db.create();
+        let player = db.create_orphan();
         assert_eq!(
             Some(Command::new(
                 "",
@@ -168,14 +168,14 @@ mod tests {
     #[test]
     fn test_empty_input() {
         let mut db = Database::new();
-        let player = db.create();
+        let player = db.create_orphan();
         assert_eq!(None, Command::parse("   ", &player, &db));
     }
 
     #[test]
     fn test_verb_direct() {
         let mut db = Database::new();
-        let player = db.create();
+        let player = db.create_orphan();
 
         // Object not found
         assert_eq!(
@@ -190,7 +190,7 @@ mod tests {
         );
 
         // Object by UUID in inventory
-        let object = db.create();
+        let object = db.create_orphan();
         db.move_object(&object, &player).unwrap();
         assert_eq!(
             ParsedCommand::VerbDirect {
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn test_say() {
         let mut db = Database::new();
-        let player = db.create();
+        let player = db.create_orphan();
 
         assert_eq!(
             Some(Command::new(
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn test_shortcuts() {
         let mut db = Database::new();
-        let player = db.create();
+        let player = db.create_orphan();
 
         assert_eq!(
             Some(Command::new(

@@ -42,12 +42,12 @@ impl Object {
             Property::from(PropertyValue::List(vec![])),
         );
         o.properties.insert(
-            "parent".to_string(),
+            "owner".to_string(),
             Property::from(PropertyValue::UuidOpt(None)),
         );
         o.properties.insert(
-            "children".to_string(),
-            Property::from(HashSet::<Uuid>::new()),
+            "parent".to_string(),
+            Property::from(PropertyValue::UuidOpt(None)),
         );
 
         o

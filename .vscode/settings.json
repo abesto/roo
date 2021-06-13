@@ -15,6 +15,7 @@
         "retval",
         "stringio",
         "stringx",
-        "tablex"
+        "tablex",
+        "webclient"
     ]
 }

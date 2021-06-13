@@ -5,6 +5,7 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
+use crate::server::CONNDATA;
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
 
@@ -95,13 +96,24 @@ impl DatabaseProxy {
 
 impl LuaUserData for DatabaseProxy {
     fn add_methods<'lua, M: LuaUserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method("create", |lua, this, ()| {
-            let uuid = {
+        methods.add_method(
+            "create",
+            |_lua, this, (parent, owner): (String, Option<String>)| {
+                let (parent, owner) = {
+                    // Verify parent, owner exist
+                    let lock = this.db.read().unwrap();
+                    let parent = this.get_object(&lock, &parent)?;
+                    let owner = this.get_object(
+                        &lock,
+                        &owner.unwrap_or_else(|| CONNDATA.get().player_object.to_string()),
+                    )?;
+                    // TODO verify valid, fertile
+                    (parent.uuid().clone(), owner.uuid().clone())
+                };
                 let mut lock = this.db.write().unwrap();
-                lock.create()
-            };
-            this.make_object_proxy(lua, &uuid)
-        });
+                Ok(lock.create(&parent, &owner).to_string())
+            },
+        );
 
         methods.add_method(
             "set_property",

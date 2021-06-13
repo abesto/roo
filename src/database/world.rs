@@ -2,39 +2,26 @@
 use std::sync::{Arc, RwLock};
 
 use mlua::prelude::*;
+use uuid::Uuid;
 
 use crate::database::{Database, DatabaseProxy};
-use uuid::Uuid;
 
 pub struct World {
     db: Arc<RwLock<Database>>,
-    system: Uuid,
+    system_uuid: Uuid,
 }
 
 impl World {
     #[must_use]
     pub fn new() -> Self {
         let db = Database::new();
+        let system_uuid = db.system_uuid().clone();
         let db_lock = Arc::new(RwLock::new(db));
-        let system = {
-            let mut lock = db_lock.write().unwrap();
-            lock.create()
-        };
 
-        let o = Self {
+        Self {
             db: db_lock,
-            system,
-        };
-
-        // RooCore
-        o.lua()
-            .load(include_str!("../lua/core.lua"))
-            .set_name("core")
-            .unwrap()
-            .exec()
-            .unwrap();
-
-        o
+            system_uuid,
+        }
     }
 
     pub fn lua(&self) -> Lua {
@@ -45,7 +32,9 @@ impl World {
         {
             let globals = lua.globals();
             globals.set("db", dbproxy).unwrap();
-            globals.set("system_uuid", self.system.to_string()).unwrap();
+            globals
+                .set("system_uuid", self.system_uuid.to_string())
+                .unwrap();
         }
 
         // Penlight Lua library
@@ -214,19 +203,20 @@ impl World {
             lua.load(&code).set_name(module).unwrap().exec().unwrap();
         }
 
-        // API
-        lua.load(include_str!("../lua/api.lua"))
-            .set_name("api")
-            .unwrap()
-            .exec()
-            .unwrap();
-
-        // Webclient interface
-        lua.load(include_str!("../lua/webclient.lua"))
-            .set_name("webclient")
-            .unwrap()
-            .exec()
-            .unwrap();
+        for (module, module_code) in vec![
+            ("init", include_str!("../lua/init.lua")),
+            ("result", include_str!("../lua/result.lua")),
+            ("moo", include_str!("../lua/moo.lua")),
+            ("proxies", include_str!("../lua/proxies.lua")),
+            ("core", include_str!("../lua/core.lua")),
+            ("webclient", include_str!("../lua/webclient.lua")),
+        ] {
+            lua.load(module_code)
+                .set_name(module)
+                .unwrap()
+                .exec()
+                .unwrap();
+        }
 
         lua
     }
@@ -239,143 +229,161 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::database::PropertyValue;
+    use crate::{database::PropertyValue, server::ConnData};
+
+    struct Ctx {
+        world: World,
+        lua: Lua,
+        db: Arc<RwLock<Database>>,
+    }
+
+    fn with_context(f: fn(Ctx)) {
+        let world = World::new();
+        let db = world.db();
+
+        let player_object = {
+            let mut lock = db.write().unwrap();
+            lock.create_orphan()
+        };
+
+        CONNDATA.sync_scope(ConnData { player_object }, || {
+            let lua = world.lua();
+            f(Ctx { world, lua, db });
+        });
+    }
 
     #[test]
     fn set_properties() {
-        let world = World::new();
-        let lua = world.lua();
-        let globals = lua.globals();
-        let db = world.db();
+        with_context(|Ctx { lua, db, .. }| {
+            // Step 1: create an object and set a property on it
+            lua.load("o1 = create(S.nothing):unwrap(); o1.x = \"test-1\"")
+                .exec()
+                .unwrap();
 
-        // Step 1: create an object and set a property on it
-        lua.load("o1 = db:create(); o1.x = \"test-1\"")
-            .exec()
-            .unwrap();
+            {
+                let db = db.read().unwrap();
+                let o1_proxy: LuaTable = lua.globals().get("o1").unwrap();
+                assert_eq!("test-1", o1_proxy.get::<&str, String>("x").unwrap());
 
-        {
-            let db = db.read().unwrap();
-            let o1_proxy: LuaTable = globals.get("o1").unwrap();
-            assert_eq!("test-1", o1_proxy.get::<&str, String>("x").unwrap());
+                let uuid =
+                    DatabaseProxy::parse_uuid(&o1_proxy.get::<&str, String>("uuid").unwrap())
+                        .unwrap();
+                let o1 = db.get(&uuid).unwrap();
+                assert_eq!(
+                    &PropertyValue::String("test-1".to_string()),
+                    o1.get_property("x").unwrap()
+                );
+            };
 
-            let uuid =
-                DatabaseProxy::parse_uuid(&o1_proxy.get::<&str, String>("uuid").unwrap()).unwrap();
-            let o1 = db.get(&uuid).unwrap();
-            assert_eq!(
-                &PropertyValue::String("test-1".to_string()),
-                o1.get_property("x").unwrap()
-            );
-        };
+            // Step 2: get another reference to the same object, verify property
+            lua.load("o2 = db[o1.uuid]").exec().unwrap();
+            let o2_proxy: LuaTable = lua.globals().get("o2").unwrap();
+            assert_eq!("test-1", o2_proxy.get::<&str, String>("x").unwrap());
 
-        // Step 2: get another reference to the same object, verify property
-        lua.load("o2 = db[o1.uuid]").exec().unwrap();
-        let o2_proxy: LuaTable = globals.get("o2").unwrap();
-        assert_eq!("test-1", o2_proxy.get::<&str, String>("x").unwrap());
-
-        // Step 3: set property on one reference, verify on the other
-        lua.load("o1.x = \"test-2\"").exec().unwrap();
-        let o2_proxy: LuaTable = globals.get("o2").unwrap();
-        assert_eq!("test-2", o2_proxy.get::<&str, String>("x").unwrap());
+            // Step 3: set property on one reference, verify on the other
+            lua.load("o1.x = \"test-2\"").exec().unwrap();
+            let o2_proxy: LuaTable = lua.globals().get("o2").unwrap();
+            assert_eq!("test-2", o2_proxy.get::<&str, String>("x").unwrap());
+        });
     }
 
     #[test]
     fn get_parent_property() {
-        let world = World::new();
-        let lua = world.lua();
-
-        let retval = lua
-            .load(
-                "
-        root = db:create()
+        with_context(|Ctx { lua, .. }| {
+            let retval = lua
+                .load(
+                    "
+        root = create(S.nothing):unwrap()
         root.x = 3
 
-        sub = db:create()
-        sub:chparent(root)
+        sub = create(root):unwrap()
 
         return sub.x
         ",
-            )
-            .eval::<LuaInteger>()
-            .unwrap();
+                )
+                .eval::<LuaInteger>()
+                .unwrap();
 
-        assert_eq!(3, retval);
+            assert_eq!(3, retval);
+        });
     }
 
     #[test]
     fn starting_room() {
-        let world = World::new();
-        let lua1 = world.lua();
-        let lua2 = world.lua();
+        with_context(
+            |Ctx {
+                 lua: lua1, world, ..
+             }| {
+                let lua2 = world.lua();
 
-        assert_eq!(
-            lua1.load("system.uuid").eval::<String>().unwrap(),
-            lua2.load("system.uuid").eval::<String>().unwrap(),
-        );
-        assert_eq!(
-            lua1.load("system.starting_room.uuid")
-                .eval::<String>()
-                .unwrap(),
-            lua2.load("system.starting_room.uuid")
-                .eval::<String>()
-                .unwrap(),
+                assert_eq!(
+                    lua1.load("system.uuid").eval::<String>().unwrap(),
+                    lua2.load("system.uuid").eval::<String>().unwrap(),
+                );
+                assert_eq!(
+                    lua1.load("system.starting_room.uuid")
+                        .eval::<String>()
+                        .unwrap(),
+                    lua2.load("system.starting_room.uuid")
+                        .eval::<String>()
+                        .unwrap(),
+                );
+            },
         );
     }
 
     #[test]
     fn do_login_command() {
-        let world = World::new();
-        let lua = world.lua();
-        lua.load("system.do_login_command()").exec().unwrap();
+        with_context(|Ctx { lua, .. }| {
+            lua.load("S:do_login_command()").exec().unwrap();
+        });
     }
 
     #[test]
     fn look() {
-        let world = World::new();
-        let lua = world.lua();
-        lua.load(
-            "
-        player = db:create()
+        with_context(|Ctx { lua, .. }| {
+            lua.load(
+                "
+        player = create(S.Player):unwrap()
         player:move(system.starting_room)
 
-        o = db:create()
-        o:move(player.location)
+        o = create(S.nothing)
 
-        system.starting_room:look()
+        S.starting_room:look()
         ",
-        )
-        .exec()
-        .unwrap();
+            )
+            .exec()
+            .unwrap();
+        });
     }
 
     #[test]
     fn call_parent() {
-        let world = World::new();
-        let lua = world.lua();
-        assert_eq!(
-            lua.load("system.starting_room:tell{\"whee\"}")
-                .eval::<LuaValue>()
-                .unwrap()
-                .type_name(),
-            "nil"
-        );
+        with_context(|Ctx { lua, .. }| {
+            assert_eq!(
+                lua.load("system.starting_room:tell{\"whee\"}")
+                    .eval::<LuaValue>()
+                    .unwrap()
+                    .type_name(),
+                "nil"
+            );
+        });
     }
 
     #[test]
     fn set_into_list() {
-        let world = World::new();
-        let lua = world.lua();
+        with_context(|Ctx { lua, .. }| {
+            let uuid_str = lua
+                .load("return create(S.nothing):unwrap().uuid")
+                .eval::<String>()
+                .unwrap();
+            let uuid = Uuid::parse_str(&uuid_str).unwrap();
 
-        let uuid_str = lua
-            .load("return db:create().uuid")
-            .eval::<String>()
-            .unwrap();
-        let uuid = Uuid::parse_str(&uuid_str).unwrap();
-
-        let retval = lua
-            .load(
-                &("local o = db[\"".to_string()
-                    + &uuid_str
-                    + "\"]
+            let retval = lua
+                .load(
+                    &("local o = db[\"".to_string()
+                        + &uuid_str
+                        + "\"]
         o.l = {1, 2, {3, 4}}
         o.l[1] = 'foo'
         o.l[3][1] = 'bar'
@@ -385,26 +393,27 @@ mod tests {
         table.insert(o.l[3], o.uuid)
         return o.l._inner
         "),
-            )
-            .set_name("set_into_list-test")
-            .unwrap()
-            .eval::<PropertyValue>()
-            .unwrap();
+                )
+                .set_name("set_into_list-test")
+                .unwrap()
+                .eval::<PropertyValue>()
+                .unwrap();
 
-        assert_eq!(
-            PropertyValue::List(vec![
-                PropertyValue::String("foo".to_string()),
-                PropertyValue::Integer(2),
+            assert_eq!(
                 PropertyValue::List(vec![
-                    PropertyValue::String("bar".to_string()),
-                    PropertyValue::Integer(4),
-                    PropertyValue::Uuid(uuid.clone()),
-                    PropertyValue::Uuid(uuid.clone())
+                    PropertyValue::String("foo".to_string()),
+                    PropertyValue::Integer(2),
+                    PropertyValue::List(vec![
+                        PropertyValue::String("bar".to_string()),
+                        PropertyValue::Integer(4),
+                        PropertyValue::Uuid(uuid.clone()),
+                        PropertyValue::Uuid(uuid.clone())
+                    ]),
+                    PropertyValue::Integer(5),
+                    PropertyValue::Integer(6),
                 ]),
-                PropertyValue::Integer(5),
-                PropertyValue::Integer(6),
-            ]),
-            retval
-        );
+                retval
+            );
+        });
     }
 }

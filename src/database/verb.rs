@@ -268,7 +268,10 @@ impl<'lua> FromLuaMulti<'lua> for Verb {
 impl<'lua> ToLua<'lua> for &Verb {
     fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
         // TODO memoize
-        let code = &format!("function(this, args)\n{}\nend", self.code);
+        let code = &format!(
+            "function(this, ...)\nlocal args = {{...}}\n{}\nend",
+            self.code
+        );
         lua.load(code)
             .set_name(&self.names()[0])?
             .eval::<mlua::Value>()
