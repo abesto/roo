@@ -432,7 +432,7 @@ return {verbargs, rest};
     S.Player:add_verb({S.uuid, "rx", {"edit_option"}}, {})
     -- EOF Player
 
-    S.Player:add_verb({S.uuid, "rx", {"@program"}}, "{}")
+    S.Player:add_verb({S.uuid, "rx", {"@program"}}, {})
     S.Player:set_verb_code("@program", "")
 
     S.Room = create(S.Root):unwrap()
@@ -498,5 +498,6 @@ return {verbargs, rest};
     test:set_verb_code("wiggle", [[
         this:emote("looks around")
         this:emote("wiggles")
+        player:notify("Read: %s" % {read()})
     ]])
 end)()

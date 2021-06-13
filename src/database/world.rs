@@ -5,6 +5,7 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::database::{Database, DatabaseProxy};
+use crate::server::CONNDATA;
 
 pub struct World {
     db: Arc<RwLock<Database>>,
