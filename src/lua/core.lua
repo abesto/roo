@@ -546,7 +546,7 @@ end
 
     S.starting_room = create(S.Room):unwrap()
     S.starting_room.name = "The Void"
-    S.starting_room.description = "You float in nothing."
+    S.starting_room.description = "There is nothing, and you are in it."
 
     S.starting_room:add_verb({system.uuid, "rx", {"wiggle"}}, {})
     S.starting_room:set_verb_code("wiggle", [[
