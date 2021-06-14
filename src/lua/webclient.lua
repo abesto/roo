@@ -11,7 +11,6 @@ editor:add_verb({S.uuid, "rx", {"local_editing_info"}}, {"this", "none", "this"}
 editor:set_verb_code("local_editing_info", [[
 local object, vname, code = table.unpack(args)
 local vargs
-pl.pretty("local_editing_info", object, vname, code)
 if is_type(vname, "table") then
   vargs = " %s %s %s" % {vname[2], S.code_utils:short_prep(vname[3]), vname[4]}
   vname = vname[1]

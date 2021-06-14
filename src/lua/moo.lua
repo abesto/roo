@@ -77,6 +77,9 @@ end
 
 ---@return Result<?, ?>
 function set_verb_code(object, name, code)
+    if is_type(code, "string") then
+        code = pl.stringx.split(code, "\n")
+    end
     return touuid(object):map_method(db, 'set_verb_code', name, code)
 end
 

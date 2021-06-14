@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::fmt::Display;
 
 use mlua::prelude::*;
 use uuid::Uuid;
@@ -100,6 +101,15 @@ impl<'lua> FromLua<'lua> for VerbDesc {
                 "Cannot build VerbDesc from {}",
                 lua_value.type_name()
             ))),
+        }
+    }
+}
+
+impl Display for VerbDesc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VerbDesc::Index(n) => n.fmt(f),
+            VerbDesc::Name(s) => s.fmt(f),
         }
     }
 }

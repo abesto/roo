@@ -58,6 +58,29 @@ impl DatabaseProxy {
         }
     }
 
+    fn get_verb_mut<'a>(
+        &self,
+        lock: &'a mut RwLockWriteGuard<Database>,
+        uuid: &str,
+        desc: &VerbDesc,
+    ) -> LuaResult<&'a mut Verb> {
+        let object = self.get_object_mut(lock, &uuid)?;
+        match desc {
+            VerbDesc::Index(n) => {
+                let verb = object
+                    .verbs_mut()
+                    .get_mut(n - 1)
+                    .ok_or_else(|| LuaError::external("No such verby birby"))?;
+                Ok(verb)
+            }
+            VerbDesc::Name(name) => object
+                .verbs_mut()
+                .iter_mut()
+                .find(|v| v.name_matches(name))
+                .ok_or_else(|| LuaError::external("No such verb by name eh")),
+        }
+    }
+
     fn get_object_mut<'a>(
         &self,
         lock: &'a mut RwLockWriteGuard<Database>,
@@ -196,17 +219,17 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method(
             "set_verb_code",
-            |lua, this, (uuid, name, code): (String, String, String)| {
-                let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut(&mut lock, &uuid)?;
-
+            |lua, this, (uuid, desc, lines): (String, VerbDesc, Vec<String>)| {
                 // Verify the code is at least mostly sane
-                lua.load(&code).set_name(&name)?.into_function()?;
+                let code = lines.join("\n");
+                lua.load(&code)
+                    .set_name(&format!("validate_verb_code {}:{}", uuid, desc))?
+                    .into_function()?;
 
                 // And write it
-                object
-                    .set_verb_code(&name, code)
-                    .map_err(LuaError::RuntimeError)
+                let mut lock = this.db.write().unwrap();
+                this.get_verb_mut(&mut lock, &uuid, &desc)?.code = code;
+                Ok(())
             },
         );
 

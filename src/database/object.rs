@@ -225,22 +225,12 @@ impl Object {
         &self.verbs
     }
 
-    pub fn has_verb_with_name(&self, name: &str) -> bool {
-        self.resolve_verb(name).is_some()
+    pub fn verbs_mut(&mut self) -> &mut Vec<Verb> {
+        &mut self.verbs
     }
 
-    pub fn set_verb_code(&mut self, verb_name: &String, code: String) -> Result<(), String> {
-        let verb_opt = self
-            .verbs
-            .iter_mut()
-            .find(|v| v.names().iter().any(|name| name == verb_name));
-
-        if let Some(verb) = verb_opt {
-            verb.code = code;
-            Ok(())
-        } else {
-            Err(format!("Verb {} not found on {}", verb_name, self.uuid()))
-        }
+    pub fn has_verb_with_name(&self, name: &str) -> bool {
+        self.resolve_verb(name).is_some()
     }
 }
 

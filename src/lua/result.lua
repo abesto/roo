@@ -136,7 +136,7 @@ function Ok:map_unpacked(f, ...)
     return Ok(f(unpack(args)))
 end
 
-function Err:map_method(obj, f, ...)
+function Err:map_unpacked(f, ...)
     assert_class_of(0, self, Result)
     pl.utils.function_arg(1, f)
     return self

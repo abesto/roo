@@ -235,25 +235,28 @@ fn execute_verb(db: Arc<RwLock<Database>>, line: String) -> Result<(String, Stri
         .args()
         .iter()
         .map(|s| format!("{:?}", s))
-        .collect::<Vec<_>>()
-        .join(", ");
+        .collect::<Vec<_>>();
+
+    // Not very efficient but /shrug
+    let mut this_args = vec!["this".to_string()];
+    this_args.extend(args.clone());
 
     Ok((
-        format!("{}:{}({})", this.name(), verb_name, args),
+        format!("{}:{}({})", this.name(), verb_name, args.join(", ")),
         format!(
             "
             player = toobj({:?}):unwrap()
             dobjstr = {:?}
             argstr = {:?}
             local this = toobj({:?}):unwrap()
-            this[{:?}](this, {})
+            this[{:?}]({})
         ",
             player_uuid.to_string(),
             dobjstr,
             argstr,
             this_uuid,
             verb_name,
-            args
+            this_args.join(", ")
         ),
     ))
 }
