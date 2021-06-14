@@ -8,6 +8,7 @@ use crate::command::Command;
 use crate::database::{Database, DatabaseProxy, Object, Verb, World};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
+use std::time::Duration;
 use tokio::sync::mpsc;
 
 #[derive(Copy, Clone)]
@@ -45,6 +46,12 @@ fn format_error(e: &LuaError) -> String {
 
 #[tokio::main]
 pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> {
+    tokio::task::LocalSet::new()
+        .run_until(server_main(world))
+        .await
+}
+
+pub async fn server_main(world: World) -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("127.0.0.1:8888").await?;
     let txs: Arc<RwLock<HashMap<Uuid, mpsc::Sender<String>>>> =
         Arc::new(RwLock::new(HashMap::new()));
@@ -72,39 +79,41 @@ pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> 
         let (line_tx, line_rx) = async_channel::unbounded::<String>();
         spawn_read_task(read, line_tx);
         inject_read_function(&lua, line_rx.clone());
-
-        let (eval_tx, eval_rx) = mpsc::channel::<(String, String)>(100);
-        spawn_processing_task(uuid, eval_tx, notify_tx, line_rx.clone(), db);
-
-        tokio::spawn(async move {
-            eval_task(lua, eval_rx, notify_tx.clone()).await;
-        });
+        spawn_processing_task(lua, uuid, notify_tx.clone(), line_rx.clone(), db);
     }
 
     // TODO notify players when a player in the same room disconnects
 }
 
-async fn eval_task(
-    lua: Lua,
-    mut eval_rx: mpsc::Receiver<(String, String)>,
-    notify_tx: mpsc::Sender<String>,
-) {
-    while let Some((chunk_name, lua_code)) = eval_rx.recv().await {
-        println!("{}\n{}", chunk_name, lua_code);
-        let chunk = lua.load(&lua_code).set_name(&chunk_name).unwrap();
-        let future = chunk.eval_async();
-        let lua_result = future.await;
+async fn eval(lua: &Lua, chunk_name: String, lua_code: String, notify_tx: &mpsc::Sender<String>) {
+    println!("{}\n{}", chunk_name, lua_code);
+    let chunk = lua.load(&lua_code).set_name(&chunk_name).unwrap();
+    let future = chunk.eval_async();
+    let lua_result = future.await;
 
-        let msg = match lua_result {
+    let msg = match lua_result {
+        Err(e) => format_error(&e),
+        Ok(LuaValue::String(s)) => s.to_str().unwrap().to_string(),
+        Ok(LuaValue::Nil) => String::new(),
+        Ok(LuaValue::Thread(t)) => match t.into_async::<_, LuaValue>(()).await {
             Err(e) => format_error(&e),
             Ok(LuaValue::String(s)) => s.to_str().unwrap().to_string(),
+            Ok(LuaValue::Nil) => String::new(),
             Ok(v) => format!("{:?}", v),
-        };
+        },
+        Ok(v) => format!("{:?}", v),
+    };
 
+    if !msg.is_empty() {
         if let Err(e) = notify_tx.send(msg).await {
             println!("spawn_eval_task -> notify_tx.send: {}", e);
         }
     }
+}
+
+async fn sleep(_lua: &Lua, n: u64) -> LuaResult<&'static str> {
+    tokio::time::sleep(Duration::from_millis(n)).await;
+    Ok("done")
 }
 
 fn inject_read_function(lua: &Lua, line_rx: async_channel::Receiver<String>) {
@@ -124,6 +133,10 @@ fn inject_read_function(lua: &Lua, line_rx: async_channel::Receiver<String>) {
             .unwrap(),
         )
         .unwrap();
+
+    lua.globals()
+        .set("sleep", lua.create_async_function(sleep).unwrap())
+        .unwrap();
 }
 
 fn spawn_read_task(read: OwnedReadHalf, line_tx: async_channel::Sender<String>) {
@@ -136,13 +149,13 @@ fn spawn_read_task(read: OwnedReadHalf, line_tx: async_channel::Sender<String>) 
 }
 
 fn spawn_processing_task(
+    lua: Lua,
     uuid: Uuid,
-    eval_tx: mpsc::Sender<(String, String)>,
     notify_tx: mpsc::Sender<String>,
     line_rx: async_channel::Receiver<String>,
     db: Arc<RwLock<Database>>,
 ) {
-    tokio::spawn(async move {
+    tokio::task::spawn_local(async move {
         let conndata = ConnData {
             player_object: uuid,
         };
@@ -165,8 +178,12 @@ fn spawn_processing_task(
                         execute_verb(db.clone(), line)
                     };
                     match res {
-                        Ok(eval) => eval_tx.send(eval).await.ok(),
-                        Err(s) => notify_tx.send(s).await.ok(),
+                        Ok((chunk_name, lua_code)) => {
+                            eval(&lua, chunk_name, lua_code, &notify_tx).await
+                        }
+                        Err(s) => {
+                            notify_tx.send(s).await.ok();
+                        }
                     }
                 })
                 .await;
@@ -228,7 +245,8 @@ fn execute_verb(db: Arc<RwLock<Database>>, line: String) -> Result<(String, Stri
             player = toobj({:?}):unwrap()
             dobjstr = {:?}
             argstr = {:?}
-            return toobj({:?}):unwrap():{}({})
+            local this = toobj({:?}):unwrap()
+            this[{:?}](this, {})
         ",
             player_uuid.to_string(),
             dobjstr,
