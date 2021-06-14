@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 
 use mlua::prelude::*;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::command::{Command, ParsedCommand};
@@ -9,7 +10,7 @@ use crate::database::Object;
 
 use super::DatabaseProxy;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnyOrThis {
     Any,
     This,
@@ -35,7 +36,7 @@ impl<'lua> FromLua<'lua> for AnyOrThis {
 }
 
 // TODO generalize various permission objects once more are added
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VerbPermissions {
     pub r: bool,
     pub w: bool,
@@ -114,7 +115,7 @@ impl Display for VerbDesc {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct VerbInfo {
     owner: Uuid,
     perms: VerbPermissions,
@@ -169,7 +170,7 @@ impl<'lua> ToLua<'lua> for VerbInfo {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum VerbArgs {
     NoArgs,
     Direct { dobj: AnyOrThis },
@@ -222,11 +223,11 @@ impl<'lua> FromLua<'lua> for VerbArgs {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Verb {
     pub info: VerbInfo,
     pub args: VerbArgs,
-    pub code: String,
+    pub code: Vec<String>,
 }
 
 impl Verb {
@@ -235,7 +236,7 @@ impl Verb {
         Self {
             info,
             args,
-            code: String::new(),
+            code: vec![],
         }
     }
 
@@ -280,7 +281,7 @@ impl<'lua> ToLua<'lua> for &Verb {
         // TODO memoize
         let code = &format!(
             "function(this, ...)\nlocal args = {{...}}\n{}\nend",
-            self.code
+            self.code.join("\n")
         );
         lua.load(code)
             .set_name(&self.names()[0])?

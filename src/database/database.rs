@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{command::Command, database::Object};
 
 use super::{PropertyValue, Verb};
 
+#[derive(Serialize, Deserialize)]
 pub struct Database {
     objects: HashMap<Uuid, Object>,
     system_uuid: Uuid,

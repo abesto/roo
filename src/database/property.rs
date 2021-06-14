@@ -1,9 +1,10 @@
 use std::collections::HashSet;
 
 use mlua::prelude::*;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum PropertyValue {
     Boolean(bool),
     String(String),
@@ -94,7 +95,7 @@ impl<'lua> ToLua<'lua> for PropertyValue {
         }
     }
 }
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Property {
     pub value: PropertyValue,
 }

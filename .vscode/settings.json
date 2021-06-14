@@ -13,6 +13,7 @@
         "mlua",
         "preload",
         "retval",
+        "saveload",
         "stringio",
         "stringx",
         "tablex",

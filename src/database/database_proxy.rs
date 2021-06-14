@@ -5,6 +5,7 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
+use crate::saveload;
 use crate::server::CONNDATA;
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
@@ -219,10 +220,9 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method(
             "set_verb_code",
-            |lua, this, (uuid, desc, lines): (String, VerbDesc, Vec<String>)| {
+            |lua, this, (uuid, desc, code): (String, VerbDesc, Vec<String>)| {
                 // Verify the code is at least mostly sane
-                let code = lines.join("\n");
-                lua.load(&code)
+                lua.load(&code.join("\n"))
                     .set_name(&format!("validate_verb_code {}:{}", uuid, desc))?
                     .into_function()?;
 
@@ -280,13 +280,15 @@ impl LuaUserData for DatabaseProxy {
             |_lua, this, (uuid, desc): (String, VerbDesc)| {
                 let lock = this.db.read().unwrap();
                 let verb = this.get_verb(&lock, &uuid, &desc)?;
-                Ok(verb
-                    .code
-                    .lines()
-                    .map(|l| l.to_string())
-                    .collect::<Vec<String>>())
+                Ok(verb.code.clone())
             },
         );
+
+        methods.add_method("checkpoint", |_lua, this, ()| {
+            let lock = this.db.read().unwrap();
+            saveload::checkpoint(&lock, &saveload::SaveloadConfig::default())
+                .map_err(LuaError::external)
+        });
 
         methods.add_meta_method(LuaMetaMethod::Index, |lua, this, (uuid,): (String,)| {
             this.make_object_proxy(lua, &Self::parse_uuid(&uuid)?)

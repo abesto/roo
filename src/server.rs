@@ -6,10 +6,11 @@ use uuid::Uuid;
 
 use crate::command::Command;
 use crate::database::{Database, DatabaseProxy, Object, Verb, World};
+use crate::saveload::{self, SaveloadConfig};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::time::Duration;
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, oneshot};
 
 #[derive(Copy, Clone)]
 pub struct ConnData {
@@ -45,44 +46,96 @@ fn format_error(e: &LuaError) -> String {
 }
 
 #[tokio::main]
-pub async fn run_server(world: World) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run_server(world: World, saveload_config: SaveloadConfig) {
     tokio::task::LocalSet::new()
-        .run_until(server_main(world))
+        .run_until(server_main(world, saveload_config))
         .await
+        .unwrap();
 }
 
-pub async fn server_main(world: World) -> Result<(), Box<dyn std::error::Error>> {
+struct Cleanup {
+    db: Arc<RwLock<Database>>,
+    saveload_config: SaveloadConfig,
+}
+
+impl Drop for Cleanup {
+    fn drop(&mut self) {
+        println!("Shutting down, writing final DB checkpoint");
+        let lock = self.db.read().unwrap();
+        saveload::checkpoint(&lock, &self.saveload_config).unwrap();
+    }
+}
+
+pub async fn server_main(
+    mut world: World,
+    saveload_config: SaveloadConfig,
+) -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("127.0.0.1:8888").await?;
-    let txs: Arc<RwLock<HashMap<Uuid, mpsc::Sender<String>>>> =
+    let notify_txs: Arc<RwLock<HashMap<Uuid, mpsc::Sender<String>>>> =
         Arc::new(RwLock::new(HashMap::new()));
 
+    let db = world.db();
+    let system_uuid = db.read().unwrap().system_uuid().clone();
+
+    let _cleanup = Cleanup {
+        db: db.clone(),
+        saveload_config: saveload_config.clone(),
+    };
+    spawn_checkpointing_task(db.clone(), saveload_config);
+
+    let (shutdown_tx, mut shutdown_rx) = oneshot::channel::<()>();
+    tokio::spawn(async move {
+        tokio::signal::ctrl_c().await.unwrap();
+        shutdown_tx.send(()).unwrap();
+    });
+
     loop {
-        let (socket, _) = listener.accept().await?;
-        let our_txs = txs.clone();
-        let db = world.db();
-        let system_uuid = db.read().unwrap().system_uuid().clone();
-        let lua = CONNDATA.sync_scope(
-            ConnData {
-                player_object: system_uuid,
+        tokio::select! {
+            _ = &mut shutdown_rx => {
+                break Ok(())
             },
-            || world.lua(),
-        );
+            result = listener.accept() => {
+                let (socket, _) = result?;
+                let lua = CONNDATA.sync_scope(
+                    ConnData {
+                        player_object: system_uuid,
+                    },
+                    || world.lua(),
+                );
 
-        let (read, write) = socket.into_split();
+                let (read, write) = socket.into_split();
 
-        let uuid = do_login_command(system_uuid, &lua);
+                let uuid = do_login_command(system_uuid, &lua);
 
-        inject_notify_function(&lua, our_txs.clone());
-        let (notify_tx, notify_rx) = create_notify_channel(our_txs, uuid);
-        spawn_notify_task(notify_rx, write);
+                inject_notify_function(&lua, notify_txs.clone());
+                let (notify_tx, notify_rx) = create_notify_channel(notify_txs.clone(), uuid);
+                spawn_notify_task(notify_rx, write);
 
-        let (line_tx, line_rx) = async_channel::unbounded::<String>();
-        spawn_read_task(read, line_tx);
-        inject_read_function(&lua, line_rx.clone());
-        spawn_processing_task(lua, uuid, notify_tx.clone(), line_rx.clone(), db);
+                let (line_tx, line_rx) = async_channel::unbounded::<String>();
+                spawn_read_task(read, line_tx);
+                inject_read_function(&lua, line_rx.clone());
+                spawn_processing_task(lua, uuid, notify_tx.clone(), line_rx.clone(), db.clone());
+            }
+        }
     }
 
     // TODO notify players when a player in the same room disconnects
+}
+
+fn spawn_checkpointing_task(db: Arc<RwLock<Database>>, saveload_config: SaveloadConfig) {
+    tokio::task::spawn_local(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(100)).await;
+            println!("Starting periodic DB checkpointing");
+            {
+                let lock = db.read().unwrap();
+                match saveload::checkpoint(&lock, &saveload_config) {
+                    Err(e) => println!("Checkpointing failed: {}", e),
+                    Ok(f) => println!("Checkpointing done, saved to {}", f),
+                }
+            }
+        }
+    });
 }
 
 async fn eval(lua: &Lua, chunk_name: String, lua_code: String, notify_tx: &mpsc::Sender<String>) {

@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use mlua::prelude::*;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::command::Command;
@@ -9,7 +10,7 @@ use crate::database::Property;
 use super::PropertyValue;
 use super::Verb;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Object {
     properties: HashMap<String, Property>,
     verbs: Vec<Verb>,

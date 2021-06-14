@@ -1,31 +1,81 @@
 // TODO maybe switch to parking_lot::Mutex
-use std::sync::{Arc, RwLock};
+use std::{
+    fs::File,
+    path::PathBuf,
+    sync::{Arc, RwLock},
+};
 
 use mlua::prelude::*;
 use uuid::Uuid;
 
-use crate::database::{Database, DatabaseProxy};
-use crate::server::CONNDATA;
+use crate::{
+    database::{Database, DatabaseProxy},
+    saveload::SaveloadConfig,
+};
 
 pub struct World {
     db: Arc<RwLock<Database>>,
     system_uuid: Uuid,
+    needs_minimal_core: bool,
 }
 
 impl World {
     #[must_use]
-    pub fn new() -> Self {
-        let db = Database::new();
+    pub fn from_saveload_config(saveload_config: &SaveloadConfig) -> Self {
+        let (db, needs_minimal_core) = match Self::load_db_from_file(saveload_config.current_path())
+        {
+            Some(db) => {
+                println!("Database loading succeeded");
+                (db, false)
+            }
+            None => (Database::new(), true),
+        };
+
+        Self::from_database(db, needs_minimal_core)
+    }
+
+    #[must_use]
+    pub fn from_database(db: Database, needs_minimal_core: bool) -> Self {
         let system_uuid = db.system_uuid().clone();
         let db_lock = Arc::new(RwLock::new(db));
 
         Self {
             db: db_lock,
             system_uuid,
+            needs_minimal_core,
         }
     }
 
-    pub fn lua(&self) -> Lua {
+    #[allow(dead_code)]
+    #[must_use]
+    pub fn new() -> Self {
+        Self::from_database(Database::new(), true)
+    }
+
+    fn load_db_from_file(path: PathBuf) -> Option<Database> {
+        if path.exists() {
+            println!("Trying to load DB from {:?}", &path);
+            let file = match File::open(&path) {
+                Ok(f) => f,
+                Err(e) => {
+                    println!("Failed to open: {}", e);
+                    return None;
+                }
+            };
+
+            match ron::de::from_reader(file) {
+                Ok(db) => Some(db),
+                Err(e) => {
+                    println!("Failed to load DB: {}", e);
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn lua(&mut self) -> Lua {
         let lua = unsafe { Lua::unsafe_new() };
 
         // globals
@@ -212,6 +262,13 @@ impl World {
             ("core", include_str!("../lua/core.lua")),
             ("webclient", include_str!("../lua/webclient.lua")),
         ] {
+            if module == "core" {
+                if !self.needs_minimal_core {
+                    continue;
+                } else {
+                    self.needs_minimal_core = false;
+                }
+            }
             lua.load(module_code)
                 .set_name(module)
                 .unwrap()
@@ -230,6 +287,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::server::CONNDATA;
     use crate::{database::PropertyValue, server::ConnData};
 
     struct Ctx {
@@ -239,7 +297,7 @@ mod tests {
     }
 
     fn with_context(f: fn(Ctx)) {
-        let world = World::new();
+        let mut world = World::new();
         let db = world.db();
 
         let player_object = {
@@ -313,7 +371,9 @@ mod tests {
     fn starting_room() {
         with_context(
             |Ctx {
-                 lua: lua1, world, ..
+                 lua: lua1,
+                 mut world,
+                 ..
              }| {
                 let lua2 = world.lua();
 
