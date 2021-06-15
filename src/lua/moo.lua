@@ -154,6 +154,11 @@ function verb_args(object, desc)
     return Ok({})
 end
 
+---@return Result<nil, ?>
+function recycle(object)
+    return touuid(object):map_method(db, 'recycle')
+end
+
 function read()
     local line = _server_read()
     while line == nil do

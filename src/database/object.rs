@@ -39,6 +39,10 @@ impl Object {
             Property::from(HashSet::<Uuid>::new()),
         );
         o.properties.insert(
+            "children".to_string(),
+            Property::from(HashSet::<Uuid>::new()),
+        );
+        o.properties.insert(
             "aliases".to_string(),
             Property::from(PropertyValue::List(vec![])),
         );
@@ -113,8 +117,16 @@ impl Object {
     }
 
     pub fn remove_child(&mut self, uuid: &Uuid) {
-        if let Some(PropertyValue::Uuids(uuids)) = self.get_property_mut("child") {
+        if let Some(PropertyValue::Uuids(uuids)) = self.get_property_mut("children") {
             uuids.remove(uuid);
+        } else {
+            unreachable!(".children is always set to a HashSet<Uuid>")
+        }
+    }
+
+    pub fn children(&self) -> &HashSet<Uuid> {
+        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property("children") {
+            &uuids
         } else {
             unreachable!(".children is always set to a HashSet<Uuid>")
         }

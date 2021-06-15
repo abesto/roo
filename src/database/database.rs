@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::TryInto};
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -56,6 +56,15 @@ impl Database {
         &self.system_uuid
     }
 
+    pub fn nothing_uuid(&self) -> &Uuid {
+        self.get(self.system_uuid())
+            .unwrap()
+            .get_property("nothing")
+            .unwrap()
+            .try_into()
+            .unwrap()
+    }
+
     pub fn get(&self, uuid: &Uuid) -> Result<&Object, String> {
         self.objects
             .get(uuid)
@@ -110,9 +119,8 @@ impl Database {
 
     pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), String> {
         // Remove from contents of the old location, if any
-        if let Some(PropertyValue::Uuid(old_location)) =
-            self.get_property(what_uuid, "location")?.cloned()
-        {
+        if let Some(old_location) = self.get(what_uuid)?.location().cloned() {
+            println!("remove_content({}, {})", old_location, what_uuid);
             self.get_mut(&old_location)?.remove_content(what_uuid);
         }
 
@@ -122,6 +130,24 @@ impl Database {
 
         // Add to contents of new location
         self.get_mut(to_uuid)?.insert_content(*what_uuid);
+
+        Ok(())
+    }
+
+    pub fn delete(&mut self, what: &Uuid) -> Result<(), String> {
+        if let Some(location_uuid) = self.get(what)?.location().cloned() {
+            if let Ok(location) = self.get_mut(&location_uuid) {
+                location.remove_content(what);
+            }
+        }
+
+        if let Some(parent_uuid) = self.get(what)?.parent().cloned() {
+            if let Ok(parent) = self.get_mut(&parent_uuid) {
+                parent.remove_child(what);
+            }
+        }
+
+        self.objects.remove(what);
 
         Ok(())
     }

@@ -1,35 +1,18 @@
 (
     objects: {
-        "f01e9cc0-40ca-4f66-9e6f-a7bf9cddab31": (
+        "e86571c3-7988-4f31-85c9-b73bfc2d1a5c": (
             properties: {
-                "description": (
-                    value: String("This is a placeholder parent for all the $..._utils packages, to more easily find them and manipulate them. At present this object defines no useful verbs or properties. (Filfre.)"),
+                "location": (
+                    value: UuidOpt(None),
                 ),
                 "name": (
                     value: String(""),
                 ),
-                "aliases": (
-                    value: List([
-                        String("Webclient Package"),
-                    ]),
+                "description": (
+                    value: String("This is a placeholder parent for all the $..._utils packages, to more easily find them and manipulate them. At present this object defines no useful verbs or properties. (Filfre.)"),
                 ),
                 "uuid": (
-                    value: Uuid("f01e9cc0-40ca-4f66-9e6f-a7bf9cddab31"),
-                ),
-                "key": (
-                    value: Integer(0),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "contents": (
-                    value: Uuids([]),
+                    value: Uuid("e86571c3-7988-4f31-85c9-b73bfc2d1a5c"),
                 ),
                 "object_size": (
                     value: List([
@@ -37,11 +20,31 @@
                         Integer(0),
                     ]),
                 ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "key": (
+                    value: Integer(0),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "aliases": (
+                    value: List([
+                        String("Webclient Package"),
+                    ]),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
             },
             verbs: [
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -73,7 +76,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -107,7 +110,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -177,7 +180,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -198,7 +201,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -238,7 +241,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -263,60 +266,1525 @@
                 ),
             ],
         ),
-        "cde69fdd-30fc-4c9e-a530-ffd3f0306ca3": (
+        "c9fbc52e-cfc8-47d9-baa4-63de38f3f740": (
             properties: {
-                "parent": (
-                    value: UuidOpt(Some("0df12956-1bfa-46b4-83f9-8070ce6433b1")),
-                ),
                 "name": (
-                    value: String("guest"),
+                    value: String(""),
                 ),
-                "owner": (
-                    value: Uuid("cde69fdd-30fc-4c9e-a530-ffd3f0306ca3"),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "contents": (
+                "children": (
                     value: Uuids([]),
                 ),
-                "location": (
-                    value: UuidOpt(Some("c5e92a53-4070-4b17-92ea-ae30554ec721")),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "description": (
+                    value: String("This is a placeholder parent for all the $..._utils packages, to more easily find them and manipulate them. At present this object defines no useful verbs or properties. (Filfre.)"),
                 ),
                 "uuid": (
-                    value: Uuid("cde69fdd-30fc-4c9e-a530-ffd3f0306ca3"),
-                ),
-            },
-            verbs: [],
-        ),
-        "0df12956-1bfa-46b4-83f9-8070ce6433b1": (
-            properties: {
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("1dfa93a3-611f-46f8-bc6c-2ed41d3bb4f5")),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
+                    value: Uuid("c9fbc52e-cfc8-47d9-baa4-63de38f3f740"),
                 ),
                 "location": (
                     value: UuidOpt(None),
                 ),
-                "name": (
-                    value: String("generic player"),
+                "contents": (
+                    value: Uuids([]),
                 ),
-                "uuid": (
-                    value: Uuid("0df12956-1bfa-46b4-83f9-8070ce6433b1"),
+                "aliases": (
+                    value: List([
+                        String("Webclient Package"),
+                    ]),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "key": (
+                    value: Integer(0),
+                ),
+                "object_size": (
+                    value: List([
+                        Integer(0),
+                        Integer(0),
+                    ]),
                 ),
             },
             verbs: [
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "local_editing_info",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "local object, vname, code = table.unpack(args)",
+                        "local vargs",
+                        "if is_type(vname, \"table\") then",
+                        "  vargs = \" %s %s %s\" % {vname[2], S.code_utils:short_prep(vname[3]), vname[4]}",
+                        "  vname = vname[1]",
+                        "else",
+                        "  vargs = \"\"",
+                        "end",
+                        "local name = \"%s:%s\" % {object.name, vname};",
+                        "-- TODO swap to full @program invocation once we have proper dobj, prep, iobj support",
+                        "-- local upload = \"@program %s:%s %s\" % {object.uuid, vname, vargs}",
+                        "local upload = \"@program %s:%s\" % {object.uuid, vname}",
+                        "return {name, code, upload};",
+                        "",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "invoke",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "-- :invoke(...)",
+                        "-- to find out what arguments this verb expects,",
+                        "-- see this editor\'s parse_invoke verb.",
+                        "local new = args[1]",
+                        "local spec = this:parse_invoke(unpack(args))",
+                        "if type(spec) == \"table\" and not is_error(spec) then",
+                        "  local info = this:local_editing_info(unpack(spec))",
+                        "  -- TODO impl has_verb, then uncomment",
+                        "  --if S.object_utils:has_verb(this, \"local_editing_info\") and info then",
+                        "    player:tell(\"Invoking local editor\")",
+                        "    this:invoke_local_editor(unpack(info))",
+                        "  --else",
+                        "    --player:tell(\"This is for editing in a web client, if you don\'t wanna do that, use a different verb.\");",
+                        "  --end",
+                        "end",
+                        "",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "parse_invoke",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "-- :parse_invoke(string, v)",
+                        "-- string is the commandline string to parse to obtain the obj:verb to edit",
+                        "--  v is the actual command verb used to invoke the editor",
+                        "-- => {object, verbname, verb_code} or error",
+                        "",
+                        "local vref = S.string_utils:words(args[1])",
+                        "local spec = S.code_utils:parse_verbref(vref[1])",
+                        "if not vref or spec == 0 then",
+                        "  player:tell(\"Usage: %s %s\" % {args[2], \" object:verb\"})",
+                        "  return",
+                        "end",
+                        "local argspec = List(vref):slice(2)",
+                        "if #argspec > 0 then",
+                        "  local pas = S.code_utils:parse_argspec(unpack(argspec))",
+                        "  if type(pas) == \"table\" then",
+                        "    if pas[2] and #pas[2] > 0 then",
+                        "      player:tell(\'I don\\\'t understand \"%s\"\' % {S.string_utils:from_list(pas[2], \" \")})",
+                        "      return",
+                        "    end",
+                        "    argspec = pl.List(pas[1]):extend{\"none\", \"none\"}:slice(1, 3)",
+                        "    argspec[2] = S.code_utils:full_prep(argspec[2]) or argspec[2]",
+                        "  else",
+                        "    player:tell(toliteral(pas))",
+                        "    return",
+                        "  end",
+                        "end",
+                        "player:tell(toliteral(spec))",
+                        "local object = player:my_match_object(spec[1], S.verb_editor:get_room(player))",
+                        "if not S.command_utils:object_match_failed(object, spec[1]) then",
+                        "  local vname = spec[2]",
+                        "  local vnum = S.code_utils:find_verb_named(object, vname)",
+                        "  if #argspec > 0 then",
+                        "    -- TODO may need deep table comparison here",
+                        "    while vnum and (object:verb_args(vnum) ~= argspec) do",
+                        "      vnum = S.code_utils:find_verb_named(object, vname, vnum + 1)",
+                        "    end",
+                        "  end",
+                        "  local code",
+                        "  if vnum ~= nil then",
+                        "    code = this:fetch_verb_code(object, vnum)",
+                        "  else",
+                        "    code = E_VERBNF",
+                        "  end",
+                        "  if is_error(code) then",
+                        "    player:tell((code ~= E_VERBNF) and code or \"That object does not define that verb\", argspec and \" with those args.\" or \".\")",
+                        "    return code",
+                        "  else",
+                        "    return {object, argspec and {vname, table.unpack(argspec)} or vname, code}",
+                        "  end",
+                        "end",
+                        "return 0",
+                        "",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "fetch_verb_code",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "set_task_perms(player)",
+                        "return verb_code(args[1], args[2], not player:edit_option(\"no_parens\")):unwrap_or(\"\")",
+                        "",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "invoke_local_editor",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "-- :invoke_local_editor(name, text, upload)",
+                        "-- Spits out the magic text that invokes the local editor in the player\'s client.\"",
+                        "-- NAME is a good human-readable name for the local editor to use for this particular piece of text.\"",
+                        "-- TEXT is a string or list of strings, the initial body of the text being edited.\"",
+                        "-- UPLOAD, a string, is a MOO command that the local editor can use to save the text when the user is done editing.  The local editor is going to send that command on a line by itself, followed by the new text lines, followed by a line containing only `.\'.  The UPLOAD command should therefore call $command_utils:read_lines() to get the new text as a list of strings.\"",
+                        "",
+                        "-- TODO re-enable caller checking once caller is implemented",
+                        "--if caller ~= this then",
+                        "--   return",
+                        "--end",
+                        "",
+                        "local name, text, upload = table.unpack(args)",
+                        "assert_string(1, name)",
+                        "if is_type(text, \"string\") then",
+                        "  text = {text}",
+                        "end",
+                        "this:local_instruction(name, upload)",
+                        "-- :dump_lines() takes care of the final `.\' ...",
+                        "for i, line in ipairs(S.command_utils:dump_lines(text)) do",
+                        "  notify(player, line)",
+                        "end",
+                        "",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "local_instruction",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "local label, upload = table.unpack(args)",
+                        "if not upload then",
+                        "    upload = \"none\"",
+                        "end",
+                        "local msg = \"#$# edit name: %s upload: %s\" % {label, upload}",
+                        "player:tell(msg)",
+                        "",
+                    ],
+                ),
+            ],
+        ),
+        "73b4884c-c99f-44ed-bf37-214a0aefd2a8": (
+            properties: {
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "uuid": (
+                    value: Uuid("73b4884c-c99f-44ed-bf37-214a0aefd2a8"),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "name": (
+                    value: String(""),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "has_verb",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        local object, verb = table.unpack(args)",
+                        "        return db:has_verb_with_name(object.uuid, verb)",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "2c62a282-99b2-4ed7-b04c-2c5af37191a9": (
+            properties: {
+                "uuid": (
+                    value: Uuid("2c62a282-99b2-4ed7-b04c-2c5af37191a9"),
+                ),
+                "name": (
+                    value: String("S.failed_match"),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "parent": (
+                    value: UuidOpt(None),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "owner": (
+                    value: UuidOpt(None),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+            },
+            verbs: [],
+        ),
+        "1546c4fe-090d-4c7f-8690-a24e3761f76a": (
+            properties: {
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "webclient": (
+                    value: Uuid("e86571c3-7988-4f31-85c9-b73bfc2d1a5c"),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "minimal_core_loaded": (
+                    value: Boolean(true),
+                ),
+                "verb_editor": (
+                    value: Uuid("b7aae523-9773-46dd-bac1-33149c2e9242"),
+                ),
+                "Root": (
+                    value: Uuid("41234f1c-7b6f-47ea-aedc-32ade95f102f"),
+                ),
+                "name": (
+                    value: String(""),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "object_utils": (
+                    value: Uuid("73b4884c-c99f-44ed-bf37-214a0aefd2a8"),
+                ),
+                "Room": (
+                    value: Uuid("c6afcc46-a5a4-4af4-8008-be4d4447873c"),
+                ),
+                "command_utils": (
+                    value: Uuid("334b5245-6601-428a-8b8c-3b3c11643caa"),
+                ),
+                "uuid": (
+                    value: Uuid("1546c4fe-090d-4c7f-8690-a24e3761f76a"),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "parent": (
+                    value: UuidOpt(None),
+                ),
+                "code_utils": (
+                    value: Uuid("ca619fbf-f8e2-4953-8e92-ab1cbeb18605"),
+                ),
+                "owner": (
+                    value: UuidOpt(None),
+                ),
+                "ambiguous_match": (
+                    value: Uuid("6d22d743-30dc-4f0e-9216-6cda91ff6fc3"),
+                ),
+                "nothing": (
+                    value: Uuid("107bc370-0416-4aff-b6d8-8efcdae0acb7"),
+                ),
+                "failed_match": (
+                    value: Uuid("2c62a282-99b2-4ed7-b04c-2c5af37191a9"),
+                ),
+                "Player": (
+                    value: Uuid("a8bdddb1-0ee8-45ba-ac22-e365c4752edf"),
+                ),
+                "starting_room": (
+                    value: Uuid("463f674c-86f0-4636-b035-d2808abf242d"),
+                ),
+                "string_utils": (
+                    value: Uuid("60f31cca-a361-4be4-8f80-d46fadc53695"),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: false,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "do_login_command",
+                        ],
+                    ),
+                    args: NoArgs,
+                    code: [
+                        "        player = create(S.Player):unwrap()",
+                        "        player.owner = player",
+                        "        player:move(S.starting_room)",
+                        "        player.name = \"guest\"",
+                        "",
+                        "        return player.uuid",
+                        "        ",
+                    ],
+                ),
+            ],
+        ),
+        "4dea5a0d-151f-4790-8611-cad372d16843": (
+            properties: {
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("a8bdddb1-0ee8-45ba-ac22-e365c4752edf")),
+                ),
+                "name": (
+                    value: String("guest"),
+                ),
+                "uuid": (
+                    value: Uuid("4dea5a0d-151f-4790-8611-cad372d16843"),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "location": (
+                    value: UuidOpt(Some("463f674c-86f0-4636-b035-d2808abf242d")),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "owner": (
+                    value: Uuid("4dea5a0d-151f-4790-8611-cad372d16843"),
+                ),
+            },
+            verbs: [],
+        ),
+        "41234f1c-7b6f-47ea-aedc-32ade95f102f": (
+            properties: {
+                "uuid": (
+                    value: Uuid("41234f1c-7b6f-47ea-aedc-32ade95f102f"),
+                ),
+                "name": (
+                    value: String("root object"),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "match",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "        local c = this.contents",
+                        "        return S.string_utils:match(args[1], c, \"name\", c, \"aliases\")",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "get_name",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        return this.name",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "title",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        local name = this:get_name()",
+                        "        if is_type(name, \"string\") and #name > 0 then",
+                        "            return name",
+                        "        end",
+                        "        return this.uuid",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "tell",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        this:notify(tostr(args))",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "ca619fbf-f8e2-4953-8e92-ab1cbeb18605": (
+            properties: {
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "name": (
+                    value: String(""),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "uuid": (
+                    value: Uuid("ca619fbf-f8e2-4953-8e92-ab1cbeb18605"),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "short_prep",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        return args[1]",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "full_prep",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        return nil",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "toobj",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        -- TODO this may need some extra logic",
+                        "        return toobj(args[1]):unwrap_unsafe()",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "parse_verbref",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "        -- S.code_utils:parse_verbref(string)",
+                        "        -- Parses string as a MOO-code verb reference, returning {object, verb-name-string} for a successful parse and false otherwise.  It always returns the right object-string to pass to, for example, this-room:match_object().",
+                        "        local s = args[1]",
+                        "        local colon = string.find(s, \":\", 1, true)",
+                        "        if colon then",
+                        "            local object = string.sub(s, 1, colon - 1)",
+                        "            local verbname = string.sub(s, colon + 1)",
+                        "            if not (object and verbname) then",
+                        "                return 0",
+                        "            end",
+                        "            if string.sub(object, 0, 2) == \"S.\" then",
+                        "                local pname = string.sub(object, 3)",
+                        "                local p = S[pname]",
+                        "                if not is_type(p, ObjectProxy) then",
+                        "                    return 0",
+                        "                end",
+                        "                object = p.uuid",
+                        "            end",
+                        "            return {object, verbname}",
+                        "        else",
+                        "            return 0",
+                        "        end",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "parse_argspec",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "-- :parse_arg_spec(@args)",
+                        "--  attempts to parse the given sequence of args into a verb_arg specification",
+                        "--  returns {verb_args,remaining_args} if successful.",
+                        "--  e.g., :parse_arg_spec(\\\"this\\\",\\\"in\\\",\\\"front\\\",\\\"of\\\",\\\"any\\\",\\\"foo\\\"..)",
+                        "--           => {{\\\"this\\\",\\\"in front of\\\",\\\"any\\\"},{\\\"foo\\\"..}}",
+                        "--  returns a string error message if parsing fails.",
+                        "local nargs = #args",
+                        "local args = List(args)",
+                        "if nargs < 1 then",
+                        "  return {{}, {}}",
+                        "end",
+                        "",
+                        "local ds = args[1]",
+                        "if args[1] == \"tnt\" then",
+                        "  return {{\"this\", \"none\", \"this\"}, args:slice(2)}",
+                        "elseif not List{\"this\", \"any\", \"none\"}:contains(ds) then",
+                        "  return \'\"%s\" is not a valid direct object specifier.\' % {ds}",
+                        "elseif nargs < 2 or List{\"none\", \"any\"}:contains(args[2]) then",
+                        "  local verbargs = args:slice(1, min(3, nargs))",
+                        "  local rest = args:slice(4, nargs);",
+                        "end",
+                        "",
+                        "local gp = List(S.code_utils:get_prep(unpack(args:slice(2, nargs))))",
+                        "if not gp[1] then",
+                        "  return \'\"%s\" is not a valid preposition.\' % {args[2]}",
+                        "else",
+                        "  local nargs = #gp",
+                        "  local verbargs = List{ds}:extend(gp:slice(1, min(2, nargs)))",
+                        "  rest = gp:slice(3, nargs)",
+                        "end",
+                        "",
+                        "if #verbargs >= 3 and not List{\"this\", \"any\", \"none\"}:contains(verbargs[3]) then",
+                        "  return \'\"%s\" is not a valid indirect object specifier.\' % {verbargs[3]}",
+                        "end",
+                        "return {verbargs, rest};",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "find_verb_named",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        -- :find_verb_named(object,name[,n])",
+                        "        --  returns the *number* of the first verb on object matching the given name.",
+                        "        --  optional argument n, if given, starts the search with verb n,",
+                        "        --  causing the first n verbs (1..n-1) to be ignored.",
+                        "        --  nil is returned if no verb is found.",
+                        "        --  This routine does not find inherited verbs.",
+                        "        local object, name, start = unpack(args)",
+                        "        assert_object(1, object)",
+                        "        assert_string(2, name)",
+                        "",
+                        "        if start == nil then",
+                        "            start = 1",
+                        "        end",
+                        "        assert_arg(3, start, \"number\")",
+                        "",
+                        "        return verbs(object):map(function (object_verbs)",
+                        "            for i = start, #object_verbs do",
+                        "                local verbinfo = verb_info(object, i):unwrap()",
+                        "                if this:verbname_match(verbinfo[3], name) then",
+                        "                    return i",
+                        "                end",
+                        "            end",
+                        "        end):unwrap_or(nil)",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "verbname_match",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        local candidates, name = table.unpack(args)",
+                        "        assert_arg(1, candidates, \'table\', nil, is_indexable)",
+                        "        assert_string(2, name)",
+                        "        return List(candidates):contains(name)",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "463f674c-86f0-4636-b035-d2808abf242d": (
+            properties: {
+                "parent": (
+                    value: UuidOpt(Some("c6afcc46-a5a4-4af4-8008-be4d4447873c")),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "uuid": (
+                    value: Uuid("463f674c-86f0-4636-b035-d2808abf242d"),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "name": (
+                    value: String("The Void"),
+                ),
+                "description": (
+                    value: String("There is nothing, and you are in it."),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "contents": (
+                    value: Uuids([
+                        "4dea5a0d-151f-4790-8611-cad372d16843",
+                    ]),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "wiggle",
+                        ],
+                    ),
+                    args: NoArgs,
+                    code: [
+                        "        this:announce_all(\"%s wiggles\" % {this.name})",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "fea81c18-1188-431d-806f-2a44624b657e": (
+            properties: {
+                "uuid": (
+                    value: Uuid("fea81c18-1188-431d-806f-2a44624b657e"),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("a8bdddb1-0ee8-45ba-ac22-e365c4752edf")),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "name": (
+                    value: String("guest"),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "location": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "owner": (
+                    value: Uuid("fea81c18-1188-431d-806f-2a44624b657e"),
+                ),
+            },
+            verbs: [],
+        ),
+        "c6afcc46-a5a4-4af4-8008-be4d4447873c": (
+            properties: {
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "uuid": (
+                    value: Uuid("c6afcc46-a5a4-4af4-8008-be4d4447873c"),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("41234f1c-7b6f-47ea-aedc-32ade95f102f")),
+                ),
+                "description": (
+                    value: String("A nondescript room"),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "name": (
+                    value: String("Prototype:Room"),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "announce",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        for i, target in ipairs(this.contents:without(player)) do",
+                        "            pcall(target.tell, target, unpack(args))",
+                        "        end",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "announce_all",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        for i, target in ipairs(this.contents) do",
+                        "            pcall(target.tell, target, unpack(args))",
+                        "        end",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "say",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        pcall(function()",
+                        "            -- TODO player should really be caller here once implemented",
+                        "            player:tell(\'You say, \"%s\"\' % {argstr})",
+                        "            this:announce(\'$name says, \"$msg\"\' % {name = player.name, msg = argstr})",
+                        "        end)",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "emote",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        -- TODO player should really be caller here once implemented",
+                        "        this:announce_all(\'%s %s\' % {player.name, argstr})",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "describe",
+                        ],
+                    ),
+                    args: NoArgs,
+                    code: [
+                        "        local name = this:title()",
+                        "        local description = this.description or \"You see nothing special.\"",
+                        "        local msg = \'%s\\n%s\' % {name, description}",
+                        "",
+                        "        local seen = this.contents:without(player):map(_1.name)",
+                        "        if #seen > 0 then",
+                        "            msg = msg .. \"\\nYou see here: \" .. table.concat(seen, \", \")",
+                        "        end",
+                        "",
+                        "        return msg",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: true,
+                        ),
+                        names: [
+                            "look",
+                        ],
+                    ),
+                    args: NoArgs,
+                    code: [
+                        "        player:notify(this:describe())",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "334b5245-6601-428a-8b8c-3b3c11643caa": (
+            properties: {
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "uuid": (
+                    value: Uuid("334b5245-6601-428a-8b8c-3b3c11643caa"),
+                ),
+                "name": (
+                    value: String(""),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "object_match_failed",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        -- Usage: object_match_failed(object, string)",
+                        "        -- Prints a message if string does not match object.  Generally used after object is derived from a :match_object(string).",
+                        "        local match_result, string = table.unpack(args)",
+                        "        assert_class_of(1, match_result, ObjectProxy)",
+                        "        assert_string(2, string)",
+                        "",
+                        "        -- TODO: tell = $perm_utils:controls(caller_perms(), player) ? \"notify\" | \"tell\";",
+                        "        local tell = bind1(player.tell, player)",
+                        "        if is_uuid(string) and S.code_utils:toobj(string) ~= E_TYPE then",
+                        "          -- ...avoid the `I don\'t know which `#-2\' you mean\' message...",
+                        "          if not valid(match_result) then",
+                        "            tell(\"%s does not exist.\" % {string})",
+                        "          end",
+                        "          return not valid(match_result)",
+                        "        elseif match_result == S.nothing then",
+                        "          tell(\"You must give the name of some object.\")",
+                        "        elseif match_result == S.failed_match then",
+                        "          tell(\'I see no \"%s\" here.\' % {string})",
+                        "        elseif match_result == S.ambiguous_match then",
+                        "          tell(\'I don\\\'t know which \"%s\" you mean.\' % {string})",
+                        "        elseif not valid(match_result) then",
+                        "          tell(\"%s does not exist.\" % {match_result})",
+                        "        else",
+                        "          return false",
+                        "        end",
+                        "        return true",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "dump_lines",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        -- :dump_lines(text) => text `.\'-quoted for :read_lines()",
+                        "        --  text is assumed to be a list of strings",
+                        "        --  Returns a corresponding list of strings which, when read via :read_lines, ",
+                        "        --  produces the original list of strings (essentially, any strings beginning ",
+                        "        --  with a period \".\" have the period doubled).",
+                        "        --  The list returned includes a final \".\"",
+                        "        -- TODO original implementation has some magic I don\'t understand, review that",
+                        "        local text = args[1]",
+                        "        return pl.List(text):map(function (line)",
+                        "            if string.sub(line, 1, 1) == \".\" then",
+                        "                return \".\" .. line",
+                        "            else",
+                        "                return line",
+                        "            end",
+                        "        end):append(\".\")",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "60f31cca-a361-4be4-8f80-d46fadc53695": (
+            properties: {
+                "uuid": (
+                    value: Uuid("60f31cca-a361-4be4-8f80-d46fadc53695"),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "name": (
+                    value: String(""),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "words",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        return pl.stringx.split(args[1])",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "from_list",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        local list, delimiter = table.unpack(args)",
+                        "        return table.concat(list, delimiter)",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "match_object",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "        -- :match_object(string,location[,someone])",
+                        "        -- Returns the object matching the given string for someone, on the assumption that s/he is in the given location.  `someone\' defaults to player.",
+                        "        -- This first tries :literal_object(string), \\\"me\\\"=>someone,\\\"here\\\"=>location, then player:match(string) and finally location:match(string) if location is valid.",
+                        "        -- This is the default algorithm for use by room :match_object() and player :my_match_object() verbs.  Player verbs that are calling this directly should probably be calling :my_match_object instead.",
+                        "        local string, here, who = table.unpack(args)",
+                        "        if who == nil then",
+                        "            who = player",
+                        "        end",
+                        "        pl.utils.assert_string(1, string)",
+                        "        assert_class_of(2, here, ObjectProxy)",
+                        "        assert_class_of(3, who, ObjectProxy)",
+                        "",
+                        "        local object = this:literal_object(string)",
+                        "        if S.failed_match ~= object then",
+                        "            return object",
+                        "        elseif string == \"me\" then",
+                        "            return who",
+                        "        elseif string == \"here\" then",
+                        "            return here",
+                        "        end",
+                        "",
+                        "        local pobject = who:match(string)",
+                        "        if valid(pobject) and List{pobject.name}:extend(pobject.aliases):contains(string) or not valid(here) then",
+                        "            -- ...exact match in player, or room is bogus...",
+                        "            return pobject",
+                        "        end",
+                        "",
+                        "        local hobject = here:match(string)",
+                        "        if valid(hobject) and List{hobject.name}:extend(hobject.aliases):contains(string) or pobject == S.failed_match then",
+                        "            -- ...exact match in room, or match in player failed completely...",
+                        "            return hobject",
+                        "        else",
+                        "            return pobject",
+                        "        end",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "match",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "    -- Each obj-list should be a list of objects or a single object, which is treated as if it were a list of that object.  Each prop-name should be string naming a property on every object in the corresponding obj-list.  The value of that property in each case should be either a string or a list of strings.",
+                        "    -- The argument string is matched against all of the strings in the property values.",
+                        "    -- If it exactly matches exactly one of them, the object containing that property is returned.  If it exactly matches more than one of them, $ambiguous_match is returned.",
+                        "    -- If there are no exact matches, then partial matches are considered, ones in which the given string is a prefix of some property string.  Again, if exactly one match is found, the object with that property is returned, and if there is more than one match, $ambiguous_match is returned.",
+                        "    -- Finally, if there are no exact or partial matches, then $failed_match is returned.",
+                        "    local subject = args[1]",
+                        "    assert_class_of(0, this, ObjectProxy)",
+                        "    assert_string(1, subject)",
+                        "    ",
+                        "    if subject == \"\" then",
+                        "        return S.nothing",
+                        "    end",
+                        "    local no_exact_match = nil",
+                        "    local no_partial_match = nil",
+                        "    for i = 1, #args / 2 do",
+                        "        local prop_name = args[2 * i + 1]",
+                        "        local olist = args[2 * i]",
+                        "        for j, object in ipairs(is_indexable(olist) and olist or {olist}) do",
+                        "            if valid(object) then",
+                        "                local str_list = object[prop_name]",
+                        "                if is_indexable(str_list) and not List:class_of(str_list) then",
+                        "                    str_list = List(str_list)",
+                        "                elseif not str_list then",
+                        "                    str_list = List()",
+                        "                end",
+                        "                -- TODO handle E_PERM, E_PROPNF => {}",
+                        "                if not is_indexable(str_list) then",
+                        "                    str_list = List{str_list}",
+                        "                end",
+                        "                if str_list:contains(subject) then",
+                        "                    if no_exact_match == nil then",
+                        "                        no_exact_match = object",
+                        "                    elseif no_exact_match ~= object then",
+                        "                        return S.ambiguous_match",
+                        "                    end",
+                        "                else",
+                        "                    for i, string in ipairs(str_list) do",
+                        "                        if string.find(string, subject, 1, true) ~= 1 then",
+                        "                        elseif no_partial_match == nil then",
+                        "                            no_partial_match = object",
+                        "                        elseif no_partial_match ~= object then",
+                        "                            no_partial_match = S.ambiguous_match",
+                        "                        end",
+                        "                    end",
+                        "                end",
+                        "            end",
+                        "        end",
+                        "    end",
+                        "    return no_exact_match or (no_partial_match or S.failed_match)",
+                        "    ",
+                    ],
+                ),
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "literal_object",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: This,
+                    ),
+                    code: [
+                        "    -- Matches args[1] against literal objects: #xxxxx, $variables, *mailing-lists, and username.  Returns the object if successful, $failed_match else.",
+                        "    -- TODO this is currently a partial implementation",
+                        "    local string = args[1]",
+                        "    if #string == 0 then",
+                        "      return S.nothing",
+                        "    end",
+                        "    local object = S.code_utils:toobj(string)",
+                        "    if object ~= nil and not is_error(object) then",
+                        "      return object;",
+                        "    end",
+                        "    return S.failed_match;",
+                        "    -- elseif (string[1] == \"~\")",
+                        "    --   return this:match_player(string[2..$], #0);",
+                        "    -- elseif (string[1] == \"*\" && length(string) > 1)",
+                        "    --   return $mail_agent:match_recipient(string);",
+                        "    -- elseif (string[1] == \"$\")",
+                        "    --   string[1..1] = \"\";",
+                        "    --   object = #0;",
+                        "    --   while (pn = string[1..(dot = index(string, \".\")) ? dot - 1 | $])",
+                        "    --     if (!$object_utils:has_property(object, pn) || typeof(object = object.(pn)) != OBJ)",
+                        "    --       return $failed_match;",
+                        "    --     endif",
+                        "    --     string = string[length(pn) + 2..$];",
+                        "    --   endwhile",
+                        "    --   if (object == #0 || typeof(object) == ERR)",
+                        "    --     return $failed_match;",
+                        "    --   else",
+                        "    --     return object;",
+                        "    --   endif",
+                        "    -- else",
+                        "    --   return $failed_match;",
+                        "    -- endif",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "b7aae523-9773-46dd-bac1-33149c2e9242": (
+            properties: {
+                "aliases": (
+                    value: List([]),
+                ),
+                "name": (
+                    value: String(""),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "uuid": (
+                    value: Uuid("b7aae523-9773-46dd-bac1-33149c2e9242"),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("107bc370-0416-4aff-b6d8-8efcdae0acb7")),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
+                        perms: (
+                            r: true,
+                            w: false,
+                            x: false,
+                        ),
+                        names: [
+                            "get_room",
+                        ],
+                    ),
+                    args: Direct(
+                        dobj: Any,
+                    ),
+                    code: [
+                        "        local object = args[1]",
+                        "        return object.location",
+                        "    ",
+                    ],
+                ),
+            ],
+        ),
+        "a8bdddb1-0ee8-45ba-ac22-e365c4752edf": (
+            properties: {
+                "uuid": (
+                    value: Uuid("a8bdddb1-0ee8-45ba-ac22-e365c4752edf"),
+                ),
+                "owner": (
+                    value: UuidOpt(Some("1546c4fe-090d-4c7f-8690-a24e3761f76a")),
+                ),
+                "name": (
+                    value: String("generic player"),
+                ),
+                "contents": (
+                    value: Uuids([]),
+                ),
+                "children": (
+                    value: Uuids([]),
+                ),
+                "aliases": (
+                    value: List([]),
+                ),
+                "location": (
+                    value: UuidOpt(None),
+                ),
+                "parent": (
+                    value: UuidOpt(Some("41234f1c-7b6f-47ea-aedc-32ade95f102f")),
+                ),
+            },
+            verbs: [
+                (
+                    info: (
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -339,7 +1807,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -385,7 +1853,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -400,7 +1868,7 @@
                 ),
                 (
                     info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+                        owner: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
                         perms: (
                             r: true,
                             w: false,
@@ -474,1772 +1942,66 @@
                 ),
             ],
         ),
-        "1dfa93a3-611f-46f8-bc6c-2ed41d3bb4f5": (
-            properties: {
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "uuid": (
-                    value: Uuid("1dfa93a3-611f-46f8-bc6c-2ed41d3bb4f5"),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "name": (
-                    value: String("root object"),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "match",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "        local c = this.contents",
-                        "        return S.string_utils:match(args[1], c, \"name\", c, \"aliases\")",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "get_name",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        return this.name",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "title",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        local name = this:get_name()",
-                        "        if is_type(name, \"string\") and #name > 0 then",
-                        "            return name",
-                        "        end",
-                        "        return this.uuid",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "tell",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        this:notify(tostr(args))",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "c5e92a53-4070-4b17-92ea-ae30554ec721": (
+        "107bc370-0416-4aff-b6d8-8efcdae0acb7": (
             properties: {
                 "contents": (
                     value: Uuids([
-                        "1f4e0739-e908-443d-8ccb-4a9051510560",
-                        "cde69fdd-30fc-4c9e-a530-ffd3f0306ca3",
-                        "68320a27-944a-4079-8eb7-0820c6b398c9",
+                        "fea81c18-1188-431d-806f-2a44624b657e",
                     ]),
                 ),
-                "name": (
-                    value: String("The Void"),
-                ),
-                "uuid": (
-                    value: Uuid("c5e92a53-4070-4b17-92ea-ae30554ec721"),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "description": (
-                    value: String("There is nothing, and you are in it."),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c8ea18d6-4c2c-4920-8359-a58b8a054913")),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "wiggle",
-                        ],
-                    ),
-                    args: NoArgs,
-                    code: [
-                        "        this:announce_all(\"%s wiggles\" % {this.name})",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "68320a27-944a-4079-8eb7-0820c6b398c9": (
-            properties: {
-                "parent": (
-                    value: UuidOpt(Some("0df12956-1bfa-46b4-83f9-8070ce6433b1")),
-                ),
-                "owner": (
-                    value: Uuid("68320a27-944a-4079-8eb7-0820c6b398c9"),
-                ),
-                "contents": (
+                "children": (
                     value: Uuids([]),
-                ),
-                "name": (
-                    value: String("guest"),
-                ),
-                "uuid": (
-                    value: Uuid("68320a27-944a-4079-8eb7-0820c6b398c9"),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "location": (
-                    value: UuidOpt(Some("c5e92a53-4070-4b17-92ea-ae30554ec721")),
-                ),
-            },
-            verbs: [],
-        ),
-        "f628d076-78dd-46df-a5d6-cdcfdd47024e": (
-            properties: {
-                "aliases": (
-                    value: List([]),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "uuid": (
-                    value: Uuid("f628d076-78dd-46df-a5d6-cdcfdd47024e"),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "object_match_failed",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        -- Usage: object_match_failed(object, string)",
-                        "        -- Prints a message if string does not match object.  Generally used after object is derived from a :match_object(string).",
-                        "        local match_result, string = table.unpack(args)",
-                        "        assert_class_of(1, match_result, ObjectProxy)",
-                        "        assert_string(2, string)",
-                        "",
-                        "        -- TODO: tell = $perm_utils:controls(caller_perms(), player) ? \"notify\" | \"tell\";",
-                        "        local tell = bind1(player.tell, player)",
-                        "        if is_uuid(string) and S.code_utils:toobj(string) ~= E_TYPE then",
-                        "          -- ...avoid the `I don\'t know which `#-2\' you mean\' message...",
-                        "          if not valid(match_result) then",
-                        "            tell(\"%s does not exist.\" % {string})",
-                        "          end",
-                        "          return not valid(match_result)",
-                        "        elseif match_result == S.nothing then",
-                        "          tell(\"You must give the name of some object.\")",
-                        "        elseif match_result == S.failed_match then",
-                        "          tell(\'I see no \"%s\" here.\' % {string})",
-                        "        elseif match_result == S.ambiguous_match then",
-                        "          tell(\'I don\\\'t know which \"%s\" you mean.\' % {string})",
-                        "        elseif not valid(match_result) then",
-                        "          tell(\"%s does not exist.\" % {match_result})",
-                        "        else",
-                        "          return false",
-                        "        end",
-                        "        return true",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "dump_lines",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        -- :dump_lines(text) => text `.\'-quoted for :read_lines()",
-                        "        --  text is assumed to be a list of strings",
-                        "        --  Returns a corresponding list of strings which, when read via :read_lines, ",
-                        "        --  produces the original list of strings (essentially, any strings beginning ",
-                        "        --  with a period \".\" have the period doubled).",
-                        "        --  The list returned includes a final \".\"",
-                        "        -- TODO original implementation has some magic I don\'t understand, review that",
-                        "        local text = args[1]",
-                        "        return pl.List(text):map(function (line)",
-                        "            if string.sub(line, 1, 1) == \".\" then",
-                        "                return \".\" .. line",
-                        "            else",
-                        "                return line",
-                        "            end",
-                        "        end):append(\".\")",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "1f4e0739-e908-443d-8ccb-4a9051510560": (
-            properties: {
-                "uuid": (
-                    value: Uuid("1f4e0739-e908-443d-8ccb-4a9051510560"),
-                ),
-                "name": (
-                    value: String("guest"),
-                ),
-                "location": (
-                    value: UuidOpt(Some("c5e92a53-4070-4b17-92ea-ae30554ec721")),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("0df12956-1bfa-46b4-83f9-8070ce6433b1")),
-                ),
-                "owner": (
-                    value: Uuid("1f4e0739-e908-443d-8ccb-4a9051510560"),
-                ),
-            },
-            verbs: [],
-        ),
-        "b902b6b9-f803-4e60-9fab-5915e2512aed": (
-            properties: {
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "uuid": (
-                    value: Uuid("b902b6b9-f803-4e60-9fab-5915e2512aed"),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "short_prep",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        return args[1]",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "full_prep",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        return nil",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "toobj",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        -- TODO this may need some extra logic",
-                        "        return toobj(args[1]):unwrap_unsafe()",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "parse_verbref",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "        -- S.code_utils:parse_verbref(string)",
-                        "        -- Parses string as a MOO-code verb reference, returning {object, verb-name-string} for a successful parse and false otherwise.  It always returns the right object-string to pass to, for example, this-room:match_object().",
-                        "        local s = args[1]",
-                        "        local colon = string.find(s, \":\", 1, true)",
-                        "        if colon then",
-                        "            local object = string.sub(s, 1, colon - 1)",
-                        "            local verbname = string.sub(s, colon + 1)",
-                        "            if not (object and verbname) then",
-                        "                return 0",
-                        "            end",
-                        "            if string.sub(object, 0, 2) == \"S.\" then",
-                        "                local pname = string.sub(object, 3)",
-                        "                local p = S[pname]",
-                        "                if not is_type(p, ObjectProxy) then",
-                        "                    return 0",
-                        "                end",
-                        "                object = p.uuid",
-                        "            end",
-                        "            return {object, verbname}",
-                        "        else",
-                        "            return 0",
-                        "        end",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "parse_argspec",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "-- :parse_arg_spec(@args)",
-                        "--  attempts to parse the given sequence of args into a verb_arg specification",
-                        "--  returns {verb_args,remaining_args} if successful.",
-                        "--  e.g., :parse_arg_spec(\\\"this\\\",\\\"in\\\",\\\"front\\\",\\\"of\\\",\\\"any\\\",\\\"foo\\\"..)",
-                        "--           => {{\\\"this\\\",\\\"in front of\\\",\\\"any\\\"},{\\\"foo\\\"..}}",
-                        "--  returns a string error message if parsing fails.",
-                        "local nargs = #args",
-                        "local args = List(args)",
-                        "if nargs < 1 then",
-                        "  return {{}, {}}",
-                        "end",
-                        "",
-                        "local ds = args[1]",
-                        "if args[1] == \"tnt\" then",
-                        "  return {{\"this\", \"none\", \"this\"}, args:slice(2)}",
-                        "elseif not List{\"this\", \"any\", \"none\"}:contains(ds) then",
-                        "  return \'\"%s\" is not a valid direct object specifier.\' % {ds}",
-                        "elseif nargs < 2 or List{\"none\", \"any\"}:contains(args[2]) then",
-                        "  local verbargs = args:slice(1, min(3, nargs))",
-                        "  local rest = args:slice(4, nargs);",
-                        "end",
-                        "",
-                        "local gp = List(S.code_utils:get_prep(unpack(args:slice(2, nargs))))",
-                        "if not gp[1] then",
-                        "  return \'\"%s\" is not a valid preposition.\' % {args[2]}",
-                        "else",
-                        "  local nargs = #gp",
-                        "  local verbargs = List{ds}:extend(gp:slice(1, min(2, nargs)))",
-                        "  rest = gp:slice(3, nargs)",
-                        "end",
-                        "",
-                        "if #verbargs >= 3 and not List{\"this\", \"any\", \"none\"}:contains(verbargs[3]) then",
-                        "  return \'\"%s\" is not a valid indirect object specifier.\' % {verbargs[3]}",
-                        "end",
-                        "return {verbargs, rest};",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "find_verb_named",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        -- :find_verb_named(object,name[,n])",
-                        "        --  returns the *number* of the first verb on object matching the given name.",
-                        "        --  optional argument n, if given, starts the search with verb n,",
-                        "        --  causing the first n verbs (1..n-1) to be ignored.",
-                        "        --  nil is returned if no verb is found.",
-                        "        --  This routine does not find inherited verbs.",
-                        "        local object, name, start = unpack(args)",
-                        "        assert_object(1, object)",
-                        "        assert_string(2, name)",
-                        "",
-                        "        if start == nil then",
-                        "            start = 1",
-                        "        end",
-                        "        assert_arg(3, start, \"number\")",
-                        "",
-                        "        return verbs(object):map(function (object_verbs)",
-                        "            for i = start, #object_verbs do",
-                        "                local verbinfo = verb_info(object, i):unwrap()",
-                        "                if this:verbname_match(verbinfo[3], name) then",
-                        "                    return i",
-                        "                end",
-                        "            end",
-                        "        end):unwrap_or(nil)",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "verbname_match",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        local candidates, name = table.unpack(args)",
-                        "        assert_arg(1, candidates, \'table\', nil, is_indexable)",
-                        "        assert_string(2, name)",
-                        "        return List(candidates):contains(name)",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "c821244e-f29a-4131-923b-f155cc04e78d": (
-            properties: {
-                "aliases": (
-                    value: List([]),
-                ),
-                "uuid": (
-                    value: Uuid("c821244e-f29a-4131-923b-f155cc04e78d"),
                 ),
                 "name": (
                     value: String("S.nothing"),
                 ),
-                "owner": (
-                    value: UuidOpt(None),
-                ),
-                "contents": (
-                    value: Uuids([]),
+                "aliases": (
+                    value: List([]),
                 ),
                 "parent": (
                     value: UuidOpt(None),
                 ),
                 "location": (
                     value: UuidOpt(None),
+                ),
+                "owner": (
+                    value: UuidOpt(None),
+                ),
+                "uuid": (
+                    value: Uuid("107bc370-0416-4aff-b6d8-8efcdae0acb7"),
                 ),
             },
             verbs: [],
         ),
-        "e2358dc4-4a0b-4c60-a4db-ae85e6aab127": (
+        "6d22d743-30dc-4f0e-9216-6cda91ff6fc3": (
             properties: {
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "aliases": (
-                    value: List([
-                        String("Webclient Package"),
-                    ]),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "uuid": (
-                    value: Uuid("e2358dc4-4a0b-4c60-a4db-ae85e6aab127"),
-                ),
-                "key": (
-                    value: Integer(0),
-                ),
-                "description": (
-                    value: String("This is a placeholder parent for all the $..._utils packages, to more easily find them and manipulate them. At present this object defines no useful verbs or properties. (Filfre.)"),
-                ),
-                "object_size": (
-                    value: List([
-                        Integer(0),
-                        Integer(0),
-                    ]),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "local_editing_info",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "local object, vname, code = table.unpack(args)",
-                        "local vargs",
-                        "if is_type(vname, \"table\") then",
-                        "  vargs = \" %s %s %s\" % {vname[2], S.code_utils:short_prep(vname[3]), vname[4]}",
-                        "  vname = vname[1]",
-                        "else",
-                        "  vargs = \"\"",
-                        "end",
-                        "local name = \"%s:%s\" % {object.name, vname};",
-                        "-- TODO swap to full @program invocation once we have proper dobj, prep, iobj support",
-                        "-- local upload = \"@program %s:%s %s\" % {object.uuid, vname, vargs}",
-                        "local upload = \"@program %s:%s\" % {object.uuid, vname}",
-                        "return {name, code, upload};",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "invoke",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "-- :invoke(...)",
-                        "-- to find out what arguments this verb expects,",
-                        "-- see this editor\'s parse_invoke verb.",
-                        "local new = args[1]",
-                        "local spec = this:parse_invoke(unpack(args))",
-                        "if type(spec) == \"table\" and not is_error(spec) then",
-                        "  local info = this:local_editing_info(unpack(spec))",
-                        "  -- TODO impl has_verb, then uncomment",
-                        "  --if S.object_utils:has_verb(this, \"local_editing_info\") and info then",
-                        "    player:tell(\"Invoking local editor\")",
-                        "    this:invoke_local_editor(unpack(info))",
-                        "  --else",
-                        "    --player:tell(\"This is for editing in a web client, if you don\'t wanna do that, use a different verb.\");",
-                        "  --end",
-                        "end",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "parse_invoke",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "-- :parse_invoke(string, v)",
-                        "-- string is the commandline string to parse to obtain the obj:verb to edit",
-                        "--  v is the actual command verb used to invoke the editor",
-                        "-- => {object, verbname, verb_code} or error",
-                        "",
-                        "local vref = S.string_utils:words(args[1])",
-                        "local spec = S.code_utils:parse_verbref(vref[1])",
-                        "if not vref or spec == 0 then",
-                        "  player:tell(\"Usage: %s %s\" % {args[2], \" object:verb\"})",
-                        "  return",
-                        "end",
-                        "local argspec = List(vref):slice(2)",
-                        "if #argspec > 0 then",
-                        "  local pas = S.code_utils:parse_argspec(unpack(argspec))",
-                        "  if type(pas) == \"table\" then",
-                        "    if pas[2] and #pas[2] > 0 then",
-                        "      player:tell(\'I don\\\'t understand \"%s\"\' % {S.string_utils:from_list(pas[2], \" \")})",
-                        "      return",
-                        "    end",
-                        "    argspec = pl.List(pas[1]):extend{\"none\", \"none\"}:slice(1, 3)",
-                        "    argspec[2] = S.code_utils:full_prep(argspec[2]) or argspec[2]",
-                        "  else",
-                        "    player:tell(toliteral(pas))",
-                        "    return",
-                        "  end",
-                        "end",
-                        "player:tell(toliteral(spec))",
-                        "local object = player:my_match_object(spec[1], S.verb_editor:get_room(player))",
-                        "if not S.command_utils:object_match_failed(object, spec[1]) then",
-                        "  local vname = spec[2]",
-                        "  local vnum = S.code_utils:find_verb_named(object, vname)",
-                        "  if #argspec > 0 then",
-                        "    -- TODO may need deep table comparison here",
-                        "    while vnum and (object:verb_args(vnum) ~= argspec) do",
-                        "      vnum = S.code_utils:find_verb_named(object, vname, vnum + 1)",
-                        "    end",
-                        "  end",
-                        "  local code",
-                        "  if vnum ~= nil then",
-                        "    code = this:fetch_verb_code(object, vnum)",
-                        "  else",
-                        "    code = E_VERBNF",
-                        "  end",
-                        "  if is_error(code) then",
-                        "    player:tell((code ~= E_VERBNF) and code or \"That object does not define that verb\", argspec and \" with those args.\" or \".\")",
-                        "    return code",
-                        "  else",
-                        "    return {object, argspec and {vname, table.unpack(argspec)} or vname, code}",
-                        "  end",
-                        "end",
-                        "return 0",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "fetch_verb_code",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "set_task_perms(player)",
-                        "return verb_code(args[1], args[2], not player:edit_option(\"no_parens\")):unwrap_or(\"\")",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "invoke_local_editor",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "-- :invoke_local_editor(name, text, upload)",
-                        "-- Spits out the magic text that invokes the local editor in the player\'s client.\"",
-                        "-- NAME is a good human-readable name for the local editor to use for this particular piece of text.\"",
-                        "-- TEXT is a string or list of strings, the initial body of the text being edited.\"",
-                        "-- UPLOAD, a string, is a MOO command that the local editor can use to save the text when the user is done editing.  The local editor is going to send that command on a line by itself, followed by the new text lines, followed by a line containing only `.\'.  The UPLOAD command should therefore call $command_utils:read_lines() to get the new text as a list of strings.\"",
-                        "",
-                        "-- TODO re-enable caller checking once caller is implemented",
-                        "--if caller ~= this then",
-                        "--   return",
-                        "--end",
-                        "",
-                        "local name, text, upload = table.unpack(args)",
-                        "assert_string(1, name)",
-                        "if is_type(text, \"string\") then",
-                        "  text = {text}",
-                        "end",
-                        "this:local_instruction(name, upload)",
-                        "-- :dump_lines() takes care of the final `.\' ...",
-                        "for i, line in ipairs(S.command_utils:dump_lines(text)) do",
-                        "  notify(player, line)",
-                        "end",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "local_instruction",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "local label, upload = table.unpack(args)",
-                        "if not upload then",
-                        "    upload = \"none\"",
-                        "end",
-                        "local msg = \"#$# edit name: %s upload: %s\" % {label, upload}",
-                        "player:tell(msg)",
-                        "",
-                    ],
-                ),
-            ],
-        ),
-        "3603ceda-48b8-4edd-9b72-2cb859d78114": (
-            properties: {
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "uuid": (
-                    value: Uuid("3603ceda-48b8-4edd-9b72-2cb859d78114"),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "has_verb",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        local object, verb = table.unpack(args)",
-                        "        return db:has_verb_with_name(object.uuid, verb)",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "a62683dc-fe93-4441-bf90-3445e9c80653": (
-            properties: {
-                "owner": (
-                    value: UuidOpt(None),
-                ),
                 "name": (
                     value: String("S.ambiguous_match"),
                 ),
-                "location": (
-                    value: UuidOpt(None),
+                "uuid": (
+                    value: Uuid("6d22d743-30dc-4f0e-9216-6cda91ff6fc3"),
+                ),
+                "contents": (
+                    value: Uuids([]),
                 ),
                 "aliases": (
                     value: List([]),
                 ),
-                "parent": (
+                "children": (
+                    value: Uuids([]),
+                ),
+                "location": (
                     value: UuidOpt(None),
                 ),
-                "uuid": (
-                    value: Uuid("a62683dc-fe93-4441-bf90-3445e9c80653"),
+                "owner": (
+                    value: UuidOpt(None),
                 ),
-                "contents": (
-                    value: Uuids([]),
+                "parent": (
+                    value: UuidOpt(None),
                 ),
             },
             verbs: [],
-        ),
-        "76890254-841c-4b3b-9524-9556b8fed332": (
-            properties: {
-                "parent": (
-                    value: UuidOpt(None),
-                ),
-                "owner": (
-                    value: UuidOpt(None),
-                ),
-                "uuid": (
-                    value: Uuid("76890254-841c-4b3b-9524-9556b8fed332"),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "name": (
-                    value: String("S.failed_match"),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-            },
-            verbs: [],
-        ),
-        "f422ddc3-a5f9-4687-a1f7-a200137edff8": (
-            properties: {
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "uuid": (
-                    value: Uuid("f422ddc3-a5f9-4687-a1f7-a200137edff8"),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "words",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        return pl.stringx.split(args[1])",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "from_list",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        local list, delimiter = table.unpack(args)",
-                        "        return table.concat(list, delimiter)",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "match_object",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "        -- :match_object(string,location[,someone])",
-                        "        -- Returns the object matching the given string for someone, on the assumption that s/he is in the given location.  `someone\' defaults to player.",
-                        "        -- This first tries :literal_object(string), \\\"me\\\"=>someone,\\\"here\\\"=>location, then player:match(string) and finally location:match(string) if location is valid.",
-                        "        -- This is the default algorithm for use by room :match_object() and player :my_match_object() verbs.  Player verbs that are calling this directly should probably be calling :my_match_object instead.",
-                        "        local string, here, who = table.unpack(args)",
-                        "        if who == nil then",
-                        "            who = player",
-                        "        end",
-                        "        pl.utils.assert_string(1, string)",
-                        "        assert_class_of(2, here, ObjectProxy)",
-                        "        assert_class_of(3, who, ObjectProxy)",
-                        "",
-                        "        local object = this:literal_object(string)",
-                        "        if S.failed_match ~= object then",
-                        "            return object",
-                        "        elseif string == \"me\" then",
-                        "            return who",
-                        "        elseif string == \"here\" then",
-                        "            return here",
-                        "        end",
-                        "",
-                        "        local pobject = who:match(string)",
-                        "        if valid(pobject) and List{pobject.name}:extend(pobject.aliases):contains(string) or not valid(here) then",
-                        "            -- ...exact match in player, or room is bogus...",
-                        "            return pobject",
-                        "        end",
-                        "",
-                        "        local hobject = here:match(string)",
-                        "        if valid(hobject) and List{hobject.name}:extend(hobject.aliases):contains(string) or pobject == S.failed_match then",
-                        "            -- ...exact match in room, or match in player failed completely...",
-                        "            return hobject",
-                        "        else",
-                        "            return pobject",
-                        "        end",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "match",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "    -- Each obj-list should be a list of objects or a single object, which is treated as if it were a list of that object.  Each prop-name should be string naming a property on every object in the corresponding obj-list.  The value of that property in each case should be either a string or a list of strings.",
-                        "    -- The argument string is matched against all of the strings in the property values.",
-                        "    -- If it exactly matches exactly one of them, the object containing that property is returned.  If it exactly matches more than one of them, $ambiguous_match is returned.",
-                        "    -- If there are no exact matches, then partial matches are considered, ones in which the given string is a prefix of some property string.  Again, if exactly one match is found, the object with that property is returned, and if there is more than one match, $ambiguous_match is returned.",
-                        "    -- Finally, if there are no exact or partial matches, then $failed_match is returned.",
-                        "    local subject = args[1]",
-                        "    assert_class_of(0, this, ObjectProxy)",
-                        "    assert_string(1, subject)",
-                        "    ",
-                        "    if subject == \"\" then",
-                        "        return S.nothing",
-                        "    end",
-                        "    local no_exact_match = nil",
-                        "    local no_partial_match = nil",
-                        "    for i = 1, #args / 2 do",
-                        "        local prop_name = args[2 * i + 1]",
-                        "        local olist = args[2 * i]",
-                        "        for j, object in ipairs(is_indexable(olist) and olist or {olist}) do",
-                        "            if valid(object) then",
-                        "                local str_list = object[prop_name]",
-                        "                if is_indexable(str_list) and not List:class_of(str_list) then",
-                        "                    str_list = List(str_list)",
-                        "                elseif not str_list then",
-                        "                    str_list = List()",
-                        "                end",
-                        "                -- TODO handle E_PERM, E_PROPNF => {}",
-                        "                if not is_indexable(str_list) then",
-                        "                    str_list = List{str_list}",
-                        "                end",
-                        "                if str_list:contains(subject) then",
-                        "                    if no_exact_match == nil then",
-                        "                        no_exact_match = object",
-                        "                    elseif no_exact_match ~= object then",
-                        "                        return S.ambiguous_match",
-                        "                    end",
-                        "                else",
-                        "                    for i, string in ipairs(str_list) do",
-                        "                        if string.find(string, subject, 1, true) ~= 1 then",
-                        "                        elseif no_partial_match == nil then",
-                        "                            no_partial_match = object",
-                        "                        elseif no_partial_match ~= object then",
-                        "                            no_partial_match = S.ambiguous_match",
-                        "                        end",
-                        "                    end",
-                        "                end",
-                        "            end",
-                        "        end",
-                        "    end",
-                        "    return no_exact_match or (no_partial_match or S.failed_match)",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "literal_object",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "    -- Matches args[1] against literal objects: #xxxxx, $variables, *mailing-lists, and username.  Returns the object if successful, $failed_match else.",
-                        "    -- TODO this is currently a partial implementation",
-                        "    local string = args[1]",
-                        "    if #string == 0 then",
-                        "      return S.nothing",
-                        "    end",
-                        "    local object = S.code_utils:toobj(string)",
-                        "    if object ~= nil and not is_error(object) then",
-                        "      return object;",
-                        "    end",
-                        "    return S.failed_match;",
-                        "    -- elseif (string[1] == \"~\")",
-                        "    --   return this:match_player(string[2..$], #0);",
-                        "    -- elseif (string[1] == \"*\" && length(string) > 1)",
-                        "    --   return $mail_agent:match_recipient(string);",
-                        "    -- elseif (string[1] == \"$\")",
-                        "    --   string[1..1] = \"\";",
-                        "    --   object = #0;",
-                        "    --   while (pn = string[1..(dot = index(string, \".\")) ? dot - 1 | $])",
-                        "    --     if (!$object_utils:has_property(object, pn) || typeof(object = object.(pn)) != OBJ)",
-                        "    --       return $failed_match;",
-                        "    --     endif",
-                        "    --     string = string[length(pn) + 2..$];",
-                        "    --   endwhile",
-                        "    --   if (object == #0 || typeof(object) == ERR)",
-                        "    --     return $failed_match;",
-                        "    --   else",
-                        "    --     return object;",
-                        "    --   endif",
-                        "    -- else",
-                        "    --   return $failed_match;",
-                        "    -- endif",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "1c13d1f3-856f-48de-866e-9bf9cd7a04a1": (
-            properties: {
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "key": (
-                    value: Integer(0),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-                "aliases": (
-                    value: List([
-                        String("Webclient Package"),
-                    ]),
-                ),
-                "object_size": (
-                    value: List([
-                        Integer(0),
-                        Integer(0),
-                    ]),
-                ),
-                "uuid": (
-                    value: Uuid("1c13d1f3-856f-48de-866e-9bf9cd7a04a1"),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "description": (
-                    value: String("This is a placeholder parent for all the $..._utils packages, to more easily find them and manipulate them. At present this object defines no useful verbs or properties. (Filfre.)"),
-                ),
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "local_editing_info",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "local object, vname, code = table.unpack(args)",
-                        "local vargs",
-                        "if is_type(vname, \"table\") then",
-                        "  vargs = \" %s %s %s\" % {vname[2], S.code_utils:short_prep(vname[3]), vname[4]}",
-                        "  vname = vname[1]",
-                        "else",
-                        "  vargs = \"\"",
-                        "end",
-                        "local name = \"%s:%s\" % {object.name, vname};",
-                        "-- TODO swap to full @program invocation once we have proper dobj, prep, iobj support",
-                        "-- local upload = \"@program %s:%s %s\" % {object.uuid, vname, vargs}",
-                        "local upload = \"@program %s:%s\" % {object.uuid, vname}",
-                        "return {name, code, upload};",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "invoke",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "-- :invoke(...)",
-                        "-- to find out what arguments this verb expects,",
-                        "-- see this editor\'s parse_invoke verb.",
-                        "local new = args[1]",
-                        "local spec = this:parse_invoke(unpack(args))",
-                        "if type(spec) == \"table\" and not is_error(spec) then",
-                        "  local info = this:local_editing_info(unpack(spec))",
-                        "  -- TODO impl has_verb, then uncomment",
-                        "  --if S.object_utils:has_verb(this, \"local_editing_info\") and info then",
-                        "    player:tell(\"Invoking local editor\")",
-                        "    this:invoke_local_editor(unpack(info))",
-                        "  --else",
-                        "    --player:tell(\"This is for editing in a web client, if you don\'t wanna do that, use a different verb.\");",
-                        "  --end",
-                        "end",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "parse_invoke",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "-- :parse_invoke(string, v)",
-                        "-- string is the commandline string to parse to obtain the obj:verb to edit",
-                        "--  v is the actual command verb used to invoke the editor",
-                        "-- => {object, verbname, verb_code} or error",
-                        "",
-                        "local vref = S.string_utils:words(args[1])",
-                        "local spec = S.code_utils:parse_verbref(vref[1])",
-                        "if not vref or spec == 0 then",
-                        "  player:tell(\"Usage: %s %s\" % {args[2], \" object:verb\"})",
-                        "  return",
-                        "end",
-                        "local argspec = List(vref):slice(2)",
-                        "if #argspec > 0 then",
-                        "  local pas = S.code_utils:parse_argspec(unpack(argspec))",
-                        "  if type(pas) == \"table\" then",
-                        "    if pas[2] and #pas[2] > 0 then",
-                        "      player:tell(\'I don\\\'t understand \"%s\"\' % {S.string_utils:from_list(pas[2], \" \")})",
-                        "      return",
-                        "    end",
-                        "    argspec = pl.List(pas[1]):extend{\"none\", \"none\"}:slice(1, 3)",
-                        "    argspec[2] = S.code_utils:full_prep(argspec[2]) or argspec[2]",
-                        "  else",
-                        "    player:tell(toliteral(pas))",
-                        "    return",
-                        "  end",
-                        "end",
-                        "player:tell(toliteral(spec))",
-                        "local object = player:my_match_object(spec[1], S.verb_editor:get_room(player))",
-                        "if not S.command_utils:object_match_failed(object, spec[1]) then",
-                        "  local vname = spec[2]",
-                        "  local vnum = S.code_utils:find_verb_named(object, vname)",
-                        "  if #argspec > 0 then",
-                        "    -- TODO may need deep table comparison here",
-                        "    while vnum and (object:verb_args(vnum) ~= argspec) do",
-                        "      vnum = S.code_utils:find_verb_named(object, vname, vnum + 1)",
-                        "    end",
-                        "  end",
-                        "  local code",
-                        "  if vnum ~= nil then",
-                        "    code = this:fetch_verb_code(object, vnum)",
-                        "  else",
-                        "    code = E_VERBNF",
-                        "  end",
-                        "  if is_error(code) then",
-                        "    player:tell((code ~= E_VERBNF) and code or \"That object does not define that verb\", argspec and \" with those args.\" or \".\")",
-                        "    return code",
-                        "  else",
-                        "    return {object, argspec and {vname, table.unpack(argspec)} or vname, code}",
-                        "  end",
-                        "end",
-                        "return 0",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "fetch_verb_code",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "set_task_perms(player)",
-                        "return verb_code(args[1], args[2], not player:edit_option(\"no_parens\")):unwrap_or(\"\")",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "invoke_local_editor",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "-- :invoke_local_editor(name, text, upload)",
-                        "-- Spits out the magic text that invokes the local editor in the player\'s client.\"",
-                        "-- NAME is a good human-readable name for the local editor to use for this particular piece of text.\"",
-                        "-- TEXT is a string or list of strings, the initial body of the text being edited.\"",
-                        "-- UPLOAD, a string, is a MOO command that the local editor can use to save the text when the user is done editing.  The local editor is going to send that command on a line by itself, followed by the new text lines, followed by a line containing only `.\'.  The UPLOAD command should therefore call $command_utils:read_lines() to get the new text as a list of strings.\"",
-                        "",
-                        "-- TODO re-enable caller checking once caller is implemented",
-                        "--if caller ~= this then",
-                        "--   return",
-                        "--end",
-                        "",
-                        "local name, text, upload = table.unpack(args)",
-                        "assert_string(1, name)",
-                        "if is_type(text, \"string\") then",
-                        "  text = {text}",
-                        "end",
-                        "this:local_instruction(name, upload)",
-                        "-- :dump_lines() takes care of the final `.\' ...",
-                        "for i, line in ipairs(S.command_utils:dump_lines(text)) do",
-                        "  notify(player, line)",
-                        "end",
-                        "",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "local_instruction",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: This,
-                    ),
-                    code: [
-                        "local label, upload = table.unpack(args)",
-                        "if not upload then",
-                        "    upload = \"none\"",
-                        "end",
-                        "local msg = \"#$# edit name: %s upload: %s\" % {label, upload}",
-                        "player:tell(msg)",
-                        "",
-                    ],
-                ),
-            ],
-        ),
-        "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62": (
-            properties: {
-                "verb_editor": (
-                    value: Uuid("0808c3ba-fb93-4073-a825-871bbd41fad5"),
-                ),
-                "failed_match": (
-                    value: Uuid("76890254-841c-4b3b-9524-9556b8fed332"),
-                ),
-                "minimal_core_loaded": (
-                    value: Boolean(true),
-                ),
-                "code_utils": (
-                    value: Uuid("b902b6b9-f803-4e60-9fab-5915e2512aed"),
-                ),
-                "command_utils": (
-                    value: Uuid("f628d076-78dd-46df-a5d6-cdcfdd47024e"),
-                ),
-                "owner": (
-                    value: UuidOpt(None),
-                ),
-                "Player": (
-                    value: Uuid("0df12956-1bfa-46b4-83f9-8070ce6433b1"),
-                ),
-                "uuid": (
-                    value: Uuid("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62"),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "starting_room": (
-                    value: Uuid("c5e92a53-4070-4b17-92ea-ae30554ec721"),
-                ),
-                "object_utils": (
-                    value: Uuid("3603ceda-48b8-4edd-9b72-2cb859d78114"),
-                ),
-                "nothing": (
-                    value: Uuid("c821244e-f29a-4131-923b-f155cc04e78d"),
-                ),
-                "string_utils": (
-                    value: Uuid("f422ddc3-a5f9-4687-a1f7-a200137edff8"),
-                ),
-                "ambiguous_match": (
-                    value: Uuid("a62683dc-fe93-4441-bf90-3445e9c80653"),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "Room": (
-                    value: Uuid("c8ea18d6-4c2c-4920-8359-a58b8a054913"),
-                ),
-                "parent": (
-                    value: UuidOpt(None),
-                ),
-                "Root": (
-                    value: Uuid("1dfa93a3-611f-46f8-bc6c-2ed41d3bb4f5"),
-                ),
-                "webclient": (
-                    value: Uuid("f01e9cc0-40ca-4f66-9e6f-a7bf9cddab31"),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: false,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "do_login_command",
-                        ],
-                    ),
-                    args: NoArgs,
-                    code: [
-                        "        player = create(S.Player):unwrap()",
-                        "        player.owner = player",
-                        "        player:move(S.starting_room)",
-                        "        player.name = \"guest\"",
-                        "",
-                        "        return player.uuid",
-                        "        ",
-                    ],
-                ),
-            ],
-        ),
-        "c8ea18d6-4c2c-4920-8359-a58b8a054913": (
-            properties: {
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "description": (
-                    value: String("A nondescript room"),
-                ),
-                "uuid": (
-                    value: Uuid("c8ea18d6-4c2c-4920-8359-a58b8a054913"),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "name": (
-                    value: String("Prototype:Room"),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("1dfa93a3-611f-46f8-bc6c-2ed41d3bb4f5")),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "announce",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        for i, target in ipairs(this.contents:without(player)) do",
-                        "            pcall(target.tell, target, unpack(args))",
-                        "        end",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "announce_all",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        for i, target in ipairs(this.contents) do",
-                        "            pcall(target.tell, target, unpack(args))",
-                        "        end",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "say",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        pcall(function()",
-                        "            -- TODO player should really be caller here once implemented",
-                        "            player:tell(\'You say, \"%s\"\' % {argstr})",
-                        "            this:announce(\'$name says, \"$msg\"\' % {name = player.name, msg = argstr})",
-                        "        end)",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "emote",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        -- TODO player should really be caller here once implemented",
-                        "        this:announce_all(\'%s %s\' % {player.name, argstr})",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "describe",
-                        ],
-                    ),
-                    args: NoArgs,
-                    code: [
-                        "        local name = this:title()",
-                        "        local description = this.description or \"You see nothing special.\"",
-                        "        local msg = \'%s\\n%s\' % {name, description}",
-                        "",
-                        "        local seen = this.contents:without(player):map(_1.name)",
-                        "        if #seen > 0 then",
-                        "            msg = msg .. \"\\nYou see here: \" .. table.concat(seen, \", \")",
-                        "        end",
-                        "",
-                        "        return msg",
-                        "    ",
-                    ],
-                ),
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: true,
-                        ),
-                        names: [
-                            "look",
-                        ],
-                    ),
-                    args: NoArgs,
-                    code: [
-                        "        player:notify(this:describe())",
-                        "    ",
-                    ],
-                ),
-            ],
-        ),
-        "0808c3ba-fb93-4073-a825-871bbd41fad5": (
-            properties: {
-                "owner": (
-                    value: UuidOpt(Some("0e82dfa5-a4fb-48ef-9069-6e44b7d61b62")),
-                ),
-                "name": (
-                    value: String(""),
-                ),
-                "aliases": (
-                    value: List([]),
-                ),
-                "location": (
-                    value: UuidOpt(None),
-                ),
-                "uuid": (
-                    value: Uuid("0808c3ba-fb93-4073-a825-871bbd41fad5"),
-                ),
-                "contents": (
-                    value: Uuids([]),
-                ),
-                "parent": (
-                    value: UuidOpt(Some("c821244e-f29a-4131-923b-f155cc04e78d")),
-                ),
-            },
-            verbs: [
-                (
-                    info: (
-                        owner: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
-                        perms: (
-                            r: true,
-                            w: false,
-                            x: false,
-                        ),
-                        names: [
-                            "get_room",
-                        ],
-                    ),
-                    args: Direct(
-                        dobj: Any,
-                    ),
-                    code: [
-                        "        local object = args[1]",
-                        "        return object.location",
-                        "    ",
-                    ],
-                ),
-            ],
         ),
     },
-    system_uuid: "0e82dfa5-a4fb-48ef-9069-6e44b7d61b62",
+    system_uuid: "1546c4fe-090d-4c7f-8690-a24e3761f76a",
 )

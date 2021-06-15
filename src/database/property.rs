@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, convert::TryFrom};
 
 use mlua::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -45,6 +45,18 @@ impl From<&str> for PropertyValue {
             PropertyValue::Uuid(uuid)
         } else {
             PropertyValue::String(value.to_string())
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a PropertyValue> for &'a Uuid {
+    type Error = String;
+
+    fn try_from(pv: &'a PropertyValue) -> Result<&'a Uuid, Self::Error> {
+        match pv {
+            PropertyValue::Uuid(uuid) => Ok(uuid),
+            PropertyValue::UuidOpt(Some(uuid)) => Ok(uuid),
+            _ => Err(format!("Cannot convert to Uuid: {:?}", pv)),
         }
     }
 }

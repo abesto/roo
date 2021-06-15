@@ -30,14 +30,12 @@ impl DatabaseProxy {
         LuaError::external(format!("No object found with UUID {}", uuid))
     }
 
-    #[allow(dead_code)]
-    fn get_object<'a>(
-        &self,
-        lock: &'a RwLockReadGuard<Database>,
-        uuid: &str,
-    ) -> LuaResult<&'a Object> {
-        lock.get(&Self::parse_uuid(&uuid)?)
-            .map_err(LuaError::external)
+    fn get_object<'a>(&self, db: &'a Database, uuid: &str) -> LuaResult<&'a Object> {
+        self.get_object_by_uuid(db, &Self::parse_uuid(uuid)?)
+    }
+
+    fn get_object_by_uuid<'a>(&self, db: &'a Database, uuid: &Uuid) -> LuaResult<&'a Object> {
+        db.get(uuid).map_err(LuaError::external)
     }
 
     fn get_verb<'a>(
@@ -118,6 +116,24 @@ impl DatabaseProxy {
     }
 }
 
+impl DatabaseProxy {
+    fn lmove(_lua: &Lua, this: &DatabaseProxy, (what, to): (String, String)) -> LuaResult<()> {
+        let mut lock = this.db.write().unwrap();
+        lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
+            .map_err(LuaError::external)
+    }
+
+    fn chparent(
+        _lua: &Lua,
+        this: &DatabaseProxy,
+        (child, new_parent): (String, String),
+    ) -> LuaResult<()> {
+        let mut lock = this.db.write().unwrap();
+        lock.chparent(&Self::parse_uuid(&child)?, &Self::parse_uuid(&new_parent)?)
+            .map_err(LuaError::external)
+    }
+}
+
 impl LuaUserData for DatabaseProxy {
     fn add_methods<'lua, M: LuaUserDataMethods<'lua, Self>>(methods: &mut M) {
         methods.add_method(
@@ -182,21 +198,8 @@ impl LuaUserData for DatabaseProxy {
             },
         );
 
-        methods.add_method("move", |_lua, this, (what, to): (String, String)| {
-            let mut lock = this.db.write().unwrap();
-            lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
-                .map_err(LuaError::RuntimeError)?;
-            Ok(LuaValue::Nil)
-        });
-
-        methods.add_method(
-            "chparent",
-            |_lua, this, (child, new_parent): (String, String)| {
-                let mut lock = this.db.write().unwrap();
-                lock.chparent(&Self::parse_uuid(&child)?, &Self::parse_uuid(&new_parent)?)
-                    .map_err(LuaError::RuntimeError)
-            },
-        );
+        methods.add_method("move", DatabaseProxy::lmove);
+        methods.add_method("chparent", DatabaseProxy::chparent);
 
         methods.add_method(
             "add_verb",
@@ -288,6 +291,42 @@ impl LuaUserData for DatabaseProxy {
             let lock = this.db.read().unwrap();
             saveload::checkpoint(&lock, &saveload::SaveloadConfig::default())
                 .map_err(LuaError::external)
+        });
+
+        methods.add_method("recycle", |lua, this, (uuid,): (String,)| {
+            // TODO permission checks
+            // Re-parent children to parent of self
+            let db = this.db.read().unwrap();
+            let uuid = Self::parse_uuid(&uuid)?;
+            let obj = this.get_object_by_uuid(&db, &uuid)?;
+            let parent_uuid_opt = obj.parent().cloned();
+            let children_uuids: Vec<_> = obj.children().iter().cloned().collect();
+            let content_uuids: Vec<_> = obj.contents().iter().cloned().collect();
+            let nothing_uuid = db.nothing_uuid().clone();
+            drop(db);
+
+            if let Some(parent_uuid) = parent_uuid_opt {
+                for child_uuid in children_uuids {
+                    Self::chparent(lua, this, (child_uuid.to_string(), parent_uuid.to_string()))?;
+                }
+            } else {
+                // TODO do something here :)
+            }
+
+            // Move contents to S.nothing
+            for content_uuid in content_uuids {
+                Self::lmove(
+                    lua,
+                    this,
+                    (content_uuid.to_string(), nothing_uuid.to_string()),
+                )?;
+            }
+
+            // TODO ownership quota
+
+            // And actually delete the object
+            let mut db = this.db.write().unwrap();
+            db.delete(&uuid).map_err(LuaError::external)
         });
 
         methods.add_meta_method(LuaMetaMethod::Index, |lua, this, (uuid,): (String,)| {
