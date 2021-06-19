@@ -15,12 +15,16 @@ function is_error(x)
 end
 
 local function make_error(name)
-    _G[name] = Error(name)
+    rawset(_G, name, Error(name))
 end
 imap(make_error,
     {"E_NONE", "E_TYPE", "E_DIV", "E_PERM", "E_PROPNF", "E_VERBNF", "E_VARNF", "E_INVIND", "E_RECMOVE", "E_MAXREC",
      "E_RANGE", "E_ARGS", "E_NACC", "E_INVARG", "E_QUOTA", "E_FLOAT"})
 -- EOF Moo Errors
+
+-- Placeholders for values to be injected by the server
+function _server_notify(...)
+end
 
 -- Moo functions
 function tostr(...)
@@ -53,7 +57,7 @@ end
 -- Not really a Moo function, but it's roughly the inverse of toobj so /shrug
 function touuid(what)
     if is_type(what, "string") then
-        if not is_uuid(uuid) then
+        if not is_uuid(what) then
             return Err(E_TYPE)
         end
         return Ok(what)
@@ -97,7 +101,7 @@ end
 ---@return Result<ObjectProxy, ?>
 function create(parent, owner)
     local parent_res = touuid(parent)
-    local owner_res = (owner ~= nil) and touuid(owner) or Ok(nil)
+    local owner_res = touuid(owner or S.nothing)
 
     return Result.zip(parent_res, owner_res):map_method_unpacked(db, 'create'):and_then(toobj):map(function(object)
         -- Call object:initialize() if it exists
@@ -164,7 +168,7 @@ function set_player_flag(object, val)
 end
 
 ---@return Result<bool, ?>
-function is_player(object, val)
+function is_player(object)
     return touuid(object):map_method(db, 'is_player')
 end
 

@@ -173,3 +173,4 @@ Cargo.lock
 # End of https://www.toptal.com/developers/gitignore/api/rust,lua,visualstudiocode,intellij
 
 database/*.backup.*
+dome-client.js/

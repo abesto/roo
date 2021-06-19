@@ -4,7 +4,7 @@
     end
     S.minimal_core_loaded = true
 
-    system:add_verb({system.uuid, "", {"do_login_command"}}, {})
+    system:add_verb({system.uuid, "", {"do_login_command"}}, {}):unwrap()
     system:set_verb_code("do_login_command", [=[
         local command = assert_string(1, args[1])
         if command ~= "connect" then
@@ -29,7 +29,7 @@
         new.name = name
 
         return new.uuid
-        ]=])
+        ]=]):unwrap()
 
     --- S.code_utils
     S.code_utils = create(S.nothing):unwrap()

@@ -261,6 +261,7 @@ impl World {
             ("proxies", include_str!("../lua/proxies.lua")),
             ("core", include_str!("../lua/core.lua")),
             ("webclient", include_str!("../lua/webclient.lua")),
+            ("final", include_str!("../lua/final.lua")),
         ] {
             if module == "core" {
                 if !self.needs_minimal_core {
@@ -396,9 +397,11 @@ mod tests {
     #[test]
     fn do_login_command() {
         with_context(|Ctx { lua, .. }| {
-            lua.load("S:do_login_command('connect', 'testuser')")
-                .exec()
-                .unwrap();
+            lua.load(
+                "player = create(S.Player):unwrap(); S:do_login_command('connect', 'testuser')",
+            )
+            .exec()
+            .unwrap();
         });
     }
 

@@ -1,5 +1,26 @@
 -- Rough Result<V, E> implementation a 'la Rust (just another take on the Either monad)
+local nilvalue = {}
+
 pl.class.Result()
+Result:catch(function(self, name)
+    error("No '" .. name .. "' field on '" .. self._name .. "'")
+end)
+
+function Result:_init(value)
+    if value == nil then
+        self.value = nilvalue
+    else
+        self.value = value
+    end
+end
+
+function Result:_getvalue()
+    if self.value == nilvalue then
+        return nil
+    else
+        return self.value
+    end
+end
 
 function Result:is_ok()
     return self:is_a(Ok)
@@ -10,30 +31,22 @@ function Result:is_err()
 end
 
 function Result:err()
-    assert_class_of(0, self, Err)
-    return self.value
+    assert_class_of(0, self, Err, ":err() called on an Ok")
+    return self:_getvalue()
 end
 
 function Result:unwrap()
-    assert_class_of(0, self, Ok)
-    return self.value
+    assert_class_of(0, self, Ok, ":unwrap() called on an Err")
+    return self:_getvalue()
 end
 
 pl.class.Ok(Result)
 pl.class.Err(Result)
 
-function Ok:_init(value)
-    self.value = value
-end
-
 function Ok:land(other)
     assert_class_of(0, self, Result)
     assert_class_of(1, other, Result)
     return other
-end
-
-function Err:_init(err)
-    self.value = err
 end
 
 function Err:land(other)

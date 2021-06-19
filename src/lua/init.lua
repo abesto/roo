@@ -1,6 +1,8 @@
 -- Penlight "standard" library
 pl = require 'pl.import_into'()
 require'pl.text'.format_operator() -- text templates
+strict = require 'pl.strict'
+strict.make_all_strict(_G)
 pl.utils.import 'pl.func' -- argument placeholders (ie. :map(_1.name))
 pl.utils.on_error("error")
 
@@ -29,7 +31,9 @@ function_arg = pl.utils.function_arg
 
 -- Extensions to pl for commonly used patterns
 function assert_class_of(n, x, C, msg)
-    return pl.utils.assert_arg(n, x, 'table', C:class_of(_1), msg, 3)
+    return pl.utils.assert_arg(n, x, 'table', function(o)
+        return C:class_of(o)
+    end, msg, 3)
 end
 
 function pl.List:without(item)
