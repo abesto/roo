@@ -2,7 +2,7 @@
 --- Returns a new table.
 local function deflate_uuids(what)
     if is_type(what, ObjectProxy) then
-        return what.uuid
+        return what.__uuid
     elseif is_indexable(what) then
         return imap(deflate_uuids, what)
     else
@@ -41,7 +41,7 @@ function ObjectProxy.__index(t, k)
     end
 
     -- Read the value from the DB
-    local v = db:get_property(t.uuid, k)
+    local v = db:get_property(t.__uuid, k)
     if k == "children" or k == "contents" then
         return List(inflate_uuids(v))
     end
@@ -49,7 +49,7 @@ function ObjectProxy.__index(t, k)
     -- Spawn list wrapper so that we can do syntactically nice updates into
     -- nested lists
     if is_indexable(v) then
-        return ListProxy:new(t.uuid, k, {}, v)
+        return ListProxy:new(t.__uuid, k, {}, v)
     end
 
     -- Unpack UUIDs into ObjectProxies, unless we're actually trying to
@@ -62,7 +62,7 @@ function ObjectProxy.__index(t, k)
 end
 
 function ObjectProxy.__newindex(t, k, v)
-    return db:set_property(t.uuid, k, deflate_uuids(v))
+    return db:set_property(t.__uuid, k, deflate_uuids(v))
 end
 
 function ObjectProxy.__eq(a, b)
@@ -70,12 +70,12 @@ function ObjectProxy.__eq(a, b)
 end
 
 function ObjectProxy:__tostring()
-    return "ObjectProxy(" .. self.uuid .. ")"
+    return "ObjectProxy(" .. self.__uuid .. ")"
 end
 
 function ObjectProxy:new(uuid)
     local p = {
-        uuid = uuid
+        __uuid = uuid
     }
     setmetatable(p, self)
     return p
@@ -92,7 +92,7 @@ ObjectProxy.verb_args = verb_args
 -- Roo-specific extensions
 
 function ObjectProxy:resolve_verb(name)
-    return db:resolve_verb(self.uuid, name)
+    return db:resolve_verb(self.__uuid, name)
 end
 
 function ObjectProxy:call_verb(verb, args)

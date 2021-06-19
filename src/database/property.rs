@@ -39,6 +39,12 @@ impl From<HashSet<Uuid>> for PropertyValue {
     }
 }
 
+impl From<Vec<PropertyValue>> for PropertyValue {
+    fn from(value: Vec<PropertyValue>) -> Self {
+        Self::List(value)
+    }
+}
+
 impl From<&str> for PropertyValue {
     fn from(value: &str) -> Self {
         if let Some(uuid) = Uuid::parse_str(value).ok() {
@@ -52,11 +58,22 @@ impl From<&str> for PropertyValue {
 impl<'a> TryFrom<&'a PropertyValue> for &'a Uuid {
     type Error = String;
 
-    fn try_from(pv: &'a PropertyValue) -> Result<&'a Uuid, Self::Error> {
+    fn try_from(pv: &'a PropertyValue) -> Result<Self, Self::Error> {
         match pv {
             PropertyValue::Uuid(uuid) => Ok(uuid),
             PropertyValue::UuidOpt(Some(uuid)) => Ok(uuid),
             _ => Err(format!("Cannot convert to Uuid: {:?}", pv)),
+        }
+    }
+}
+
+impl<'a> TryFrom<&'a PropertyValue> for &'a String {
+    type Error = String;
+
+    fn try_from(pv: &'a PropertyValue) -> Result<Self, Self::Error> {
+        match pv {
+            PropertyValue::String(s) => Ok(s),
+            _ => Err(format!("Cannot convert to String: {:?}", pv)),
         }
     }
 }
@@ -110,6 +127,22 @@ impl<'lua> ToLua<'lua> for PropertyValue {
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Property {
     pub value: PropertyValue,
+}
+
+impl Property {
+    pub fn set(&mut self, new: PropertyValue, typed: bool) -> Result<PropertyValue, String> {
+        println!(
+            "{:?} {:?} {:?} {:?}",
+            self.value,
+            new,
+            std::mem::discriminant(&self.value),
+            std::mem::discriminant(&new)
+        );
+        if typed && std::mem::discriminant(&self.value) != std::mem::discriminant(&new) {
+            return Err("Tried to assign value of wrong type".to_string());
+        }
+        Ok(std::mem::replace(&mut self.value, new))
+    }
 }
 
 impl<T> From<T> for Property

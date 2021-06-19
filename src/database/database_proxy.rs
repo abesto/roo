@@ -97,23 +97,6 @@ impl DatabaseProxy {
         let o: LuaTable = object_proxy.call_method("new", (uuid.to_string(),))?;
         Ok(o)
     }
-
-    fn validate_property(key: &str, value: &LuaValue) -> LuaResult<()> {
-        let type_name = value.type_name();
-        match key {
-            "name" => {
-                if type_name == "string" {
-                    Ok(())
-                } else {
-                    Err(LuaError::external(format!(
-                        "'name' property must be a string, found {}",
-                        type_name
-                    )))
-                }
-            }
-            _ => Ok(()),
-        }
-    }
 }
 
 impl DatabaseProxy {
@@ -158,7 +141,6 @@ impl LuaUserData for DatabaseProxy {
         methods.add_method(
             "set_property",
             |lua, this, (uuid, key, value): (String, String, LuaValue)| {
-                Self::validate_property(&key, &value)?;
                 let errmsg_opt = match key.as_str() {
                     "location" => Some(".location cannot be set directly. Use what:move(where)"),
                     "contents" => Some(".contents cannot be set directly. Use what:move(where)"),
@@ -177,7 +159,9 @@ impl LuaUserData for DatabaseProxy {
 
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut(&mut lock, &uuid)?;
-                object.set_property(&key, PropertyValue::from_lua(value, lua)?);
+                object
+                    .set_property(&key, PropertyValue::from_lua(value, lua)?)
+                    .map_err(LuaError::external)?;
                 Ok(LuaValue::Nil)
             },
         );
@@ -299,7 +283,7 @@ impl LuaUserData for DatabaseProxy {
             let db = this.db.read().unwrap();
             let uuid = Self::parse_uuid(&uuid)?;
             let obj = this.get_object_by_uuid(&db, &uuid)?;
-            let parent_uuid_opt = obj.parent().cloned();
+            let parent_uuid_opt = obj.parent().clone();
             let children_uuids: Vec<_> = obj.children().iter().cloned().collect();
             let content_uuids: Vec<_> = obj.contents().iter().cloned().collect();
             let nothing_uuid = db.nothing_uuid().clone();

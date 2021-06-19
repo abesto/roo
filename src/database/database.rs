@@ -28,27 +28,31 @@ impl Database {
             let uuid = db.create_orphan();
             {
                 let o = db.get_mut(&uuid).unwrap();
-                o.set_property("name", format!("S.{}", name).as_str());
+                o.set_property("name", format!("S.{}", name).as_str())
+                    .unwrap();
             }
-            db.get_mut(&system_uuid).unwrap().set_property(name, uuid);
+            db.get_mut(&system_uuid)
+                .unwrap()
+                .set_property(name, uuid)
+                .unwrap();
         }
 
         db
     }
 
     pub fn create_orphan(&mut self) -> Uuid {
-        let uuid = Uuid::new_v4();
-        let object = Object::new(uuid);
+        let object = Object::new();
+        let uuid = object.uuid().clone();
         self.objects.insert(uuid, object);
         uuid
     }
 
     pub fn create(&mut self, parent: &Uuid, owner: &Uuid) -> Uuid {
-        let uuid = Uuid::new_v4();
-        let mut object = Object::new(uuid);
-        object.set_property("parent", Some(parent.clone()));
-        object.set_property("owner", Some(owner.clone()));
-        self.objects.insert(uuid, object);
+        let mut object = Object::new();
+        let uuid = object.uuid().clone();
+        object.set_property("parent", Some(parent.clone())).unwrap();
+        object.set_property("owner", Some(owner.clone())).unwrap();
+        self.objects.insert(object.uuid().clone(), object);
         uuid
     }
 
@@ -89,7 +93,7 @@ impl Database {
             // Objects in the location of the player
             player
                 .location()
-                .and_then(|uuid| self.get(uuid).ok())
+                .and_then(|uuid| self.get(&uuid).ok())
                 .map_or_else(|| None, |location| Some(location.contents())),
         ];
 
@@ -119,14 +123,14 @@ impl Database {
 
     pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), String> {
         // Remove from contents of the old location, if any
-        if let Some(old_location) = self.get(what_uuid)?.location().cloned() {
+        if let Some(old_location) = self.get(what_uuid)?.location().clone() {
             println!("remove_content({}, {})", old_location, what_uuid);
             self.get_mut(&old_location)?.remove_content(what_uuid);
         }
 
         // Set new location
         self.get_mut(what_uuid)?
-            .set_property("location", Some(*to_uuid));
+            .set_property("location", Some(*to_uuid))?;
 
         // Add to contents of new location
         self.get_mut(to_uuid)?.insert_content(*what_uuid);
@@ -135,13 +139,13 @@ impl Database {
     }
 
     pub fn delete(&mut self, what: &Uuid) -> Result<(), String> {
-        if let Some(location_uuid) = self.get(what)?.location().cloned() {
+        if let Some(location_uuid) = self.get(what)?.location().clone() {
             if let Ok(location) = self.get_mut(&location_uuid) {
                 location.remove_content(what);
             }
         }
 
-        if let Some(parent_uuid) = self.get(what)?.parent().cloned() {
+        if let Some(parent_uuid) = self.get(what)?.parent().clone() {
             if let Ok(parent) = self.get_mut(&parent_uuid) {
                 parent.remove_child(what);
             }
@@ -155,7 +159,7 @@ impl Database {
     pub fn chparent(&mut self, uuid_child: &Uuid, uuid_parent: &Uuid) -> Result<(), String> {
         // Remove from old parent, if any
         {
-            let opt_uuid_old_parent = self.get(uuid_child)?.parent().cloned();
+            let opt_uuid_old_parent = self.get(uuid_child)?.parent().clone();
             if let Some(uuid_old_parent) = opt_uuid_old_parent {
                 if let Some(old_parent) = self.objects.get_mut(&uuid_old_parent) {
                     old_parent.remove_child(uuid_child);
@@ -166,7 +170,7 @@ impl Database {
         // Set new parent
         {
             let child = self.get_mut(uuid_child)?;
-            child.set_property("parent", Some(uuid_parent.clone()));
+            child.set_property("parent", Some(uuid_parent.clone()))?;
         }
 
         // Add child to children of new parent

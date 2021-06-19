@@ -75,7 +75,7 @@ pub async fn server_main(
         Arc::new(RwLock::new(HashMap::new()));
 
     let db = world.db();
-    let system_uuid = db.read().unwrap().system_uuid().clone();
+    let nothing_uuid = db.read().unwrap().nothing_uuid().clone();
 
     let _cleanup = Cleanup {
         db: db.clone(),
@@ -98,14 +98,14 @@ pub async fn server_main(
                 let (socket, _) = result?;
                 let lua = CONNDATA.sync_scope(
                     ConnData {
-                        player_object: system_uuid,
+                        player_object: nothing_uuid,
                     },
                     || world.lua(),
                 );
 
                 let (read, write) = socket.into_split();
 
-                let uuid = do_login_command(system_uuid, &lua);
+                let uuid = do_login_command(nothing_uuid, &lua);
 
                 inject_notify_function(&lua, notify_txs.clone());
                 let (notify_tx, notify_rx) = create_notify_channel(notify_txs.clone(), uuid);
@@ -267,7 +267,7 @@ fn execute_verb(db: Arc<RwLock<Database>>, line: String) -> Result<(String, Stri
         lock.get(player_uuid)
             .unwrap()
             .location()
-            .and_then(|l| lock.get(l).ok())
+            .and_then(|l| lock.get(&l).ok())
     };
     // Find what
     let (this, verb) = match first_matching_verb(
@@ -346,10 +346,10 @@ fn create_notify_channel(
     (tx, rx)
 }
 
-fn do_login_command(system_uuid: Uuid, lua: &Lua) -> Uuid {
+fn do_login_command(uuid: Uuid, lua: &Lua) -> Uuid {
     let uuid = CONNDATA.sync_scope(
         ConnData {
-            player_object: system_uuid,
+            player_object: uuid,
         },
         || {
             let uuid_str = lua

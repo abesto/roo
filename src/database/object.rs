@@ -1,6 +1,8 @@
+use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
 use mlua::prelude::*;
+use paste::paste;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -10,6 +12,75 @@ use crate::database::Property;
 use super::PropertyValue;
 use super::Verb;
 
+macro_rules! getprop {
+    ($self:ident, $p:expr, $v:ident, $t:ty) => {
+        $self.properties
+            .get($p)
+            .map(|p| {
+                assert!(matches!(p.value, PropertyValue::$v { .. }));
+                match &p.value {
+                    PropertyValue::$v(v) => v,
+                    _ => unreachable!()
+                }
+            })
+            .unwrap()
+    };
+
+    ($self:ident, $p:expr, $v:ident) => { getprop!($self, $p, $v, _) }
+}
+
+macro_rules! getprop_mut {
+    ($self:ident, $p:expr, $v:ident, $t:ty) => {
+        $self.properties
+            .get_mut($p)
+            .map(|p| {
+                assert!(matches!(p.value, PropertyValue::$v { .. }));
+                match &mut p.value {
+                    PropertyValue::$v(v) => v,
+                    _ => unreachable!()
+                }
+            })
+            .unwrap()
+    };
+
+    ($self:ident, $p:expr, $v:ident) => { getprop_mut!($self, $p, $v, _) }
+}
+
+macro_rules! prop_getters {
+    ($p:ident, $v:ident, $t:ty) => {
+        pub fn $p(&self) -> &$t {
+            getprop!(self, stringify!($p), $v)
+        }
+
+        paste! {
+            pub fn[<$p _mut>](&mut self) -> &mut $t {
+                getprop_mut!(self, stringify!($p), $v)
+            }
+        }
+    };
+}
+
+macro_rules! props {
+    ($(($p:ident, $v:ident, $t:ty, $d:expr)),*) => {
+        fn is_prop_builtin(&self, key: &str) -> bool {
+            $(
+                if stringify!($p) == key { return true; }
+            )*
+            false
+        }
+
+        fn load_defaults(&mut self) {
+            $(
+                self.set_property(stringify!($p), $d).unwrap();
+            )*
+        }
+
+        $(
+            prop_getters!($p, $v, $t);
+        )*
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Object {
     properties: HashMap<String, Property>,
@@ -18,126 +89,40 @@ pub struct Object {
 
 impl Object {
     #[must_use]
-    pub(crate) fn new(uuid: Uuid) -> Self {
+    pub(crate) fn new() -> Self {
         let mut o = Object {
             properties: HashMap::new(),
             verbs: vec![],
         };
 
-        o.properties
-            .insert("uuid".to_string(), Property::from(uuid));
-        o.properties.insert(
-            "location".to_string(),
-            Property::from(PropertyValue::UuidOpt(None)),
-        );
-        o.properties.insert(
-            "name".to_string(),
-            Property::from(PropertyValue::String(String::new())),
-        );
-        o.properties.insert(
-            "contents".to_string(),
-            Property::from(HashSet::<Uuid>::new()),
-        );
-        o.properties.insert(
-            "children".to_string(),
-            Property::from(HashSet::<Uuid>::new()),
-        );
-        o.properties.insert(
-            "aliases".to_string(),
-            Property::from(PropertyValue::List(vec![])),
-        );
-        o.properties.insert(
-            "owner".to_string(),
-            Property::from(PropertyValue::UuidOpt(None)),
-        );
-        o.properties.insert(
-            "parent".to_string(),
-            Property::from(PropertyValue::UuidOpt(None)),
-        );
+        o.load_defaults();
 
         o
     }
 
-    // TODO this needs refactoring
-
-    pub fn uuid(&self) -> &Uuid {
-        if let PropertyValue::Uuid(uuid) = &self.properties.get("uuid").unwrap().value {
-            uuid
-        } else {
-            unreachable!(".uuid is always set to a Uuid");
-        }
-    }
-
-    pub fn name(&self) -> &String {
-        if let PropertyValue::String(name) = &self.properties.get("name").unwrap().value {
-            name
-        } else {
-            unreachable!(".name is always set to a String");
-        }
-    }
-
-    pub fn location(&self) -> Option<&Uuid> {
-        if let Some(PropertyValue::UuidOpt(uuid)) = &self.get_property("location") {
-            uuid.as_ref()
-        } else {
-            unreachable!(".location is always set to an Option<Uuid>")
-        }
-    }
+    props!(
+        (uuid, Uuid, Uuid, Uuid::new_v4()),
+        (name, String, String, ""),
+        (location, UuidOpt, Option<Uuid>, None),
+        (contents, Uuids, HashSet<Uuid>, HashSet::new()),
+        (parent, UuidOpt, Option<Uuid>, None),
+        (children, Uuids, HashSet<Uuid>, HashSet::new())
+    );
 
     pub fn remove_content(&mut self, uuid: &Uuid) {
-        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property_mut("contents") {
-            uuids.remove(uuid);
-        } else {
-            unreachable!(".contents is always set to a HashSet<Uuid>")
-        }
+        self.contents_mut().remove(uuid);
     }
 
     pub fn insert_content(&mut self, uuid: Uuid) {
-        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property_mut("contents") {
-            uuids.insert(uuid);
-        } else {
-            unreachable!(".contents is always set to a HashSet<Uuid>")
-        }
-    }
-
-    pub fn contents(&self) -> &HashSet<Uuid> {
-        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property("contents") {
-            uuids
-        } else {
-            unreachable!(".contents is always set to a HashSet<Uuid>")
-        }
+        self.contents_mut().insert(uuid);
     }
 
     pub fn insert_child(&mut self, uuid: Uuid) {
-        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property_mut("children") {
-            uuids.insert(uuid);
-        } else {
-            unreachable!(".children is always set to a HashSet<Uuid>")
-        }
+        self.children_mut().insert(uuid);
     }
 
     pub fn remove_child(&mut self, uuid: &Uuid) {
-        if let Some(PropertyValue::Uuids(uuids)) = self.get_property_mut("children") {
-            uuids.remove(uuid);
-        } else {
-            unreachable!(".children is always set to a HashSet<Uuid>")
-        }
-    }
-
-    pub fn children(&self) -> &HashSet<Uuid> {
-        if let Some(PropertyValue::Uuids(uuids)) = &mut self.get_property("children") {
-            &uuids
-        } else {
-            unreachable!(".children is always set to a HashSet<Uuid>")
-        }
-    }
-
-    pub fn parent(&self) -> Option<&Uuid> {
-        if let Some(PropertyValue::UuidOpt(uuid)) = &self.get_property("parent") {
-            uuid.as_ref()
-        } else {
-            unreachable!(".parent is always set to an Option<Uuid>")
-        }
+        self.children_mut().remove(uuid);
     }
 
     pub fn get_property(&self, key: &str) -> Option<&PropertyValue> {
@@ -148,13 +133,29 @@ impl Object {
         self.properties.get_mut(key).map(|p| &mut p.value)
     }
 
-    pub fn set_property<T>(&mut self, key: &str, from_value: T)
+    pub fn set_property<T>(
+        &mut self,
+        key: &str,
+        from_value: T,
+    ) -> Result<Option<PropertyValue>, String>
     where
         T: Into<PropertyValue>,
     {
         let value = from_value.into();
-        self.properties
-            .insert(key.to_string(), Property::from(value));
+        let is_builtin = self.is_prop_builtin(key);
+        println!("{} {:?}, {}", key, value, is_builtin);
+        match self.properties.entry(key.to_string()) {
+            Entry::Occupied(p) => {
+                if key == "uuid" {
+                    return Err("UUID is read-only".to_string());
+                }
+                p.into_mut().set(value, is_builtin).map(Some)
+            }
+            Entry::Vacant(v) => {
+                v.insert(Property::from(value));
+                Ok(None)
+            }
+        }
     }
 
     pub fn set_into_list<T>(
