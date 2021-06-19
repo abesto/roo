@@ -10,6 +10,7 @@
         player.owner = player
         player:move(S.starting_room)
         player.name = "guest"
+        player:set_player_flag(true)
 
         return player.uuid
         ]=])
@@ -54,6 +55,9 @@
                     return 0
                 end
                 object = p.uuid
+            end
+            if object == "S" then
+                object = S.uuid
             end
             return {object, verbname}
         else

@@ -131,13 +131,6 @@ pub struct Property {
 
 impl Property {
     pub fn set(&mut self, new: PropertyValue, typed: bool) -> Result<PropertyValue, String> {
-        println!(
-            "{:?} {:?} {:?} {:?}",
-            self.value,
-            new,
-            std::mem::discriminant(&self.value),
-            std::mem::discriminant(&new)
-        );
         if typed && std::mem::discriminant(&self.value) != std::mem::discriminant(&new) {
             return Err("Tried to assign value of wrong type".to_string());
         }

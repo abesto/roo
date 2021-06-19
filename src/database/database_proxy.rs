@@ -1,6 +1,9 @@
 // TODO maybe switch to parking_lot::Mutex
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+// TODO move database_proxy out of the database module to better enforce
+// separation of concerns via module-level field / method visibility
+
 use mlua::prelude::*;
 use uuid::Uuid;
 
@@ -312,6 +315,22 @@ impl LuaUserData for DatabaseProxy {
             let mut db = this.db.write().unwrap();
             db.delete(&uuid).map_err(LuaError::external)
         });
+
+        methods.add_method("is_player", |_lua, this, (uuid,): (String,)| {
+            let db = this.db.read().unwrap();
+            db.is_player(&Self::parse_uuid(&uuid)?)
+                .map_err(LuaError::external)
+        });
+
+        methods.add_method(
+            "set_player_flag",
+            |_lua, this, (uuid, val): (String, bool)| {
+                // TODO check permissions
+                let mut db = this.db.write().unwrap();
+                db.set_player_flag(&Self::parse_uuid(&uuid)?, val)
+                    .map_err(LuaError::external)
+            },
+        );
 
         methods.add_meta_method(LuaMetaMethod::Index, |lua, this, (uuid,): (String,)| {
             this.make_object_proxy(lua, &Self::parse_uuid(&uuid)?)

@@ -88,6 +88,8 @@ ObjectProxy.chparent = chparent
 ObjectProxy.add_verb = add_verb
 ObjectProxy.set_verb_code = set_verb_code
 ObjectProxy.verb_args = verb_args
+ObjectProxy.is_player = is_player
+ObjectProxy.set_player_flag = set_player_flag
 
 -- Roo-specific extensions
 

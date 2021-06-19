@@ -1,4 +1,7 @@
-use std::{collections::HashMap, convert::TryInto};
+use std::{
+    collections::{HashMap, HashSet},
+    convert::TryInto,
+};
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -11,6 +14,7 @@ use super::{PropertyValue, Verb};
 pub struct Database {
     objects: HashMap<Uuid, Object>,
     system_uuid: Uuid,
+    players: HashSet<Uuid>,
 }
 
 impl Database {
@@ -19,6 +23,7 @@ impl Database {
         let mut db = Self {
             objects: HashMap::new(),
             system_uuid: Uuid::new_v4(), // Fake temporary value
+            players: HashSet::new(),
         };
 
         let system_uuid = db.create_orphan();
@@ -228,5 +233,21 @@ impl Database {
         } else {
             Ok(None)
         }
+    }
+
+    pub fn set_player_flag(&mut self, uuid: &Uuid, val: bool) -> Result<bool, String> {
+        self.get(uuid)?;
+        let old = self.players.contains(uuid);
+        if val {
+            self.players.insert(uuid.clone());
+        } else {
+            self.players.remove(uuid);
+        }
+        Ok(old)
+    }
+
+    pub fn is_player(&self, uuid: &Uuid) -> Result<bool, String> {
+        self.get(uuid)?;
+        Ok(self.players.contains(uuid))
     }
 }

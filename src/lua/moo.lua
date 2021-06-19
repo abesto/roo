@@ -99,16 +99,15 @@ function create(parent, owner)
     local parent_res = touuid(parent)
     local owner_res = (owner ~= nil) and touuid(owner) or Ok(nil)
 
-    return Result.zip(parent_res, owner_res):map_method_unpacked(db, 'create'):and_then(toobj):map(
-               function(object)
-            -- Call object:initialize() if it exists
-            local initialize = object.initialize
-            if initialize ~= nil then
-                initialize(object)
-            end
+    return Result.zip(parent_res, owner_res):map_method_unpacked(db, 'create'):and_then(toobj):map(function(object)
+        -- Call object:initialize() if it exists
+        local initialize = object.initialize
+        if initialize ~= nil then
+            initialize(object)
+        end
 
-            return object
-        end)
+        return object
+    end)
 end
 
 ---@return boolean
@@ -157,6 +156,16 @@ end
 ---@return Result<nil, ?>
 function recycle(object)
     return touuid(object):map_method(db, 'recycle')
+end
+
+---@return Result<bool, ?>
+function set_player_flag(object, val)
+    return touuid(object):map_method(db, 'set_player_flag', val)
+end
+
+---@return Result<bool, ?>
+function is_player(object, val)
+    return touuid(object):map_method(db, 'is_player')
 end
 
 function read()
