@@ -132,7 +132,7 @@ end
 function move(what, where)
     local what_uuid = touuid(what)
     local where_uuid = touuid(where)
-    Result.zip(what_uuid, where_uuid):map_method_unpacked(db, 'move')
+    return Result.zip(what_uuid, where_uuid):map_method_unpacked(db, 'move')
 end
 
 ---@return Result<?, ?>
@@ -166,6 +166,13 @@ end
 ---@return Result<bool, ?>
 function is_player(object, val)
     return touuid(object):map_method(db, 'is_player')
+end
+
+---@return List<ObjectProxy>
+function players()
+    return List(db:players()):map(function(uuid)
+        return db[uuid]
+    end)
 end
 
 function read()

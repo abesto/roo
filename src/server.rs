@@ -75,7 +75,6 @@ pub async fn server_main(
         Arc::new(RwLock::new(HashMap::new()));
 
     let db = world.db();
-    let nothing_uuid = db.read().unwrap().nothing_uuid().clone();
 
     let _cleanup = Cleanup {
         db: db.clone(),
@@ -91,30 +90,42 @@ pub async fn server_main(
 
     loop {
         tokio::select! {
-            _ = &mut shutdown_rx => {
-                break Ok(())
-            },
-            result = listener.accept() => {
-                let (socket, _) = result?;
-                let lua = CONNDATA.sync_scope(
-                    ConnData {
-                        player_object: nothing_uuid,
-                    },
-                    || world.lua(),
-                );
+                _ = &mut shutdown_rx => {
+                    break Ok(())
+                },
+                result = listener.accept() => {
+                    let (socket, _) = result?;
+                    let not_logged_in_uuid = {
+                        let mut db = db.write().unwrap();
+                        db.create_orphan()
+                    };
 
-                let (read, write) = socket.into_split();
+                    CONNDATA.scope(
+                        ConnData {
+                            player_object: not_logged_in_uuid,
+                        },
+                        async {
+                            let lua = world.lua();
+                    let (read, write) = socket.into_split();
 
-                let uuid = do_login_command(nothing_uuid, &lua);
+                    let (notify_tx, notify_rx) = create_notify_channel(notify_txs.clone(), not_logged_in_uuid);
+                    inject_notify_function(&lua, notify_txs.clone());
+                    spawn_notify_task(notify_rx, write);
 
-                inject_notify_function(&lua, notify_txs.clone());
-                let (notify_tx, notify_rx) = create_notify_channel(notify_txs.clone(), uuid);
-                spawn_notify_task(notify_rx, write);
+                    let (line_tx, line_rx) = async_channel::unbounded::<String>();
+                    spawn_read_task(read, line_tx);
+                    inject_read_function(&lua, line_rx.clone());
 
-                let (line_tx, line_rx) = async_channel::unbounded::<String>();
-                spawn_read_task(read, line_tx);
-                inject_read_function(&lua, line_rx.clone());
-                spawn_processing_task(lua, uuid, notify_tx.clone(), line_rx.clone(), db.clone());
+                    if let Some(uuid) = do_login_command(&lua, line_rx.clone(), notify_tx.clone(), db.clone()).await {
+                        move_notify_channel(notify_txs.clone(), &not_logged_in_uuid, uuid);
+                        CONNDATA.scope(
+                            ConnData { player_object: uuid },
+                            async {
+                                spawn_processing_task(lua, uuid, notify_tx.clone(), line_rx.clone(), db.clone());
+                            }
+                        ).await;
+                    }
+                }).await;
             }
         }
     }
@@ -212,7 +223,6 @@ fn spawn_processing_task(
         let conndata = ConnData {
             player_object: uuid,
         };
-        notify_tx.send("Hai!".to_string()).await.unwrap();
         loop {
             let line = match line_rx.recv().await {
                 Ok(l) => l,
@@ -346,22 +356,86 @@ fn create_notify_channel(
     (tx, rx)
 }
 
-fn do_login_command(uuid: Uuid, lua: &Lua) -> Uuid {
-    let uuid = CONNDATA.sync_scope(
-        ConnData {
-            player_object: uuid,
-        },
-        || {
-            let uuid_str = lua
-                .load("system:do_login_command()")
-                .set_name("system:do_login_command()")
-                .unwrap()
-                .eval::<String>()
-                .unwrap();
-            DatabaseProxy::parse_uuid(&uuid_str).unwrap()
-        },
-    );
-    uuid
+fn move_notify_channel(
+    our_txs: Arc<RwLock<HashMap<Uuid, mpsc::Sender<String>>>>,
+    old: &Uuid,
+    new: Uuid,
+) {
+    let mut lock = our_txs.write().unwrap();
+    let val = lock.remove(old).unwrap();
+    lock.insert(new, val);
+}
+
+async fn do_login_command(
+    lua: &Lua,
+    line_rx: async_channel::Receiver<String>,
+    notify_tx: mpsc::Sender<String>,
+    db: Arc<RwLock<Database>>,
+) -> Option<Uuid> {
+    notify_tx
+        .send("Ohai! Type 'connect <username>' to get started.".to_string())
+        .await
+        .unwrap();
+    loop {
+        let line = match line_rx.recv().await {
+            Ok(l) => l,
+            Err(e) => {
+                // TODO err logging
+                println!("{}", e);
+                return None;
+            }
+        };
+        println!("< {}", line);
+
+        let uuid = &CONNDATA.get().player_object;
+        let command_opt = {
+            let lock = db.read().unwrap();
+            Command::parse(&line, uuid, &lock)
+        };
+        let command = match command_opt {
+            Some(cmd) => cmd,
+            None => {
+                println!("do_login_command: failed to parse: {}", line);
+                continue;
+            }
+        };
+        let mut args = vec![command.verb().to_string()];
+        args.extend(command.args().clone());
+        let argstr = args
+            .iter()
+            .map(|s| format!("{:?}", s))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let short_code = format!("S:do_login_command({})", argstr);
+        let full_code = format!(
+            "
+        player = db[{:?}]
+        return {}
+        ",
+            uuid.to_string(),
+            short_code
+        );
+
+        println!("{}", full_code);
+        let retval = lua
+            .load(&full_code)
+            .set_name(&short_code)
+            .unwrap()
+            .eval::<LuaValue>();
+        let msg_opt = match retval {
+            Ok(LuaValue::String(s)) => {
+                return Some(DatabaseProxy::parse_uuid(s.to_str().unwrap()).unwrap())
+            }
+            Ok(LuaValue::Nil) => None,
+            Ok(v) => Some(format!("{:?}", v)),
+            Err(e) => Some(format!("{}", e)),
+        };
+        if let Some(msg) = msg_opt {
+            if let Err(e) = notify_tx.send(msg).await {
+                println!("do_login_command notify failed: {}", e);
+            }
+        }
+    }
 }
 
 fn inject_notify_function(lua: &Lua, notify_txs: Arc<RwLock<HashMap<Uuid, mpsc::Sender<String>>>>) {

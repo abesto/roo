@@ -6,13 +6,29 @@
 
     system:add_verb({system.uuid, "", {"do_login_command"}}, {})
     system:set_verb_code("do_login_command", [=[
-        player = create(S.Player):unwrap()
-        player.owner = player
-        player:move(S.starting_room)
-        player.name = "guest"
-        player:set_player_flag(true)
+        local command = assert_string(1, args[1])
+        if command ~= "connect" then
+            player:notify('Only the "connect" command is currently supported during login')
+            return nil
+        end
 
-        return player.uuid
+        local name = assert_string(2, args[2])
+
+        for i, candidate in ipairs(players()) do
+            if candidate.name == name then
+                player:notify("Welcome back, %s" % {name})
+                return candidate.uuid
+            end
+        end
+
+        player:notify("Welcome, %s" % {name})
+        local new = create(S.Player):unwrap()
+        new:set_player_flag(true):unwrap()
+        new.owner = new
+        new:move(S.starting_room):unwrap()
+        new.name = name
+
+        return new.uuid
         ]=])
 
     --- S.code_utils

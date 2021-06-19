@@ -250,4 +250,8 @@ impl Database {
         self.get(uuid)?;
         Ok(self.players.contains(uuid))
     }
+
+    pub fn players(&self) -> &HashSet<Uuid> {
+        &self.players
+    }
 }

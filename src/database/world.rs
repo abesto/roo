@@ -396,7 +396,9 @@ mod tests {
     #[test]
     fn do_login_command() {
         with_context(|Ctx { lua, .. }| {
-            lua.load("S:do_login_command()").exec().unwrap();
+            lua.load("S:do_login_command('connect', 'testuser')")
+                .exec()
+                .unwrap();
         });
     }
 

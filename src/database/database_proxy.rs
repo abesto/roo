@@ -332,6 +332,16 @@ impl LuaUserData for DatabaseProxy {
             },
         );
 
+        methods.add_method("players", |_lua, this, ()| {
+            let db = this.db.read().unwrap();
+            Ok(db
+                .players()
+                .iter()
+                .cloned()
+                .map(|u| u.to_string())
+                .collect::<Vec<_>>())
+        });
+
         methods.add_meta_method(LuaMetaMethod::Index, |lua, this, (uuid,): (String,)| {
             this.make_object_proxy(lua, &Self::parse_uuid(&uuid)?)
         });

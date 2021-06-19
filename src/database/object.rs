@@ -143,7 +143,6 @@ impl Object {
     {
         let value = from_value.into();
         let is_builtin = self.is_prop_builtin(key);
-        println!("{} {:?}, {}", key, value, is_builtin);
         match self.properties.entry(key.to_string()) {
             Entry::Occupied(p) => {
                 if key == "uuid" {
