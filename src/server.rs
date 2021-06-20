@@ -424,7 +424,7 @@ async fn do_login_command(
             .eval::<LuaValue>();
         let msg_opt = match retval {
             Ok(LuaValue::String(s)) => {
-                return Some(DatabaseProxy::parse_uuid(s.to_str().unwrap()).unwrap())
+                return Some(DatabaseProxy::parse_uuid_old(s.to_str().unwrap()).unwrap())
             }
             Ok(LuaValue::Nil) => None,
             Ok(v) => Some(format!("{:?}", v)),
@@ -444,7 +444,7 @@ fn inject_notify_function(lua: &Lua, notify_txs: Arc<RwLock<HashMap<Uuid, mpsc::
             "_server_notify",
             lua.create_function(move |_lua, (uuid, msg): (String, String)| {
                 let lock = notify_txs.read().unwrap();
-                if let Some(tx) = lock.get(&DatabaseProxy::parse_uuid(&uuid)?) {
+                if let Some(tx) = lock.get(&DatabaseProxy::parse_uuid_old(&uuid)?) {
                     // TODO handle buffer full
                     return tx.try_send(msg).map_err(LuaError::external);
                 }

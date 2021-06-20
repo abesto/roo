@@ -4,6 +4,8 @@ use crate::database::World;
 
 mod command;
 mod database;
+mod error;
+mod result;
 mod saveload;
 mod server;
 

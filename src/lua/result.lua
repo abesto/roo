@@ -2,6 +2,7 @@
 local nilvalue = {}
 
 pl.class.Result()
+
 Result:catch(function(self, name)
     error("No '" .. name .. "' field on '" .. self._name .. "'")
 end)
@@ -22,6 +23,10 @@ function Result:_getvalue()
     end
 end
 
+function Result:__tostring()
+    return "%s(%s)" % {self._name, self.value}
+end
+
 function Result:is_ok()
     return self:is_a(Ok)
 end
@@ -31,12 +36,12 @@ function Result:is_err()
 end
 
 function Result:err()
-    assert_class_of(0, self, Err, ":err() called on an Ok")
+    assert_class_of(0, self, Err, ":err() called on an Ok: %s" % {self.value})
     return self:_getvalue()
 end
 
 function Result:unwrap()
-    assert_class_of(0, self, Ok, ":unwrap() called on an Err")
+    assert_class_of(0, self, Ok, ":unwrap() called on an Err: %s" % {self.value})
     return self:_getvalue()
 end
 
@@ -113,7 +118,7 @@ function Ok:zip(other)
 end
 
 function Err:zip(other)
-    assert_class_of(0, self, Result)
+    assert_class_of(0, self, Err)
     assert_class_of(1, other, Result)
     return self
 end
@@ -130,15 +135,33 @@ function Result.zip(...)
 end
 
 function Ok:map_method_unpacked(obj, f, ...)
-    assert_class_of(0, self, Result)
+    assert_class_of(0, self, Ok)
     local f = pl.utils.function_arg(1, obj[f])
     local args = List(self.value):extend{...}
     return Ok(f(obj, unpack(args)))
 end
 
 function Err:map_method_unpacked(obj, f, ...)
-    assert_class_of(0, self, Result)
+    assert_class_of(0, self, Err)
     local f = pl.utils.function_arg(1, obj[f])
+    return self
+end
+
+function Ok:and_then_method_unpacked(obj, f, ...)
+    assert_class_of(0, self, Ok)
+    local f = pl.utils.function_arg(1, obj[f])
+    local args = List(self.value):extend{...}
+    local res = f(obj, unpack(args))
+    if not Result:class_of(res) then
+        return pl.utils.raise("Return value of function passed to Result:and_then must be a Result, found: %s" %
+                                  {pl.types.type(res)})
+    end
+    return res
+end
+
+function Err:and_then_method_unpacked(obj, f, ...)
+    assert_class_of(0, self, Err)
+    pl.utils.function_arg(1, obj[f])
     return self
 end
 

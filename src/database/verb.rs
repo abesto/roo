@@ -146,7 +146,7 @@ impl<'lua> FromLua<'lua> for VerbInfo {
                 ));
             }
             Ok(Self {
-                owner: DatabaseProxy::parse_uuid(&t.get::<LuaInteger, String>(1)?)?,
+                owner: DatabaseProxy::parse_uuid_old(&t.get::<LuaInteger, String>(1)?)?,
                 perms: VerbPermissions::try_from(&t.get::<LuaInteger, String>(2)?)
                     .map_err(LuaError::external)?,
                 names: t.get::<LuaInteger, Vec<String>>(3)?,

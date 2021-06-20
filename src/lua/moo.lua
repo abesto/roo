@@ -2,20 +2,23 @@
 -- (and the rare addition that lines up with them very closely)
 Error = pl.class()
 
-function Error:_init(name)
-    self.name = name
+function Error:_init(code, message)
+    self.code = code
+    self.message = message
 end
 
 function Error:__tostring()
-    return self.name
+    return "%s (%s)" % {self.code, self.message}
 end
 
 function is_error(x)
     return Error:class_of(x)
 end
 
-local function make_error(name)
-    rawset(_G, name, Error(name))
+local function make_error(code)
+    rawset(_G, code, function(message)
+        return Error(code, message)
+    end)
 end
 imap(make_error,
     {"E_NONE", "E_TYPE", "E_DIV", "E_PERM", "E_PROPNF", "E_VERBNF", "E_VARNF", "E_INVIND", "E_RECMOVE", "E_MAXREC",
@@ -48,23 +51,25 @@ end
 function toobj(x)
     if is_type(x, ObjectProxy) then
         return Ok(x)
-    elseif not is_type(x, "string") or not is_uuid(x) then
-        return Err(E_TYPE)
+    elseif not is_type(x, "string") then
+        return Err(E_TYPE("toobj() expects an object or a string, got %s: \"%s\"" % {pl.types.type(x), toliteral(x)}))
+    elseif not is_uuid(x) then
+        return Err(E_INVARG("Not a valid UUID: \"%s\"" % {x}))
     end
     return Ok(ObjectProxy:new(x))
 end
 
 -- Not really a Moo function, but it's roughly the inverse of toobj so /shrug
-function touuid(what)
-    if is_type(what, "string") then
-        if not is_uuid(what) then
-            return Err(E_TYPE)
+function touuid(x)
+    if is_type(x, "string") then
+        if not is_uuid(x) then
+            return Err(E_INVARG("Not a valid UUID: \"%s\"" % {x}))
         end
-        return Ok(what)
-    elseif is_type(what, ObjectProxy) then
-        return Ok(what.uuid)
+        return Ok(x)
+    elseif is_type(x, ObjectProxy) then
+        return Ok(x.uuid)
     else
-        return Err(E_TYPE)
+        return Err(E_TYPE("touuid() expects an object or a string, got %s: \"%s\"" % {pl.types.type(x), toliteral(x)}))
     end
 end
 
@@ -103,7 +108,7 @@ function create(parent, owner)
     local parent_res = touuid(parent)
     local owner_res = touuid(owner or S.nothing)
 
-    return Result.zip(parent_res, owner_res):map_method_unpacked(db, 'create'):and_then(toobj):map(function(object)
+    return Result.zip(parent_res, owner_res):and_then_method_unpacked(db, 'create'):and_then(toobj):map(function(object)
         -- Call object:initialize() if it exists
         local initialize = object.initialize
         if initialize ~= nil then
