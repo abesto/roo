@@ -43,7 +43,7 @@ impl DatabaseProxy {
 
     pub fn parse_uuid(uuid: &str) -> Result<Uuid> {
         Uuid::parse_str(&uuid)
-            .map_err(|e| E_INVARG.new(format!("{:?} is not a valid UUID: {}", uuid, e)))
+            .map_err(|e| E_INVARG.make(format!("{:?} is not a valid UUID: {}", uuid, e)))
     }
 
     fn err_no_object(uuid: &str) -> LuaError {
@@ -65,7 +65,7 @@ impl DatabaseProxy {
     }
 
     fn get_object_by_uuid<'a>(&self, db: &'a Database, uuid: &Uuid) -> Result<&'a Object> {
-        db.get(uuid).map_err(|msg| E_PERM.new(msg))
+        db.get(uuid).map_err(|msg| E_PERM.make(msg))
     }
 
     fn get_verb<'a>(
@@ -83,7 +83,10 @@ impl DatabaseProxy {
                     .ok_or_else(|| LuaError::external("No such verby birby"))?;
                 Ok(&verb)
             }
-            _ => unimplemented!(),
+            _ => Err(LuaError::external(format!(
+                "get_verb not implemented yet for {}",
+                desc
+            ))),
         }
     }
 
@@ -307,8 +310,8 @@ impl LuaUserData for DatabaseProxy {
             },
         );
 
-        methods.add_method("checkpoint", |_lua, this, ()| {
-            unimplemented!();
+        methods.add_method("checkpoint", |lua, _this, ()| {
+            return err(lua, E_NACC.make("Not implemented yet"));
             #[allow(unreachable_code)]
             Ok(LuaValue::Nil)
             /*

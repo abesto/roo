@@ -31,7 +31,7 @@ impl std::fmt::Display for ErrorCode {
 
 impl ErrorCode {
     #[must_use]
-    pub fn new<S>(self, message: S) -> Error
+    pub fn make<S>(self, message: S) -> Error
     where
         S: ToString,
     {

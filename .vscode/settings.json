@@ -24,9 +24,8 @@
   "python.testing.unittestEnabled": true,
   "python.testing.unittestArgs": [
     "-v",
-    "-s",
-    "./integration_tests",
-    "-p",
-    "test_*.py"
+    "-s", "./integration_tests/tests",
+    "-t", "./",
+    "-p", "test_*.py"
   ]
 }
