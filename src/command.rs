@@ -21,7 +21,7 @@ impl VerbObject {
     fn resolve<S: ToString>(str: S, player: &Uuid, db: &Database) -> Self {
         let obj = db
             .resolve_object(player, &str.to_string())
-            .map(|o| o.uuid().clone());
+            .map(|o| *o.uuid());
         Self::new(str, obj)
     }
 }
@@ -140,8 +140,8 @@ impl Command {
         }?;
 
         Some(Self {
-            args,
             argstr,
+            args,
             parsed,
         })
     }
@@ -197,7 +197,7 @@ mod tests {
                 verb: "direct2".to_string(),
                 direct: VerbObject {
                     str: object.to_string(),
-                    obj: Some(object.clone())
+                    obj: Some(object)
                 }
             },
             ParsedCommand::verb_direct("direct2", object.to_string(), &player, &db)

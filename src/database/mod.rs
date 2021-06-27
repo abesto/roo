@@ -1,4 +1,4 @@
-#[allow(clippy::clippy::module_inception)]
+#[allow(clippy::module_inception)]
 pub mod database;
 pub mod database_proxy;
 pub mod object;

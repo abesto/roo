@@ -21,12 +21,15 @@ struct CliOpts {
 }
 
 fn parse_saveload_config(src: &str) -> Result<SaveloadConfig, String> {
-    let parts = src.split(":").collect::<Vec<_>>();
+    let parts = src.split(':').collect::<Vec<_>>();
     match parts[0] {
         "testing" => Ok(SaveloadConfig::Testing),
         "rotating" => Ok(SaveloadConfig::Rotating(RotatingSaveloadConfig {
             dir: parts.get(1).unwrap_or(&"./database").to_string(),
-            keep_backups: usize::from_str_radix(parts.get(2).unwrap_or(&"10"), 10)
+            keep_backups: parts
+                .get(2)
+                .unwrap_or(&"10")
+                .parse::<usize>()
                 .map_err(|e| e.to_string())?,
             basename: parts.get(3).unwrap_or(&"roo").to_string(),
         })),
@@ -38,5 +41,5 @@ fn main() {
     let opts = CliOpts::parse();
     let saveload_config = opts.db;
     let world = World::from_saveload_config(&saveload_config);
-    server::run_server(world, saveload_config.clone());
+    server::run_server(world, saveload_config);
 }

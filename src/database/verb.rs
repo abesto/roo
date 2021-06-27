@@ -157,13 +157,17 @@ impl<'lua> FromLua<'lua> for VerbInfo {
     }
 }
 
-impl<'lua> ToLua<'lua> for VerbInfo {
+impl<'lua> ToLua<'lua> for &VerbInfo {
     fn to_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
         if let LuaValue::Function(f) = lua
             .load("function (...) return {...} end")
             .eval::<LuaValue>()?
         {
-            f.call((self.owner.to_string(), self.perms.to_string(), self.names))
+            f.call((
+                self.owner.to_string(),
+                self.perms.to_string(),
+                self.names.clone(),
+            ))
         } else {
             unreachable!();
         }
@@ -189,7 +193,7 @@ where
     type Error = String;
 
     fn try_from(value: &Vec<S>) -> Result<Self, Self::Error> {
-        if value.len() == 0 {
+        if value.is_empty() {
             Ok(Self::NoArgs)
         } else if value.len() == 1 {
             let dobj = AnyOrThis::try_from(&value[0].to_string())?;
@@ -206,11 +210,9 @@ impl<'lua> FromLua<'lua> for VerbArgs {
             let len = t.len()?;
             if len == 0 {
                 Ok(Self::NoArgs)
-            } else if len == 1 {
-                Ok(Self::Direct { dobj: t.get(1)? })
             } else {
-                // TODO impl: Self::Full
                 Ok(Self::Direct { dobj: t.get(1)? })
+                // TODO impl: Self::Full
                 /*
                 Err(LuaError::external(
                     "only arg-less and dobj-only verbs are supported currently".to_string(),

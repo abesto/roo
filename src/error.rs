@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use mlua::ToLua;
 
 #[allow(non_camel_case_types, dead_code)]
@@ -52,9 +50,9 @@ impl Error {
     }
 }
 
-impl<'lua> ToLua<'lua> for Error {
+impl<'lua> ToLua<'lua> for &Error {
     fn to_lua(self, lua: &'lua mlua::Lua) -> mlua::Result<mlua::Value<'lua>> {
         let ctor: mlua::Function = lua.globals().get(self.code.to_string())?;
-        ctor.call(self.message)
+        ctor.call(self.message.clone())
     }
 }

@@ -27,9 +27,9 @@ impl Database {
         };
 
         let system_uuid = db.create_orphan();
-        db.system_uuid = system_uuid.clone();
+        db.system_uuid = system_uuid;
 
-        for name in vec!["nothing", "failed_match", "ambiguous_match"] {
+        for name in &["nothing", "failed_match", "ambiguous_match"] {
             let uuid = db.create_orphan();
             {
                 let o = db.get_mut(&uuid).unwrap();
@@ -47,17 +47,17 @@ impl Database {
 
     pub fn create_orphan(&mut self) -> Uuid {
         let object = Object::new();
-        let uuid = object.uuid().clone();
+        let uuid = *object.uuid();
         self.objects.insert(uuid, object);
         uuid
     }
 
     pub fn create(&mut self, parent: &Uuid, owner: &Uuid) -> Uuid {
         let mut object = Object::new();
-        let uuid = object.uuid().clone();
-        object.set_property("parent", Some(parent.clone())).unwrap();
-        object.set_property("owner", Some(owner.clone())).unwrap();
-        self.objects.insert(object.uuid().clone(), object);
+        let uuid = *object.uuid();
+        object.set_property("parent", Some(*parent)).unwrap();
+        object.set_property("owner", Some(*owner)).unwrap();
+        self.objects.insert(*object.uuid(), object);
         uuid
     }
 
@@ -104,20 +104,18 @@ impl Database {
 
         let input_uuid = Uuid::parse_str(input).ok();
 
-        for candidate_list_opt in candidate_lists {
-            if let Some(candidate_list) = candidate_list_opt {
-                for candidate_uuid in candidate_list {
-                    if let Ok(candidate) = self.get(candidate_uuid) {
-                        if Some(candidate_uuid) == input_uuid.as_ref() {
-                            return Some(candidate);
+        for candidate_list in candidate_lists.into_iter().flatten() {
+            for candidate_uuid in candidate_list {
+                if let Ok(candidate) = self.get(candidate_uuid) {
+                    if Some(candidate_uuid) == input_uuid.as_ref() {
+                        return Some(candidate);
+                    }
+                    match candidate.get_property("name") {
+                        // TODO add alias support, probably through a method on Object
+                        Some(PropertyValue::String(name)) if name == input => {
+                            return Some(candidate)
                         }
-                        match candidate.get_property("name") {
-                            // TODO add alias support, probably through a method on Object
-                            Some(PropertyValue::String(name)) if name == input => {
-                                return Some(candidate)
-                            }
-                            _ => {}
-                        }
+                        _ => {}
                     }
                 }
             }
@@ -128,7 +126,7 @@ impl Database {
 
     pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), String> {
         // Remove from contents of the old location, if any
-        if let Some(old_location) = self.get(what_uuid)?.location().clone() {
+        if let Some(old_location) = *self.get(what_uuid)?.location() {
             println!("remove_content({}, {})", old_location, what_uuid);
             self.get_mut(&old_location)?.remove_content(what_uuid);
         }
@@ -144,13 +142,13 @@ impl Database {
     }
 
     pub fn delete(&mut self, what: &Uuid) -> Result<(), String> {
-        if let Some(location_uuid) = self.get(what)?.location().clone() {
+        if let Some(location_uuid) = *self.get(what)?.location() {
             if let Ok(location) = self.get_mut(&location_uuid) {
                 location.remove_content(what);
             }
         }
 
-        if let Some(parent_uuid) = self.get(what)?.parent().clone() {
+        if let Some(parent_uuid) = *self.get(what)?.parent() {
             if let Ok(parent) = self.get_mut(&parent_uuid) {
                 parent.remove_child(what);
             }
@@ -164,7 +162,7 @@ impl Database {
     pub fn chparent(&mut self, uuid_child: &Uuid, uuid_parent: &Uuid) -> Result<(), String> {
         // Remove from old parent, if any
         {
-            let opt_uuid_old_parent = self.get(uuid_child)?.parent().clone();
+            let opt_uuid_old_parent = *self.get(uuid_child)?.parent();
             if let Some(uuid_old_parent) = opt_uuid_old_parent {
                 if let Some(old_parent) = self.objects.get_mut(&uuid_old_parent) {
                     old_parent.remove_child(uuid_child);
@@ -175,13 +173,13 @@ impl Database {
         // Set new parent
         {
             let child = self.get_mut(uuid_child)?;
-            child.set_property("parent", Some(uuid_parent.clone()))?;
+            child.set_property("parent", Some(*uuid_parent))?;
         }
 
         // Add child to children of new parent
         {
             let new_parent = self.get_mut(uuid_parent)?;
-            new_parent.insert_child(uuid_child.clone());
+            new_parent.insert_child(*uuid_child);
         }
 
         Ok(())
@@ -239,7 +237,7 @@ impl Database {
         self.get(uuid)?;
         let old = self.players.contains(uuid);
         if val {
-            self.players.insert(uuid.clone());
+            self.players.insert(*uuid);
         } else {
             self.players.remove(uuid);
         }

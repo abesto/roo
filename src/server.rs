@@ -26,11 +26,9 @@ fn first_matching_verb<'a, 'b>(
     command: &'a Command,
     objects: Vec<Option<&'b Object>>,
 ) -> Result<Option<(&'b Object, &'b Verb)>, String> {
-    for object_opt in objects {
-        if let Some(object) = object_opt {
-            if let Some(verb) = lock.matching_verb(object.uuid(), command)? {
-                return Ok(Some((object, verb)));
-            }
+    for object in objects.into_iter().flatten() {
+        if let Some(verb) = lock.matching_verb(object.uuid(), command)? {
+            return Ok(Some((object, verb)));
         }
     }
     Ok(None)

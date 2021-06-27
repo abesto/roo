@@ -34,7 +34,7 @@ impl World {
 
     #[must_use]
     pub fn from_database(db: Database, needs_minimal_core: bool) -> Self {
-        let system_uuid = db.system_uuid().clone();
+        let system_uuid = *db.system_uuid();
         let db_lock = Arc::new(RwLock::new(db));
 
         Self {
@@ -447,8 +447,8 @@ mod tests {
                     PropertyValue::List(vec![
                         PropertyValue::String("bar".to_string()),
                         PropertyValue::Integer(4),
-                        PropertyValue::Uuid(uuid.clone()),
-                        PropertyValue::Uuid(uuid.clone())
+                        PropertyValue::Uuid(uuid),
+                        PropertyValue::Uuid(uuid)
                     ]),
                     PropertyValue::Integer(5),
                     PropertyValue::Integer(6),

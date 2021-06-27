@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
@@ -14,36 +15,42 @@ use super::Verb;
 
 macro_rules! getprop {
     ($self:ident, $p:expr, $v:ident, $t:ty) => {
-        $self.properties
+        $self
+            .properties
             .get($p)
             .map(|p| {
                 assert!(matches!(p.value, PropertyValue::$v { .. }));
                 match &p.value {
                     PropertyValue::$v(v) => v,
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             })
             .unwrap()
     };
 
-    ($self:ident, $p:expr, $v:ident) => { getprop!($self, $p, $v, _) }
+    ($self:ident, $p:expr, $v:ident) => {
+        getprop!($self, $p, $v, _)
+    };
 }
 
 macro_rules! getprop_mut {
     ($self:ident, $p:expr, $v:ident, $t:ty) => {
-        $self.properties
+        $self
+            .properties
             .get_mut($p)
             .map(|p| {
                 assert!(matches!(p.value, PropertyValue::$v { .. }));
                 match &mut p.value {
                     PropertyValue::$v(v) => v,
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             })
             .unwrap()
     };
 
-    ($self:ident, $p:expr, $v:ident) => { getprop_mut!($self, $p, $v, _) }
+    ($self:ident, $p:expr, $v:ident) => {
+        getprop_mut!($self, $p, $v, _)
+    };
 }
 
 macro_rules! prop_getters {
@@ -193,12 +200,10 @@ impl Object {
         }
 
         let set_index = path[path.len() - 1];
-        if set_index == this_list.len() {
-            this_list.push(value);
-        } else if set_index < this_list.len() {
-            this_list[set_index] = value;
-        } else {
-            return Err(format!("{}.len() < {}", path_so_far, set_index));
+        match set_index.cmp(&this_list.len()) {
+            Ordering::Equal => this_list.push(value),
+            Ordering::Less => this_list[set_index] = value,
+            _ => return Err(format!("{}.len() < {}", path_so_far, set_index)),
         }
 
         Ok(())

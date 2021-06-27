@@ -47,7 +47,7 @@ impl From<Vec<PropertyValue>> for PropertyValue {
 
 impl From<&str> for PropertyValue {
     fn from(value: &str) -> Self {
-        if let Some(uuid) = Uuid::parse_str(value).ok() {
+        if let Ok(uuid) = Uuid::parse_str(value) {
             PropertyValue::Uuid(uuid)
         } else {
             PropertyValue::String(value.to_string())
@@ -101,10 +101,10 @@ impl<'lua> FromLua<'lua> for PropertyValue {
     }
 }
 
-impl<'lua> ToLua<'lua> for PropertyValue {
+impl<'lua> ToLua<'lua> for &PropertyValue {
     fn to_lua(self, lua: &'lua Lua) -> LuaResult<LuaValue<'lua>> {
         match self {
-            PropertyValue::String(s) => s.to_lua(lua),
+            PropertyValue::String(s) => s.clone().to_lua(lua),
             PropertyValue::Integer(n) => n.to_lua(lua),
             PropertyValue::Uuid(id) => id.to_string().to_lua(lua),
             PropertyValue::Uuids(xs) => xs
@@ -159,7 +159,7 @@ mod tests {
         let lua = Lua::new();
         let p0 = PropertyValue::String(s.clone());
 
-        let l = p0.clone().to_lua(&lua).unwrap();
+        let l = p0.to_lua(&lua).unwrap();
         assert_eq!(l, s.to_lua(&lua).unwrap());
 
         let p1 = PropertyValue::from_lua(l, &lua).unwrap();
@@ -172,7 +172,7 @@ mod tests {
         let lua = Lua::new();
         let p0 = PropertyValue::Integer(n);
 
-        let l = p0.clone().to_lua(&lua).unwrap();
+        let l = p0.to_lua(&lua).unwrap();
         assert_eq!(l, n.to_lua(&lua).unwrap());
 
         let p1 = PropertyValue::from_lua(l, &lua).unwrap();

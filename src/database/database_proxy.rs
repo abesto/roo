@@ -8,9 +8,8 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
-use crate::error::{Error, ErrorCode::*};
+use crate::error::ErrorCode::*;
 use crate::result::{err, ok, Result};
-use crate::saveload;
 use crate::server::CONNDATA;
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
@@ -170,7 +169,7 @@ impl LuaUserData for DatabaseProxy {
                         )
                     );
                     // TODO verify valid, fertile
-                    (parent.uuid().clone(), owner.uuid().clone())
+                    (*parent.uuid(), *owner.uuid())
                 };
                 let mut lock = this.db.write().unwrap();
                 ok(lua, lock.create(&parent, &owner).to_string())
@@ -294,10 +293,10 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method(
             "verb_info",
-            |_lua, this, (uuid, desc): (String, VerbDesc)| {
+            |lua, this, (uuid, desc): (String, VerbDesc)| {
                 let lock = this.db.read().unwrap();
                 let verb = this.get_verb(&lock, &uuid, &desc)?;
-                Ok(verb.info.clone())
+                Ok(verb.info.to_lua(lua))
             },
         );
 
@@ -327,10 +326,10 @@ impl LuaUserData for DatabaseProxy {
             let db = this.db.read().unwrap();
             let uuid = Self::parse_uuid_old(&uuid)?;
             let obj = this.get_object_by_uuid_old(&db, &uuid)?;
-            let parent_uuid_opt = obj.parent().clone();
+            let parent_uuid_opt = *obj.parent();
             let children_uuids: Vec<_> = obj.children().iter().cloned().collect();
             let content_uuids: Vec<_> = obj.contents().iter().cloned().collect();
-            let nothing_uuid = db.nothing_uuid().clone();
+            let nothing_uuid = *db.nothing_uuid();
             drop(db);
 
             if let Some(parent_uuid) = parent_uuid_opt {
