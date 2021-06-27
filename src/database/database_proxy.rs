@@ -51,6 +51,7 @@ impl DatabaseProxy {
 
     #[deprecated]
     fn get_object_old<'a>(&self, db: &'a Database, uuid: &str) -> LuaResult<&'a Object> {
+        #[allow(deprecated)]
         self.get_object_by_uuid_old(db, &Self::parse_uuid_old(uuid)?)
     }
 
@@ -67,12 +68,14 @@ impl DatabaseProxy {
         db.get(uuid).map_err(|msg| E_PERM.make(msg))
     }
 
-    fn get_verb<'a>(
+    #[deprecated]
+    fn get_verb_old<'a>(
         &self,
         lock: &'a RwLockReadGuard<Database>,
         uuid: &str,
         desc: &VerbDesc,
     ) -> LuaResult<&'a Verb> {
+        #[allow(deprecated)]
         let object = self.get_object_old(&lock, &uuid)?;
         match desc {
             VerbDesc::Index(n) => {
@@ -89,13 +92,15 @@ impl DatabaseProxy {
         }
     }
 
-    fn get_verb_mut<'a>(
+    #[deprecated]
+    fn get_verb_mut_old<'a>(
         &self,
         lock: &'a mut RwLockWriteGuard<Database>,
         uuid: &str,
         desc: &VerbDesc,
     ) -> LuaResult<&'a mut Verb> {
-        let object = self.get_object_mut(lock, &uuid)?;
+        #[allow(deprecated)]
+        let object = self.get_object_mut_old(lock, &uuid)?;
         match desc {
             VerbDesc::Index(n) => {
                 let verb = object
@@ -112,11 +117,13 @@ impl DatabaseProxy {
         }
     }
 
-    fn get_object_mut<'a>(
+    #[deprecated]
+    fn get_object_mut_old<'a>(
         &self,
         lock: &'a mut RwLockWriteGuard<Database>,
         uuid: &str,
     ) -> LuaResult<&'a mut Object> {
+        #[allow(deprecated)]
         lock.get_mut(&Self::parse_uuid_old(&uuid)?)
             .map_err(LuaError::external)
     }
@@ -196,7 +203,7 @@ impl LuaUserData for DatabaseProxy {
                 }
 
                 let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut(&mut lock, &uuid)?;
+                let object = this.get_object_mut_old(&mut lock, &uuid)?;
                 object
                     .set_property(&key, PropertyValue::from_lua(value, lua)?)
                     .map_err(LuaError::external)?;
@@ -227,7 +234,7 @@ impl LuaUserData for DatabaseProxy {
             "add_verb",
             |_lua, this, (uuid, info, args): (String, VerbInfo, VerbArgs)| {
                 let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut(&mut lock, &uuid)?;
+                let object = this.get_object_mut_old(&mut lock, &uuid)?;
                 let verb = Verb::new(info, args);
                 object.add_verb(verb).map_err(LuaError::RuntimeError)?;
                 Ok(LuaValue::Nil)
@@ -253,7 +260,7 @@ impl LuaUserData for DatabaseProxy {
 
                 // And write it
                 let mut lock = this.db.write().unwrap();
-                this.get_verb_mut(&mut lock, &uuid, &desc)?.code = code;
+                this.get_verb_mut_old(&mut lock, &uuid, &desc)?.code = code;
                 Ok(())
             },
         );
@@ -273,7 +280,7 @@ impl LuaUserData for DatabaseProxy {
             "set_into_list",
             |_lua, this, (uuid, key, path, value): (String, String, Vec<usize>, PropertyValue)| {
                 let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut(&mut lock, &uuid)?;
+                let object = this.get_object_mut_old(&mut lock, &uuid)?;
                 object
                     .set_into_list(&key, path, value)
                     .map_err(LuaError::RuntimeError)
@@ -295,7 +302,7 @@ impl LuaUserData for DatabaseProxy {
             "verb_info",
             |lua, this, (uuid, desc): (String, VerbDesc)| {
                 let lock = this.db.read().unwrap();
-                let verb = this.get_verb(&lock, &uuid, &desc)?;
+                let verb = this.get_verb_old(&lock, &uuid, &desc)?;
                 Ok(verb.info.to_lua(lua))
             },
         );
@@ -304,7 +311,7 @@ impl LuaUserData for DatabaseProxy {
             "verb_code",
             |_lua, this, (uuid, desc): (String, VerbDesc)| {
                 let lock = this.db.read().unwrap();
-                let verb = this.get_verb(&lock, &uuid, &desc)?;
+                let verb = this.get_verb_old(&lock, &uuid, &desc)?;
                 Ok(verb.code.clone())
             },
         );
