@@ -19,13 +19,16 @@
     "tablex",
     "webclient"
   ],
-  "python.testing.pytestEnabled": false,
+  "python.testing.pytestEnabled": true,
   "python.testing.nosetestsEnabled": false,
-  "python.testing.unittestEnabled": true,
+  "python.testing.unittestEnabled": false,
   "python.testing.unittestArgs": [
     "-v",
     "-s", "./integration_tests/tests",
     "-t", "./",
     "-p", "test_*.py"
+  ],
+  "python.testing.pytestArgs": [
+    "integration_tests"
   ]
 }
