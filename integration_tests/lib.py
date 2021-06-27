@@ -79,6 +79,10 @@ class Client(pexpect.fdpexpect.fdspawn):
         self.expect(r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")
         return self.match[0]
 
+    def expect_lines_exact(self, *lines: str) -> None:
+        for line in lines:
+            self.expect_exact(line)
+
 
 def new_client(login: Optional[str] = "__unset__"):
     def outer(f):

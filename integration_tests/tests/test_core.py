@@ -26,3 +26,18 @@ class CoreTest(IntegrationTest):
     def test_emote_shortcut(self, c1: Client, c2: Client) -> None:
         c2.sendline(":waves")
         c1.expect_exact(f"{c2.name} waves")
+
+    @new_clients(2)
+    def test_look(self, c1: Client, c2: Client) -> None:
+        c1.sendline("look")
+        c2.sendline("look")
+        c1.expect_lines_exact(
+            "The Void",
+            "There is nothing, and you are in it.",
+            f"You see here: {c2.name}",
+        )
+        c2.expect_lines_exact(
+            "The Void",
+            "There is nothing, and you are in it.",
+            f"You see here: {c1.name}",
+        )
