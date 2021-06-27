@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::command::Command;
 use crate::database::{Database, DatabaseProxy, Object, Verb, World};
-use crate::saveload::{self, SaveloadConfig};
+use crate::saveload::SaveloadConfig;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::time::Duration;
@@ -50,7 +50,7 @@ pub async fn run_server(world: World, saveload_config: SaveloadConfig) {
     tokio::task::LocalSet::new()
         .run_until(server_main(world, saveload_config))
         .await
-        .unwrap();
+        .unwrap()
 }
 
 struct Cleanup {
@@ -62,7 +62,7 @@ impl Drop for Cleanup {
     fn drop(&mut self) {
         println!("Shutting down, writing final DB checkpoint");
         let lock = self.db.read().unwrap();
-        saveload::checkpoint(&lock, &self.saveload_config).unwrap();
+        self.saveload_config.checkpoint(&lock).unwrap();
     }
 }
 
@@ -87,6 +87,8 @@ pub async fn server_main(
         tokio::signal::ctrl_c().await.unwrap();
         shutdown_tx.send(()).unwrap();
     });
+
+    println!("Server started");
 
     loop {
         tokio::select! {
@@ -140,7 +142,7 @@ fn spawn_checkpointing_task(db: Arc<RwLock<Database>>, saveload_config: Saveload
             println!("Starting periodic DB checkpointing");
             {
                 let lock = db.read().unwrap();
-                match saveload::checkpoint(&lock, &saveload_config) {
+                match saveload_config.checkpoint(&lock) {
                     Err(e) => println!("Checkpointing failed: {}", e),
                     Ok(f) => println!("Checkpointing done, saved to {}", f),
                 }

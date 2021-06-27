@@ -11,7 +11,7 @@ where
     ctor.call((class, value))
 }
 
-pub fn err_to_lua<'lua>(lua: &'lua mlua::Lua, value: Error) -> mlua::Result<mlua::Value<'lua>> {
+pub fn err<'lua>(lua: &'lua mlua::Lua, value: Error) -> mlua::Result<mlua::Value<'lua>> {
     let class: mlua::Table = lua.globals().get("Err")?;
     let ctor: mlua::Function = class.get_metatable().unwrap().get("__call")?;
     ctor.call((class, value))

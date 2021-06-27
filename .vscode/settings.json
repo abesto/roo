@@ -1,22 +1,32 @@
 {
-    "cSpell.words": [
-        "CONNDATA",
-        "argstr",
-        "arity",
-        "chparent",
-        "compat",
-        "dbproxy",
-        "dobj",
-        "dobjstr",
-        "eval",
-        "luabalanced",
-        "mlua",
-        "preload",
-        "retval",
-        "saveload",
-        "stringio",
-        "stringx",
-        "tablex",
-        "webclient"
-    ]
+  "cSpell.words": [
+    "CONNDATA",
+    "argstr",
+    "arity",
+    "chparent",
+    "compat",
+    "dbproxy",
+    "dobj",
+    "dobjstr",
+    "eval",
+    "luabalanced",
+    "mlua",
+    "preload",
+    "retval",
+    "saveload",
+    "stringio",
+    "stringx",
+    "tablex",
+    "webclient"
+  ],
+  "python.testing.pytestEnabled": false,
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.unittestEnabled": true,
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./integration_tests",
+    "-p",
+    "test_*.py"
+  ]
 }

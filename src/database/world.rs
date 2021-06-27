@@ -1,9 +1,5 @@
 // TODO maybe switch to parking_lot::Mutex
-use std::{
-    fs::File,
-    path::PathBuf,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
 use mlua::prelude::*;
 use uuid::Uuid;
@@ -22,13 +18,15 @@ pub struct World {
 impl World {
     #[must_use]
     pub fn from_saveload_config(saveload_config: &SaveloadConfig) -> Self {
-        let (db, needs_minimal_core) = match Self::load_db_from_file(saveload_config.current_path())
-        {
-            Some(db) => {
+        let (db, needs_minimal_core) = match saveload_config.load() {
+            Ok(db) => {
                 println!("Database loading succeeded");
                 (db, false)
             }
-            None => (Database::new(), true),
+            Err(msg) => {
+                println!("World failed to load DB: {}", msg);
+                (Database::new(), true)
+            }
         };
 
         Self::from_database(db, needs_minimal_core)
@@ -50,29 +48,6 @@ impl World {
     #[must_use]
     pub fn new() -> Self {
         Self::from_database(Database::new(), true)
-    }
-
-    fn load_db_from_file(path: PathBuf) -> Option<Database> {
-        if path.exists() {
-            println!("Trying to load DB from {:?}", &path);
-            let file = match File::open(&path) {
-                Ok(f) => f,
-                Err(e) => {
-                    println!("Failed to open: {}", e);
-                    return None;
-                }
-            };
-
-            match ron::de::from_reader(file) {
-                Ok(db) => Some(db),
-                Err(e) => {
-                    println!("Failed to load DB: {}", e);
-                    None
-                }
-            }
-        } else {
-            None
-        }
     }
 
     pub fn lua(&mut self) -> Lua {
@@ -326,7 +301,7 @@ mod tests {
                 assert_eq!("test-1", o1_proxy.get::<&str, String>("x").unwrap());
 
                 let uuid =
-                    DatabaseProxy::parse_uuid(&o1_proxy.get::<&str, String>("uuid").unwrap())
+                    DatabaseProxy::parse_uuid_old(&o1_proxy.get::<&str, String>("uuid").unwrap())
                         .unwrap();
                 let o1 = db.get(&uuid).unwrap();
                 assert_eq!(

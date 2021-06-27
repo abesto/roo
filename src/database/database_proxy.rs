@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
 use crate::error::{Error, ErrorCode::*};
-use crate::result::{err_to_lua, ok, Result};
+use crate::result::{err, ok, Result};
 use crate::saveload;
 use crate::server::CONNDATA;
 
@@ -19,7 +19,7 @@ macro_rules! unwrap {
     ($lua:expr, $e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => return err_to_lua($lua, e),
+            Err(e) => return err($lua, e),
         }
     };
 }
@@ -308,9 +308,14 @@ impl LuaUserData for DatabaseProxy {
         );
 
         methods.add_method("checkpoint", |_lua, this, ()| {
+            unimplemented!();
+            #[allow(unreachable_code)]
+            Ok(LuaValue::Nil)
+            /*
             let lock = this.db.read().unwrap();
             saveload::checkpoint(&lock, &saveload::SaveloadConfig::default())
                 .map_err(LuaError::external)
+            */
         });
 
         methods.add_method("recycle", |lua, this, (uuid,): (String,)| {
