@@ -1,6 +1,6 @@
 """Test correct implementation of moo server functions"""
 
-from .conftest import Login, Client
+from .conftest import Login
 
 
 def test_verb_code_by_index(login: Login) -> None:
@@ -23,10 +23,24 @@ def test_move(login: Login) -> None:
     client.send(";o = create(S.Root):unwrap()", ";o.location == nil")
     client.expect_exact("Boolean(true)")
 
-    # Move by object reference
-    client.send(f";o:move(db['{r1}'])", ";o.location.uuid")
+    # Happy: Move by object reference
+    client.send(f";o:move(db['{r1}']):unwrap() == nil", ";o.location.uuid")
+    client.expect_exact("Boolean(true)")
     assert r1 == client.read_uuid()
 
-    # Move by uuid
-    client.send(f";o:move('{r2}')", ";o.location.uuid")
+    # Happy: Move by uuid
+    client.send(f";o:move('{r2}'):unwrap() == nil", ";o.location.uuid")
+    client.expect_exact("Boolean(true)")
     assert r2 == client.read_uuid()
+
+    # Sad: Move to something that's not a uuid
+    client.send(";o:move('foobar'):unwrap().code")
+    client.expect_exact("E_INVARG")
+
+    # Sad: Move to a nonexistent uuid
+    p = client.lua_create("S.Root")
+    client.send(
+        f";recycle('{p}'):unwrap()",
+        f";o:move('{p}'):unwrap()",
+    )
+    client.expect_exact(f"E_PERM ({p} not found)")

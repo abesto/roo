@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
 use crate::error::ErrorCode::*;
-use crate::result::{err, ok, Result};
+use crate::result::{err, ok, to_lua_result, Result};
 use crate::server::CONNDATA;
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
@@ -50,32 +50,29 @@ impl DatabaseProxy {
     }
 
     #[deprecated]
+    #[allow(deprecated)]
     fn get_object_old<'a>(&self, db: &'a Database, uuid: &str) -> LuaResult<&'a Object> {
-        #[allow(deprecated)]
         self.get_object_by_uuid_old(db, &Self::parse_uuid_old(uuid)?)
     }
 
     fn get_object<'a>(&self, db: &'a Database, uuid: &str) -> Result<&'a Object> {
-        self.get_object_by_uuid(db, &Self::parse_uuid(uuid)?)
+        db.get(&Self::parse_uuid(uuid)?)
     }
 
     #[deprecated]
+    #[allow(deprecated)]
     fn get_object_by_uuid_old<'a>(&self, db: &'a Database, uuid: &Uuid) -> LuaResult<&'a Object> {
-        db.get(uuid).map_err(LuaError::external)
-    }
-
-    fn get_object_by_uuid<'a>(&self, db: &'a Database, uuid: &Uuid) -> Result<&'a Object> {
-        db.get(uuid).map_err(|msg| E_PERM.make(msg))
+        db.get_old(uuid).map_err(LuaError::external)
     }
 
     #[deprecated]
+    #[allow(deprecated)]
     fn get_verb_old<'a>(
         &self,
         lock: &'a RwLockReadGuard<Database>,
         uuid: &str,
         desc: &VerbDesc,
     ) -> LuaResult<&'a Verb> {
-        #[allow(deprecated)]
         let object = self.get_object_old(&lock, &uuid)?;
         match desc {
             VerbDesc::Index(n) => {
@@ -124,7 +121,7 @@ impl DatabaseProxy {
         uuid: &str,
     ) -> LuaResult<&'a mut Object> {
         #[allow(deprecated)]
-        lock.get_mut(&Self::parse_uuid_old(&uuid)?)
+        lock.get_mut_old(&Self::parse_uuid_old(&uuid)?)
             .map_err(LuaError::external)
     }
 
@@ -139,10 +136,21 @@ impl DatabaseProxy {
 }
 
 impl DatabaseProxy {
-    fn lmove(_lua: &Lua, this: &DatabaseProxy, (what, to): (String, String)) -> LuaResult<()> {
+    fn move_object<'lua>(
+        this: &DatabaseProxy,
+        (what, to): (String, String),
+    ) -> Result<LuaValue<'lua>> {
         let mut lock = this.db.write().unwrap();
-        lock.move_object(&Self::parse_uuid_old(&what)?, &Self::parse_uuid_old(&to)?)
-            .map_err(LuaError::external)
+        lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
+            .map(|_| LuaValue::Nil)
+    }
+
+    fn lmove<'lua>(
+        lua: &'lua Lua,
+        this: &DatabaseProxy,
+        args: (String, String),
+    ) -> LuaResult<LuaValue<'lua>> {
+        to_lua_result(lua, Self::move_object(this, args))
     }
 
     fn chparent(
@@ -205,7 +213,7 @@ impl LuaUserData for DatabaseProxy {
                 let mut lock = this.db.write().unwrap();
                 let object = this.get_object_mut_old(&mut lock, &uuid)?;
                 object
-                    .set_property(&key, PropertyValue::from_lua(value, lua)?)
+                    .set_property_old(&key, PropertyValue::from_lua(value, lua)?)
                     .map_err(LuaError::external)?;
                 Ok(LuaValue::Nil)
             },
@@ -348,12 +356,10 @@ impl LuaUserData for DatabaseProxy {
             }
 
             // Move contents to S.nothing
+            // TODO drop .map_err when this moves into run_to_lua_result
             for content_uuid in content_uuids {
-                Self::lmove(
-                    lua,
-                    this,
-                    (content_uuid.to_string(), nothing_uuid.to_string()),
-                )?;
+                Self::move_object(this, (content_uuid.to_string(), nothing_uuid.to_string()))
+                    .map_err(|e| LuaError::external(e.to_string()))?;
             }
 
             // TODO ownership quota

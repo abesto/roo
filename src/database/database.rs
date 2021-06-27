@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{command::Command, database::Object};
+use crate::{command::Command, database::Object, error::Error, error::ErrorCode::*};
 
 use super::{PropertyValue, Verb};
 
@@ -32,13 +32,13 @@ impl Database {
         for name in &["nothing", "failed_match", "ambiguous_match"] {
             let uuid = db.create_orphan();
             {
-                let o = db.get_mut(&uuid).unwrap();
-                o.set_property("name", format!("S.{}", name).as_str())
+                let o = db.get_mut_old(&uuid).unwrap();
+                o.set_property_old("name", format!("S.{}", name).as_str())
                     .unwrap();
             }
-            db.get_mut(&system_uuid)
+            db.get_mut_old(&system_uuid)
                 .unwrap()
-                .set_property(name, uuid)
+                .set_property_old(name, uuid)
                 .unwrap();
         }
 
@@ -55,8 +55,8 @@ impl Database {
     pub fn create(&mut self, parent: &Uuid, owner: &Uuid) -> Uuid {
         let mut object = Object::new();
         let uuid = *object.uuid();
-        object.set_property("parent", Some(*parent)).unwrap();
-        object.set_property("owner", Some(*owner)).unwrap();
+        object.set_property_old("parent", Some(*parent)).unwrap();
+        object.set_property_old("owner", Some(*owner)).unwrap();
         self.objects.insert(*object.uuid(), object);
         uuid
     }
@@ -66,7 +66,7 @@ impl Database {
     }
 
     pub fn nothing_uuid(&self) -> &Uuid {
-        self.get(self.system_uuid())
+        self.get_old(self.system_uuid())
             .unwrap()
             .get_property("nothing")
             .unwrap()
@@ -74,16 +74,30 @@ impl Database {
             .unwrap()
     }
 
-    pub fn get(&self, uuid: &Uuid) -> Result<&Object, String> {
+    #[deprecated]
+    pub fn get_old(&self, uuid: &Uuid) -> Result<&Object, String> {
         self.objects
             .get(uuid)
             .ok_or_else(|| format!("{} not found", uuid))
     }
 
-    pub fn get_mut(&mut self, uuid: &Uuid) -> Result<&mut Object, String> {
+    pub fn get(&self, uuid: &Uuid) -> Result<&Object, Error> {
+        self.objects
+            .get(uuid)
+            .ok_or_else(|| E_PERM.make(format!("{} not found", uuid)))
+    }
+
+    #[deprecated]
+    pub fn get_mut_old(&mut self, uuid: &Uuid) -> Result<&mut Object, String> {
         self.objects
             .get_mut(uuid)
             .ok_or_else(|| format!("{} not found", uuid))
+    }
+
+    pub fn get_mut(&mut self, uuid: &Uuid) -> Result<&mut Object, Error> {
+        self.objects
+            .get_mut(uuid)
+            .ok_or_else(|| E_PERM.make(format!("{} not found", uuid)))
     }
 
     pub fn contains_object(&self, uuid: &Uuid) -> bool {
@@ -91,14 +105,14 @@ impl Database {
     }
 
     pub fn resolve_object(&self, player_uuid: &Uuid, input: &str) -> Option<&Object> {
-        let player = self.get(player_uuid).ok()?;
+        let player = self.get_old(player_uuid).ok()?;
         let candidate_lists = vec![
             // Inventory
             Some(player.contents()),
             // Objects in the location of the player
             player
                 .location()
-                .and_then(|uuid| self.get(&uuid).ok())
+                .and_then(|uuid| self.get_old(&uuid).ok())
                 .map_or_else(|| None, |location| Some(location.contents())),
         ];
 
@@ -106,7 +120,7 @@ impl Database {
 
         for candidate_list in candidate_lists.into_iter().flatten() {
             for candidate_uuid in candidate_list {
-                if let Ok(candidate) = self.get(candidate_uuid) {
+                if let Ok(candidate) = self.get_old(candidate_uuid) {
                     if Some(candidate_uuid) == input_uuid.as_ref() {
                         return Some(candidate);
                     }
@@ -124,7 +138,7 @@ impl Database {
         None
     }
 
-    pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), String> {
+    pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), Error> {
         // Remove from contents of the old location, if any
         if let Some(old_location) = *self.get(what_uuid)?.location() {
             println!("remove_content({}, {})", old_location, what_uuid);
@@ -142,14 +156,14 @@ impl Database {
     }
 
     pub fn delete(&mut self, what: &Uuid) -> Result<(), String> {
-        if let Some(location_uuid) = *self.get(what)?.location() {
-            if let Ok(location) = self.get_mut(&location_uuid) {
+        if let Some(location_uuid) = *self.get_old(what)?.location() {
+            if let Ok(location) = self.get_mut_old(&location_uuid) {
                 location.remove_content(what);
             }
         }
 
-        if let Some(parent_uuid) = *self.get(what)?.parent() {
-            if let Ok(parent) = self.get_mut(&parent_uuid) {
+        if let Some(parent_uuid) = *self.get_old(what)?.parent() {
+            if let Ok(parent) = self.get_mut_old(&parent_uuid) {
                 parent.remove_child(what);
             }
         }
@@ -162,7 +176,7 @@ impl Database {
     pub fn chparent(&mut self, uuid_child: &Uuid, uuid_parent: &Uuid) -> Result<(), String> {
         // Remove from old parent, if any
         {
-            let opt_uuid_old_parent = *self.get(uuid_child)?.parent();
+            let opt_uuid_old_parent = *self.get_old(uuid_child)?.parent();
             if let Some(uuid_old_parent) = opt_uuid_old_parent {
                 if let Some(old_parent) = self.objects.get_mut(&uuid_old_parent) {
                     old_parent.remove_child(uuid_child);
@@ -172,13 +186,13 @@ impl Database {
 
         // Set new parent
         {
-            let child = self.get_mut(uuid_child)?;
-            child.set_property("parent", Some(*uuid_parent))?;
+            let child = self.get_mut_old(uuid_child)?;
+            child.set_property_old("parent", Some(*uuid_parent))?;
         }
 
         // Add child to children of new parent
         {
-            let new_parent = self.get_mut(uuid_parent)?;
+            let new_parent = self.get_mut_old(uuid_parent)?;
             new_parent.insert_child(*uuid_child);
         }
 
@@ -186,7 +200,7 @@ impl Database {
     }
 
     pub fn get_property(&self, uuid: &Uuid, key: &str) -> Result<Option<&PropertyValue>, String> {
-        let object = self.get(uuid)?;
+        let object = self.get_old(uuid)?;
 
         if let Some(value) = object.get_property(key) {
             Ok(Some(value))
@@ -198,7 +212,7 @@ impl Database {
     }
 
     pub fn has_verb_with_name(&self, uuid: &Uuid, name: &str) -> Result<bool, String> {
-        let object = self.get(uuid)?;
+        let object = self.get_old(uuid)?;
 
         if object.has_verb_with_name(name) {
             Ok(true)
@@ -210,7 +224,7 @@ impl Database {
     }
 
     pub fn resolve_verb(&self, uuid: &Uuid, name: &str) -> Result<Option<&Verb>, String> {
-        let object = self.get(uuid)?;
+        let object = self.get_old(uuid)?;
 
         if let Some(verb) = object.resolve_verb(name) {
             Ok(Some(verb))
@@ -222,7 +236,7 @@ impl Database {
     }
 
     pub fn matching_verb(&self, uuid: &Uuid, command: &Command) -> Result<Option<&Verb>, String> {
-        let object = self.get(uuid)?;
+        let object = self.get_old(uuid)?;
 
         if let Some(verb) = object.matching_verb(command) {
             Ok(Some(verb))
@@ -234,7 +248,7 @@ impl Database {
     }
 
     pub fn set_player_flag(&mut self, uuid: &Uuid, val: bool) -> Result<bool, String> {
-        self.get(uuid)?;
+        self.get_old(uuid)?;
         let old = self.players.contains(uuid);
         if val {
             self.players.insert(*uuid);
@@ -245,7 +259,7 @@ impl Database {
     }
 
     pub fn is_player(&self, uuid: &Uuid) -> Result<bool, String> {
-        self.get(uuid)?;
+        self.get_old(uuid)?;
         Ok(self.players.contains(uuid))
     }
 

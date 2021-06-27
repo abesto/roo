@@ -4,6 +4,8 @@ use mlua::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::error::{Error, ErrorCode::*};
+
 #[derive(Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum PropertyValue {
     Boolean(bool),
@@ -130,9 +132,17 @@ pub struct Property {
 }
 
 impl Property {
-    pub fn set(&mut self, new: PropertyValue, typed: bool) -> Result<PropertyValue, String> {
+    #[deprecated]
+    pub fn set_old(&mut self, new: PropertyValue, typed: bool) -> Result<PropertyValue, String> {
         if typed && std::mem::discriminant(&self.value) != std::mem::discriminant(&new) {
             return Err("Tried to assign value of wrong type".to_string());
+        }
+        Ok(std::mem::replace(&mut self.value, new))
+    }
+
+    pub fn set(&mut self, new: PropertyValue, typed: bool) -> Result<PropertyValue, Error> {
+        if typed && std::mem::discriminant(&self.value) != std::mem::discriminant(&new) {
+            return Err(E_TYPE.make("Tried to assign value of wrong type"));
         }
         Ok(std::mem::replace(&mut self.value, new))
     }

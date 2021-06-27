@@ -19,8 +19,7 @@ pub fn err(lua: &mlua::Lua, value: Error) -> mlua::Result<mlua::Value> {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[allow(dead_code)]
-pub fn result_to_lua<'lua, T>(
+pub fn to_lua_result<'lua, T>(
     lua: &'lua mlua::Lua,
     result: Result<T>,
 ) -> mlua::Result<mlua::Value<'lua>>
@@ -28,7 +27,15 @@ where
     T: mlua::ToLua<'lua> + std::fmt::Debug,
 {
     match result {
-        Ok(r) => r.to_lua(lua),
-        Err(e) => e.to_lua(lua),
+        Ok(r) => ok(lua, r),
+        Err(e) => err(lua, e),
     }
+}
+
+pub fn run_to_lua_result<'lua, T, F>(lua: &'lua mlua::Lua, f: F) -> mlua::Result<mlua::Value<'lua>>
+where
+    T: mlua::ToLua<'lua> + std::fmt::Debug,
+    F: FnOnce() -> Result<T>,
+{
+    to_lua_result(lua, f())
 }

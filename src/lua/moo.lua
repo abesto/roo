@@ -141,7 +141,7 @@ end
 function move(what, where)
     local what_uuid = touuid(what)
     local where_uuid = touuid(where)
-    return Result.zip(what_uuid, where_uuid):map_method_unpacked(db, 'move')
+    return Result.zip(what_uuid, where_uuid):and_then_method_unpacked(db, 'move')
 end
 
 ---@return Result<?, ?>

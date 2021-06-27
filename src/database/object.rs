@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::command::Command;
 use crate::database::Property;
+use crate::error::{Error, ErrorCode::*};
 
 use super::PropertyValue;
 use super::Verb;
@@ -140,7 +141,8 @@ impl Object {
         self.properties.get_mut(key).map(|p| &mut p.value)
     }
 
-    pub fn set_property<T>(
+    #[deprecated]
+    pub fn set_property_old<T>(
         &mut self,
         key: &str,
         from_value: T,
@@ -154,6 +156,31 @@ impl Object {
             Entry::Occupied(p) => {
                 if key == "uuid" {
                     return Err("UUID is read-only".to_string());
+                }
+                #[allow(deprecated)]
+                p.into_mut().set_old(value, is_builtin).map(Some)
+            }
+            Entry::Vacant(v) => {
+                v.insert(Property::from(value));
+                Ok(None)
+            }
+        }
+    }
+
+    pub fn set_property<T>(
+        &mut self,
+        key: &str,
+        from_value: T,
+    ) -> Result<Option<PropertyValue>, Error>
+    where
+        T: Into<PropertyValue>,
+    {
+        let value = from_value.into();
+        let is_builtin = self.is_prop_builtin(key);
+        match self.properties.entry(key.to_string()) {
+            Entry::Occupied(p) => {
+                if key == "uuid" {
+                    return Err(E_PERM.make("UUID is read-only"));
                 }
                 p.into_mut().set(value, is_builtin).map(Some)
             }
