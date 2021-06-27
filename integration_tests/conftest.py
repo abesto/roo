@@ -70,6 +70,10 @@ class Client(pexpect.fdpexpect.fdspawn):
             self._log(line, "send")
             os.write(self.child_fd, f"{line}{self.linesep}".encode("utf-8"))
 
+    def lua_create(self, parent: str) -> str:
+        self.send(f";create({parent}):unwrap().uuid")
+        return self.read_uuid()
+
 
 @pytest.fixture()
 def connect(server):
