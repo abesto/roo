@@ -56,7 +56,16 @@ impl Database {
         let mut object = Object::new();
         let uuid = *object.uuid();
         object.set_property_old("parent", Some(*parent)).unwrap();
-        object.set_property_old("owner", Some(*owner)).unwrap();
+        object
+            .set_property_old(
+                "owner",
+                Some(if owner == self.nothing_uuid() {
+                    uuid
+                } else {
+                    *owner
+                }),
+            )
+            .unwrap();
         self.objects.insert(*object.uuid(), object);
         uuid
     }

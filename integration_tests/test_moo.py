@@ -14,6 +14,23 @@ def test_verb_code_by_index(login: Login) -> None:
     client.expect_exact("Boolean(true)")
 
 
+def test_create(login: Login) -> None:
+    client = login()
+
+    # owner and parent set correctly when both are specified
+    client.send(";o = create(S.Root, player):unwrap()")
+    client.assert_lua_equals("o.owner", "player")
+    client.assert_lua_equals("o.parent", "S.Root")
+
+    # owner defaults to player
+    client.send(";o = create(S.Root):unwrap()")
+    client.assert_lua_equals("o.owner", "player")
+
+    # owner is the new object itself if set to S.nothing
+    client.send(";o = create(S.Root, S.nothing):unwrap()")
+    client.assert_lua_equals("o.owner", "o")
+
+
 def test_move(login: Login) -> None:
     client = login()
     r1 = client.lua_create("S.Room")

@@ -13,6 +13,7 @@ function Result:_init(value)
     else
         self.value = value
     end
+    self._checked = false
 end
 
 function Result:_getvalue()
@@ -25,6 +26,11 @@ end
 
 function Result:__tostring()
     return "%s(%s)" % {self._name, self.value}
+end
+
+function Result:__gc()
+    player:notify("Result GC: " .. self)
+    pl.utils.assert(self._checked, "Value of Result was never checked")
 end
 
 function Result:is_ok()

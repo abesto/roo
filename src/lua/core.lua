@@ -22,7 +22,7 @@
         end
 
         player:notify("Welcome, %s" % {name})
-        local new = create(S.Player):unwrap()
+        local new = create(S.Player, S.nothing):unwrap()
         new:set_player_flag(true):unwrap()
         new.owner = new
         new:move(S.starting_room):unwrap()
@@ -32,7 +32,7 @@
         ]=]):unwrap()
 
     --- S.code_utils
-    S.code_utils = create(S.nothing):unwrap()
+    S.code_utils = create(S.nothing, S.nothing):unwrap()
 
     -- TODO impl
     S.code_utils:add_verb({system.uuid, "rx", {"short_prep"}}, {"any"})
@@ -158,7 +158,7 @@ return {verbargs, rest};
     -- EOF S.code_utils
 
     --- S.object_utils
-    S.object_utils = create(S.nothing):unwrap()
+    S.object_utils = create(S.nothing, S.nothing):unwrap()
 
     S.object_utils:add_verb({system.uuid, "r", {"has_verb"}}, {"any"})
     S.object_utils:set_verb_code("has_verb", [[
@@ -168,7 +168,7 @@ return {verbargs, rest};
     -- EOF S.object_utils
 
     --- S.string_utils
-    S.string_utils = create(S.nothing):unwrap()
+    S.string_utils = create(S.nothing, S.nothing):unwrap()
 
     S.string_utils:add_verb({system.uuid, "r", {"words"}}, {"any"})
     S.string_utils:set_verb_code("words", [[
@@ -310,7 +310,7 @@ return {verbargs, rest};
     -- EOF S.string_utils
 
     --- S.command_utils
-    S.command_utils = create(S.nothing):unwrap()
+    S.command_utils = create(S.nothing, S.nothing):unwrap()
 
     -- TODO impl
     S.command_utils:add_verb({system.uuid, "r", {"object_match_failed"}}, {"any"})
@@ -364,7 +364,7 @@ return {verbargs, rest};
     -- EOF S.command_utils
 
     --- S.verb_editor
-    S.verb_editor = create(S.nothing):unwrap()
+    S.verb_editor = create(S.nothing, S.nothing):unwrap()
 
     -- TODO full impl
     S.verb_editor:add_verb({system.uuid, "r", {"get_room"}}, {"any"})
@@ -375,7 +375,7 @@ return {verbargs, rest};
 
     -- EOF verb_editor
 
-    S.Root = create(S.nothing):unwrap()
+    S.Root = create(S.nothing, S.nothing):unwrap()
     S.Root.name = "root object"
 
     S.Root:add_verb({system.uuid, "rx", {"match"}}, {"this", "none", "this"})
@@ -404,7 +404,7 @@ return {verbargs, rest};
     ]])
 
     --- S.Player
-    S.Player = create(S.Root):unwrap()
+    S.Player = create(S.Root, S.nothing):unwrap()
     S.Player.name = "generic player"
 
     -- TODO impl
@@ -512,7 +512,7 @@ if not S.command_utils:object_match_failed(object, spec[1]) then
 end
     ]])
 
-    S.Room = create(S.Root):unwrap()
+    S.Room = create(S.Root, S.nothing):unwrap()
     S.Room.name = "Prototype:Room"
     S.Room.description = "A nondescript room"
 
@@ -564,7 +564,7 @@ end
         player:notify(this:describe())
     ]])
 
-    S.starting_room = create(S.Room):unwrap()
+    S.starting_room = create(S.Room, S.nothing):unwrap()
     S.starting_room.name = "The Void"
     S.starting_room.description = "There is nothing, and you are in it."
 

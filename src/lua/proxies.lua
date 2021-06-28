@@ -154,3 +154,6 @@ end
 -- Equivalent for #0 on MOO
 system = db[system_uuid]
 S = system
+-- To avoid code being confused by plyear not being set until 
+-- the server injects the real player value
+player = S.nothing

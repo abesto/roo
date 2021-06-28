@@ -10,7 +10,6 @@ use uuid::Uuid;
 use crate::database::{Database, Object, PropertyValue, Verb};
 use crate::error::ErrorCode::*;
 use crate::result::{err, ok, to_lua_result, Result};
-use crate::server::CONNDATA;
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
 
@@ -169,27 +168,18 @@ impl DatabaseProxy {
 
 impl LuaUserData for DatabaseProxy {
     fn add_methods<'lua, M: LuaUserDataMethods<'lua, Self>>(methods: &mut M) {
-        methods.add_method(
-            "create",
-            |lua, this, (parent, owner): (String, Option<String>)| {
-                let (parent, owner) = {
-                    // Verify parent, owner exist
-                    let lock = this.db.read().unwrap();
-                    let parent = unwrap!(lua, this.get_object(&lock, &parent));
-                    let owner = unwrap!(
-                        lua,
-                        this.get_object(
-                            &lock,
-                            &owner.unwrap_or_else(|| CONNDATA.get().player_object.to_string()),
-                        )
-                    );
-                    // TODO verify valid, fertile
-                    (*parent.uuid(), *owner.uuid())
-                };
-                let mut lock = this.db.write().unwrap();
-                ok(lua, lock.create(&parent, &owner).to_string())
-            },
-        );
+        methods.add_method("create", |lua, this, (parent, owner): (String, String)| {
+            let (parent, owner) = {
+                // Verify parent, owner exist
+                let lock = this.db.read().unwrap();
+                let parent = unwrap!(lua, this.get_object(&lock, &parent));
+                let owner = unwrap!(lua, this.get_object(&lock, &owner));
+                // TODO verify valid, fertile
+                (*parent.uuid(), *owner.uuid())
+            };
+            let mut lock = this.db.write().unwrap();
+            ok(lua, lock.create(&parent, &owner).to_string())
+        });
 
         methods.add_method(
             "set_property",

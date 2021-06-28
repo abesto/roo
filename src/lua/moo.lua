@@ -106,7 +106,7 @@ end
 ---@return Result<ObjectProxy, ?>
 function create(parent, owner)
     local parent_res = touuid(parent)
-    local owner_res = touuid(owner or S.nothing)
+    local owner_res = touuid(owner or player)
 
     return Result.zip(parent_res, owner_res):and_then_method_unpacked(db, 'create'):and_then(toobj):map(function(object)
         -- Call object:initialize() if it exists
