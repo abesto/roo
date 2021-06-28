@@ -113,6 +113,7 @@ end
 
 function Ok:unwrap_or(default)
     assert_class_of(0, self, Ok)
+    self._checked = true
     return self.value
 end
 

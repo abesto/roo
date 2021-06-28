@@ -80,3 +80,31 @@ def test_chparent(login: Login) -> None:
     client.assert_lua_equals("o2.parent", "S.nothing")
 
     # TODO test errors
+
+
+def test_set_property(login: Login) -> None:
+    client = login()
+
+    # Integer
+    client.send(";player.x = 33")
+    client.assert_lua_equals("player.x", "33")
+
+    # String
+    client.send(";player.x = 'foo'")
+    client.assert_lua_equals("player.x", "'foo'")
+
+    # UUID
+    client.send(";player.x = S.nothing.uuid")
+    client.assert_lua_equals("player.x", "S.nothing")
+
+    # Object reference
+    client.send(";player.x = S.nothing")
+    client.assert_lua_equals("player.x", "S.nothing")
+
+    # Try to set parent, fail
+    client.send(";player.parent = 23")
+    client.expect_exact(".parent cannot be set directly")
+
+    # Try to set name to wrong type
+    client.send(";player.name = 3")
+    client.expect_exact("Tried to assign value of wrong type")

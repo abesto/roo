@@ -62,7 +62,7 @@ function ObjectProxy.__index(t, k)
 end
 
 function ObjectProxy.__newindex(t, k, v)
-    return db:set_property(t.__uuid, k, deflate_uuids(v))
+    return db:set_property(t.__uuid, k, deflate_uuids(v)):unwrap()
 end
 
 function ObjectProxy.__eq(a, b)

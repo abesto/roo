@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
 use crate::error::ErrorCode::*;
-use crate::result::{err, ok, run_to_lua_result, to_lua_result, Result};
+use crate::result::{err, ok, to_lua_result, Result};
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
 
@@ -124,6 +124,15 @@ impl DatabaseProxy {
             .map_err(LuaError::external)
     }
 
+    fn get_object_mut<'a>(
+        &self,
+        lock: &'a mut RwLockWriteGuard<Database>,
+        uuid: &str,
+    ) -> Result<&'a mut Object> {
+        #[allow(deprecated)]
+        lock.get_mut(&Self::parse_uuid(&uuid)?)
+    }
+
     fn make_object_proxy<'lua>(&self, lua: &'lua Lua, uuid: &Uuid) -> LuaResult<LuaTable<'lua>> {
         if !self.db.read().unwrap().contains_object(uuid) {
             return Err(Self::err_no_object(&uuid.to_string()));
@@ -185,11 +194,13 @@ impl LuaUserData for DatabaseProxy {
                 }
 
                 let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut_old(&mut lock, &uuid)?;
-                object
-                    .set_property_old(&key, PropertyValue::from_lua(value, lua)?)
-                    .map_err(LuaError::external)?;
-                Ok(LuaValue::Nil)
+                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid));
+                to_lua_result(
+                    lua,
+                    object
+                        .set_property(&key, PropertyValue::from_lua(value, lua)?)
+                        .map(|_| LuaValue::Nil),
+                )
             },
         );
 
