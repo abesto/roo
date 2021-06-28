@@ -85,8 +85,12 @@ class Client(pexpect.fdpexpect.fdspawn):
                 chunk_name = self.server.match[1]
                 self.server.expect_exact(f"eval-done: {chunk_name}")
 
-    def lua_create(self, parent: str) -> str:
-        self.send(f";create({parent}):unwrap().uuid")
+    def lua_create(self, parent: str, lua_var: Optional[str] = None) -> str:
+        if lua_var:
+            code = f";{lua_var} = create({parent}):unwrap(); return {lua_var}.uuid"
+        else:
+            code = f";create({parent}):unwrap().uuid"
+        self.send(code)
         return self.read_uuid()
 
     def expect_lua_boolean(self, expected: bool, msg: str = ""):

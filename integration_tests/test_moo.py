@@ -32,33 +32,40 @@ def test_create(login: Login) -> None:
 
 
 def test_move(login: Login) -> None:
-    client = login()
-    r1 = client.lua_create("S.Room")
-    r2 = client.lua_create("S.Room")
+    client = login(interleave_server_logs=True)
+    client.lua_create("S.Root", "o")
+    client.lua_create("S.Room", "r1")
+    client.lua_create("S.Room", "r2")
 
     # Assert the new object doesn't initially have a location
-    client.send(";o = create(S.Root):unwrap()")
     client.assert_lua_nil("o.location")
 
     # Happy: Move by object reference
-    client.assert_lua_nil(f"o:move(db['{r1}']):unwrap()")
-    client.send(";o.location.uuid")
-    assert r1 == client.read_uuid()
+    client.assert_lua_nil("o:move(r1):unwrap()")
+    client.assert_lua_equals("o.location", "r1")
 
     # Happy: Move by uuid
-    client.assert_lua_nil(f"o:move('{r2}'):unwrap()")
-    client.send(";o.location.uuid")
-    assert r2 == client.read_uuid()
+    client.assert_lua_nil("o:move(r2.uuid):unwrap()")
+    client.assert_lua_equals("o.location", "r2")
 
     # Sad: Move to something that's not a uuid
     client.send(";o:move('foobar'):unwrap().code")
     client.expect_exact("E_INVARG")
 
     # Sad: Move to a nonexistent uuid
-    p = client.lua_create("S.Root")
+    p = client.lua_create("S.Root", "p")
     client.send(
-        f";recycle('{p}'):unwrap()",
-        f";o:move('{p}'):unwrap()",
+        ";uuid = p.uuid",
+        ";p:recycle():unwrap()",
+        ";o:move(uuid):unwrap()",
+    )
+    client.expect_exact(f"E_PERM ({p} not found)")
+
+    # Sad: Move to object reference to nonexistent object
+    p = client.lua_create("S.Root", "p")
+    client.send(
+        ";p:recycle():unwrap()",
+        ";o:move(p):unwrap()",
     )
     client.expect_exact(f"E_PERM ({p} not found)")
 
@@ -89,11 +96,8 @@ def test_get_property(login: Login) -> None:
     client.assert_lua_equals("player.name", "'test_get_property'")
 
     # Sad: setup
-    uuid = client.lua_create("S.Root")
-    client.send(
-        f";o = db['{uuid}']",
-        ";o.name = 'testobj'",
-    )
+    uuid = client.lua_create("S.Root", "o")
+    client.send(";o.name = 'testobj'")
     client.assert_lua_equals("o.name", "'testobj'")
 
     # Sad: assert
@@ -130,6 +134,29 @@ def test_set_property(login: Login) -> None:
 
 
 def test_add_verb(login: Login) -> None:
-    client = login()
+    client = login(interleave_server_logs=True)
 
     # Simple case
+    client.lua_create("S.Root", "o")
+    client.assert_lua_nil("o:add_verb({player, 'rx', {'testverb'}}, {'any'}):unwrap()")
+    # TODO check verbinfo, verbargs once those functions are implemented
+
+    # Recreate verb
+    client.send(";o:add_verb({player, 'rx', {'testverb'}}, {'any'}):unwrap()")
+    client.expect_exact("already contains verb testverb")
+
+    # Non-existent owner
+    missing = client.lua_create("S.Root", "missing")
+    client.send(
+        ";missing:recycle():unwrap()",
+        ";o:add_verb({missing, 'rx', {'testverb2'}}, {'any'}):unwrap()",
+    )
+    client.expect_exact(f"E_PERM ({missing} not found)")
+
+    # Totally invalid verb-info
+    client.send(";o:add_verb('trololo', {}):unwrap()")
+    client.expect_exact("argument 2 expected a 'table', got a 'string'")
+
+    # Mildly invalid verb-info
+    client.send(";o:add_verb({missing}, {}):unwrap()")
+    client.expect_exact("verb-info table must have exactly three elements")

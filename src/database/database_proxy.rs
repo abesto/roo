@@ -226,12 +226,12 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method(
             "add_verb",
-            |_lua, this, (uuid, info, args): (String, VerbInfo, VerbArgs)| {
+            |lua, this, (uuid, info, args): (String, VerbInfo, VerbArgs)| {
                 let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut_old(&mut lock, &uuid)?;
                 let verb = Verb::new(info, args);
-                object.add_verb(verb).map_err(LuaError::RuntimeError)?;
-                Ok(LuaValue::Nil)
+                unwrap!(lua, lock.get(verb.owner())); // To explode if the owner doesn't exist
+                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid));
+                to_lua_result(lua, object.add_verb(verb).map(|_| LuaValue::Nil))
             },
         );
 

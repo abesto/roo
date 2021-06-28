@@ -65,5 +65,6 @@ def test_unchecked_result(login: Login) -> None:
     client = login(interleave_server_logs=True)
     client.send(";x = create(S.Root)", ";x = nil")
     client.expect_exact(
-        'Value of Result was never checked. Created at: [[string ";-command"]]:1'
+        "Value of Result was never checked. Created at: stack traceback:"
     )
+    client.expect_exact('[string ";-command"]:1: in main chunk')

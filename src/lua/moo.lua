@@ -153,7 +153,15 @@ end
 
 ---@return Result<?, ?>
 function add_verb(object, info, args)
-    return touuid(object):map_method(db, 'add_verb', info, args)
+    pl.utils.assert_arg(2, info, 'table')
+    pl.utils.assert_arg(3, args, 'table')
+    local uuid = touuid(object)
+    local owner = touuid(info[1])
+    return Result.zip(uuid, owner):and_then(function (x)
+        uuid, owner = unpack(x)
+        info[1] = owner
+        return db:add_verb(uuid, info, args)
+    end)
 end
 
 ---@return Result<?, ?>

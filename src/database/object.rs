@@ -236,16 +236,16 @@ impl Object {
         Ok(())
     }
 
-    pub fn add_verb(&mut self, verb: Verb) -> Result<(), String> {
+    pub fn add_verb(&mut self, verb: Verb) -> Result<(), Error> {
         for existing_verb in self.verbs.iter() {
             for existing_name in existing_verb.names() {
                 if verb.names().contains(existing_name) {
                     // TODO allow multiple verbs for same name but different arity
-                    return Err(format!(
+                    return Err(E_INVARG.make(format!(
                         "{} already contains verb {}",
                         self.name(),
                         verb.names().join("/")
-                    ));
+                    )));
                 }
             }
         }

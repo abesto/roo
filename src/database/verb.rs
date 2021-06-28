@@ -242,6 +242,10 @@ impl Verb {
         }
     }
 
+    pub fn owner(&self) -> &Uuid {
+        &self.info.owner
+    }
+
     pub fn names(&self) -> &Vec<String> {
         &self.info.names
     }

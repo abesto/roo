@@ -14,7 +14,7 @@ function Result:_init(value)
         self.value = value
     end
     self._checked = false
-    self._created_at = List({debug.getinfo(4, "Sl"), debug.getinfo(5, "Sl")})
+    self._created_at = debug.traceback(nil, 4)
 end
 
 function Result:_getvalue()
@@ -31,10 +31,7 @@ end
 
 function Result:__gc()
     if not self._checked then
-        local trace = self._created_at
-            :map(function (item) return "[%s]:%d" % {item.short_src, item.currentline} end)
-            :join(" <- ")
-        local msg = "Value of Result was never checked. Created at: %s" % {trace}
+        local msg = "Value of Result was never checked. Created at: %s" % {self._created_at}
         local r = player:notify(msg)
         if not r:is_ok() then
             print("Result:__gc: player:notify failed. Message: %s. Failure: %s" % {msg, r:err()})
@@ -138,16 +135,17 @@ end
 function Ok:zip(other)
     assert_class_of(0, self, Ok)
     assert_class_of(1, other, Result)
-    self._checked = true
     if other:is_ok() then
         return ResultZip(List {self:unwrap(), other:unwrap()})
     end
+    self._checked = true
     return other
 end
 
 function Err:zip(other)
     assert_class_of(0, self, Err)
     assert_class_of(1, other, Result)
+    other._checked = true
     return self
 end
 

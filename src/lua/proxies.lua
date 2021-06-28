@@ -34,6 +34,11 @@ function ObjectProxy.__index(t, k)
         return opv
     end
 
+    -- If we're asked for our UUID, just return it
+    if k == "uuid" then
+        return t.__uuid
+    end
+
     -- If it's a verb, return it
     local verb = t:resolve_verb(k)
     if verb ~= nil then
