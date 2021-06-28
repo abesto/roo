@@ -28,8 +28,8 @@ class Prefixed:
         self.f.flush()
 
 
-@pytest.fixture
-def server() -> pexpect.spawn:
+@pytest.fixture(scope="session")
+def build_server() -> None:
     output, status = pexpect.run(
         "bash -lc 'exec cargo build --color=never'",
         timeout=300,
@@ -38,6 +38,10 @@ def server() -> pexpect.spawn:
         withexitstatus=True,
     )
     assert status == 0
+
+
+@pytest.fixture
+def server(build_server) -> pexpect.spawn:
     server = pexpect.spawn(
         "./target/debug/roo testing", logfile=Prefixed("server] "), encoding="utf-8"
     )
