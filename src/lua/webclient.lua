@@ -7,7 +7,7 @@ editor.description =
     "This is a placeholder parent for all the $..._utils packages, to more easily find them and manipulate them. At present this object defines no useful verbs or properties. (Filfre.)"
 editor.object_size = {0, 0}
 
-editor:add_verb({S.uuid, "rx", {"local_editing_info"}}, {"this", "none", "this"})
+editor:add_verb({S.uuid, "rx", {"local_editing_info"}}, {"this", "none", "this"}):unwrap()
 editor:set_verb_code("local_editing_info", [[
 local object, vname, code = table.unpack(args)
 local vargs
@@ -22,9 +22,9 @@ local name = "%s:%s" % {object.name, vname};
 -- local upload = "@program %s:%s %s" % {object.uuid, vname, vargs}
 local upload = "@program %s:%s" % {object.uuid, vname}
 return {name, code, upload};
-]])
+]]):unwrap()
 
-editor:add_verb({S.uuid, "rx", {"invoke"}}, {"this", "none", "this"})
+editor:add_verb({S.uuid, "rx", {"invoke"}}, {"this", "none", "this"}):unwrap()
 editor:set_verb_code("invoke", [[
 -- :invoke(...)
 -- to find out what arguments this verb expects,
@@ -41,9 +41,9 @@ if type(spec) == "table" and not is_error(spec) then
     --player:tell("This is for editing in a web client, if you don't wanna do that, use a different verb.");
   --end
 end
-]])
+]]):unwrap()
 
-editor:add_verb({S.uuid, "rx", {"parse_invoke"}}, {"this", "none", "this"})
+editor:add_verb({S.uuid, "rx", {"parse_invoke"}}, {"this", "none", "this"}):unwrap()
 editor:set_verb_code("parse_invoke", [[
 -- :parse_invoke(string, v)
 -- string is the commandline string to parse to obtain the obj:verb to edit
@@ -96,15 +96,15 @@ if not S.command_utils:object_match_failed(object, spec[1]) then
   end
 end
 return 0
-]])
+]]):unwrap()  
 
-editor:add_verb({S.uuid, "rx", {"fetch_verb_code"}}, {"this", "none", "this"})
+editor:add_verb({S.uuid, "rx", {"fetch_verb_code"}}, {"this", "none", "this"}):unwrap()
 editor:set_verb_code("fetch_verb_code", [[
 set_task_perms(player)
 return verb_code(args[1], args[2], not player:edit_option("no_parens")):unwrap_or("")
-]])
+]]):unwrap()
 
-editor:add_verb({S.uuid, "rx", {"invoke_local_editor"}}, {"this", "none", "this"})
+editor:add_verb({S.uuid, "rx", {"invoke_local_editor"}}, {"this", "none", "this"}):unwrap()
 editor:set_verb_code("invoke_local_editor", [[
 -- :invoke_local_editor(name, text, upload)
 -- Spits out the magic text that invokes the local editor in the player's client."
@@ -127,9 +127,9 @@ this:local_instruction(name, upload)
 for i, line in ipairs(S.command_utils:dump_lines(text)) do
   notify(player, line)
 end
-]])
+]]):unwrap()
 
-editor:add_verb({S.uuid, "rx", {"local_instruction"}}, {"this", "none", "this"})
+editor:add_verb({S.uuid, "rx", {"local_instruction"}}, {"this", "none", "this"}):unwrap()
 editor:set_verb_code("local_instruction", [[
 local label, upload = table.unpack(args)
 if not upload then
@@ -137,4 +137,4 @@ if not upload then
 end
 local msg = "#$# edit name: %s upload: %s" % {label, upload}
 player:tell(msg)
-]])
+]]):unwrap()

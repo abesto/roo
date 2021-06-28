@@ -36,10 +36,9 @@ def test_notify(login: Login) -> None:
     client.expect_exact("test-2")
 
 
-def test_gc_works(login: Login) -> None:
-    client = login(interleave_server_logs=True)
+def test_gc(login: Login) -> None:
+    client = login()
     client.send(
-        ";create(S.Root)",
         ";mt = {}",
         ";function mt.__gc() print('whey'); player:notify('test: done gc') end",
         ";x = {}",
@@ -49,15 +48,24 @@ def test_gc_works(login: Login) -> None:
     client.expect_exact("test: done gc")
 
 
-def test_unchecked_result(login: Login, server: pexpect.spawn) -> None:
+def test_pl_class_gc(login: Login) -> None:
     client = login(interleave_server_logs=True)
+
     client.send(
-        ";print('here')",
-        ";create(S.Root)",
-        ";mt = {}",
-        ";function mt.__gc() print('gc!') end",
-        ";x = {}",
-        ";setmetatable(x, mt)",
+        ";pl.class.Test()",
+        ";function Test:__gc() player:notify('pl gc done') end",
+        ";x = Test()",
         ";x = nil",
     )
-    client.expect("Value of Result was never checked")
+    client.expect_exact("pl gc done")
+
+    client.send(";pl.class.Sub(Test)", ";y = Sub()", ";y = nil")
+    client.expect_exact("pl gc done")
+
+
+def test_unchecked_result(login: Login) -> None:
+    client = login(interleave_server_logs=True)
+    client.send(";x = create(S.Root)", ";x = nil")
+    client.expect_exact(
+        'Value of Result was never checked. Created at: [[string ";-command"]]:1'
+    )

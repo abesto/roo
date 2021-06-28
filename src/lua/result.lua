@@ -14,6 +14,7 @@ function Result:_init(value)
         self.value = value
     end
     self._checked = false
+    self._created_at = List({debug.getinfo(4, "Sl"), debug.getinfo(5, "Sl")})
 end
 
 function Result:_getvalue()
@@ -29,25 +30,37 @@ function Result:__tostring()
 end
 
 function Result:__gc()
-    player:notify("Result GC: " .. self)
-    pl.utils.assert(self._checked, "Value of Result was never checked")
+    if not self._checked then
+        local trace = self._created_at
+            :map(function (item) return "[%s]:%d" % {item.short_src, item.currentline} end)
+            :join(" <- ")
+        local msg = "Value of Result was never checked. Created at: %s" % {trace}
+        local r = player:notify(msg)
+        if not r:is_ok() then
+            print("Result:__gc: player:notify failed. Message: %s. Failure: %s" % {msg, r:err()})
+        end
+    end
 end
 
 function Result:is_ok()
+    self._checked = true
     return self:is_a(Ok)
 end
 
 function Result:is_err()
+    self._checked = true
     return self:is_a(Err)
 end
 
 function Result:err()
     assert_class_of(0, self, Err, ":err() called on an Ok: %s" % {self.value})
+    self._checked = true
     return self:_getvalue()
 end
 
 function Result:unwrap()
     assert_class_of(0, self, Ok, ":unwrap() called on an Err: %s" % {self.value})
+    self._checked = true
     return self:_getvalue()
 end
 
@@ -57,6 +70,7 @@ pl.class.Err(Result)
 function Ok:land(other)
     assert_class_of(0, self, Result)
     assert_class_of(1, other, Result)
+    other._checked = true
     return other
 end
 
@@ -64,6 +78,7 @@ function Err:land(other)
     assert_class_of(0, self, Result)
     assert_class_of(1, other, Result)
     pl.utils.assert_arg(1, other, Result)
+    self._checked = true
     return self
 end
 
@@ -75,6 +90,7 @@ function Ok:and_then(f)
         return pl.utils.raise("Return value of function passed to Result:and_then must be a Result, found: %s" %
                                   {pl.types.type(res)})
     end
+    self._checked = true
     return res
 end
 
@@ -85,6 +101,7 @@ end
 function Ok:map(f)
     assert_class_of(0, self, Ok)
     pl.utils.function_arg(1, f)
+    self._checked = true
     return Ok(f(self.value))
 end
 
@@ -101,22 +118,26 @@ end
 
 function Err:unwrap_or(default)
     assert_class_of(0, self, Err)
+    self._checked = true
     return default
 end
 
 function Ok:unwrap_unsafe()
     assert_class_of(0, self, Ok)
+    self._checked = true
     return self.value
 end
 
 function Err:unwrap_unsafe()
     assert_class_of(0, self, Err)
+    self._checked = true
     return self.value
 end
 
 function Ok:zip(other)
     assert_class_of(0, self, Ok)
     assert_class_of(1, other, Result)
+    self._checked = true
     if other:is_ok() then
         return ResultZip(List {self:unwrap(), other:unwrap()})
     end
@@ -144,6 +165,7 @@ function Ok:map_method_unpacked(obj, f, ...)
     assert_class_of(0, self, Ok)
     local f = pl.utils.function_arg(1, obj[f])
     local args = List(self.value):extend{...}
+    self._checked = true
     return Ok(f(obj, unpack(args)))
 end
 
@@ -155,6 +177,7 @@ end
 
 function Ok:and_then_method_unpacked(obj, f, ...)
     assert_class_of(0, self, Ok)
+    self._checked = true
     local f = pl.utils.function_arg(1, obj[f])
     local args = List(self.value):extend{...}
     local res = f(obj, unpack(args))
@@ -173,6 +196,7 @@ end
 
 function Ok:map_unpacked(f, ...)
     assert_class_of(0, self, Result)
+    self._checked = true
     pl.utils.function_arg(1, f)
     local args = List(self.value):extend{...}
     return Ok(f(unpack(args)))
@@ -186,6 +210,7 @@ end
 
 function Ok:map_method(obj, f, ...)
     assert_class_of(0, self, Result)
+    self._checked = true
     local f = pl.utils.function_arg(1, obj[f])
     local args = List {self.value}:extend{...}
     return Ok(f(obj, unpack(args)))

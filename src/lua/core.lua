@@ -21,7 +21,7 @@
             end
         end
 
-        player:notify("Welcome, %s" % {name})
+        player:notify("Welcome, %s" % {name}):unwrap()
         local new = create(S.Player, S.nothing):unwrap()
         new:set_player_flag(true):unwrap()
         new.owner = new
@@ -35,24 +35,24 @@
     S.code_utils = create(S.nothing, S.nothing):unwrap()
 
     -- TODO impl
-    S.code_utils:add_verb({system.uuid, "rx", {"short_prep"}}, {"any"})
+    S.code_utils:add_verb({system.uuid, "rx", {"short_prep"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("short_prep", [[
         return args[1]
-    ]])
+    ]]):unwrap()
 
     -- TODO impl
-    S.code_utils:add_verb({system.uuid, "rx", {"full_prep"}}, {"any"})
+    S.code_utils:add_verb({system.uuid, "rx", {"full_prep"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("full_prep", [[
         return nil
-    ]])
+    ]]):unwrap()
 
-    S.code_utils:add_verb({system.uuid, "rx", {"toobj"}}, {"any"})
+    S.code_utils:add_verb({system.uuid, "rx", {"toobj"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("toobj", [[
         -- TODO this may need some extra logic
         return toobj(args[1]):unwrap_unsafe()
-    ]])
+    ]]):unwrap()
 
-    S.code_utils:add_verb({system.uuid, "r", {"parse_verbref"}}, {"this", "none", "this"})
+    S.code_utils:add_verb({system.uuid, "r", {"parse_verbref"}}, {"this", "none", "this"}):unwrap()
     S.code_utils:set_verb_code("parse_verbref", [[
         -- S.code_utils:parse_verbref(string)
         -- Parses string as a MOO-code verb reference, returning {object, verb-name-string} for a successful parse and false otherwise.  It always returns the right object-string to pass to, for example, this-room:match_object().
@@ -79,9 +79,9 @@
         else
             return 0
         end
-    ]])
+    ]]):unwrap()
 
-    S.code_utils:add_verb({system.uuid, "r", {"parse_argspec"}}, {"any"})
+    S.code_utils:add_verb({system.uuid, "r", {"parse_argspec"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("parse_argspec", [[
 -- :parse_arg_spec(@args)
 --  attempts to parse the given sequence of args into a verb_arg specification
@@ -118,9 +118,9 @@ if #verbargs >= 3 and not List{"this", "any", "none"}:contains(verbargs[3]) then
   return '"%s" is not a valid indirect object specifier.' % {verbargs[3]}
 end
 return {verbargs, rest};
-    ]])
+    ]]):unwrap()
 
-    S.code_utils:add_verb({system.uuid, "r", {"find_verb_named"}}, {"any"})
+    S.code_utils:add_verb({system.uuid, "r", {"find_verb_named"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("find_verb_named", [[
         -- :find_verb_named(object,name[,n])
         --  returns the *number* of the first verb on object matching the given name.
@@ -145,43 +145,43 @@ return {verbargs, rest};
                 end
             end
         end):unwrap_or(nil)
-    ]])
+    ]]):unwrap()
 
     -- TODO full impl
-    S.code_utils:add_verb({system.uuid, "rx", {"verbname_match"}}, {"any"})
+    S.code_utils:add_verb({system.uuid, "rx", {"verbname_match"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("verbname_match", [[
         local candidates, name = table.unpack(args)
         assert_arg(1, candidates, 'table', nil, is_indexable)
         assert_string(2, name)
         return List(candidates):contains(name)
-    ]])
+    ]]):unwrap()
     -- EOF S.code_utils
 
     --- S.object_utils
     S.object_utils = create(S.nothing, S.nothing):unwrap()
 
-    S.object_utils:add_verb({system.uuid, "r", {"has_verb"}}, {"any"})
+    S.object_utils:add_verb({system.uuid, "r", {"has_verb"}}, {"any"}):unwrap()
     S.object_utils:set_verb_code("has_verb", [[
         local object, verb = table.unpack(args)
         return db:has_verb_with_name(object.uuid, verb)
-    ]])
+    ]]):unwrap()
     -- EOF S.object_utils
 
     --- S.string_utils
     S.string_utils = create(S.nothing, S.nothing):unwrap()
 
-    S.string_utils:add_verb({system.uuid, "r", {"words"}}, {"any"})
+    S.string_utils:add_verb({system.uuid, "r", {"words"}}, {"any"}):unwrap()
     S.string_utils:set_verb_code("words", [[
         return pl.stringx.split(args[1])
-    ]])
+    ]]):unwrap()
 
-    S.string_utils:add_verb({system.uuid, "r", {"from_list"}}, {"any"})
+    S.string_utils:add_verb({system.uuid, "r", {"from_list"}}, {"any"}):unwrap()
     S.string_utils:set_verb_code("from_list", [[
         local list, delimiter = table.unpack(args)
         return table.concat(list, delimiter)
-    ]])
+    ]]):unwrap()
 
-    S.string_utils:add_verb({system.uuid, "r", {"match_object"}}, {"this", "none", "this"})
+    S.string_utils:add_verb({system.uuid, "r", {"match_object"}}, {"this", "none", "this"}):unwrap()
     S.string_utils:set_verb_code("match_object", [[
         -- :match_object(string,location[,someone])
         -- Returns the object matching the given string for someone, on the assumption that s/he is in the given location.  `someone' defaults to player.
@@ -217,9 +217,9 @@ return {verbargs, rest};
         else
             return pobject
         end
-    ]])
+    ]]):unwrap()
 
-    S.string_utils:add_verb({system.uuid, "r", {"match"}}, {"this", "none", "this"})
+    S.string_utils:add_verb({system.uuid, "r", {"match"}}, {"this", "none", "this"}):unwrap()
     S.string_utils:set_verb_code("match", [[
     -- Each obj-list should be a list of objects or a single object, which is treated as if it were a list of that object.  Each prop-name should be string naming a property on every object in the corresponding obj-list.  The value of that property in each case should be either a string or a list of strings.
     -- The argument string is matched against all of the strings in the property values.
@@ -270,9 +270,9 @@ return {verbargs, rest};
         end
     end
     return no_exact_match or (no_partial_match or S.failed_match)
-    ]])
+    ]]):unwrap()
 
-    S.string_utils:add_verb({system.uuid, "r", {"literal_object"}}, {"this", "none", "this"})
+    S.string_utils:add_verb({system.uuid, "r", {"literal_object"}}, {"this", "none", "this"}):unwrap()
     S.string_utils:set_verb_code("literal_object", [[
     -- Matches args[1] against literal objects: #xxxxx, $variables, *mailing-lists, and username.  Returns the object if successful, $failed_match else.
     -- TODO this is currently a partial implementation
@@ -306,14 +306,14 @@ return {verbargs, rest};
     -- else
     --   return $failed_match;
     -- endif
-    ]])
+    ]]):unwrap()
     -- EOF S.string_utils
 
     --- S.command_utils
     S.command_utils = create(S.nothing, S.nothing):unwrap()
 
     -- TODO impl
-    S.command_utils:add_verb({system.uuid, "r", {"object_match_failed"}}, {"any"})
+    S.command_utils:add_verb({system.uuid, "r", {"object_match_failed"}}, {"any"}):unwrap()
     S.command_utils:set_verb_code("object_match_failed", [[
         -- Usage: object_match_failed(object, string)
         -- Prints a message if string does not match object.  Generally used after object is derived from a :match_object(string).
@@ -341,9 +341,9 @@ return {verbargs, rest};
           return false
         end
         return true
-    ]])
+    ]]):unwrap()
 
-    S.command_utils:add_verb({system.uuid, "r", {"dump_lines"}}, {"any"})
+    S.command_utils:add_verb({system.uuid, "r", {"dump_lines"}}, {"any"}):unwrap()
     S.command_utils:set_verb_code("dump_lines", [[
         -- :dump_lines(text) => text `.'-quoted for :read_lines()
         --  text is assumed to be a list of strings
@@ -360,64 +360,64 @@ return {verbargs, rest};
                 return line
             end
         end):append(".")
-    ]])
+    ]]):unwrap()
     -- EOF S.command_utils
 
     --- S.verb_editor
     S.verb_editor = create(S.nothing, S.nothing):unwrap()
 
     -- TODO full impl
-    S.verb_editor:add_verb({system.uuid, "r", {"get_room"}}, {"any"})
+    S.verb_editor:add_verb({system.uuid, "r", {"get_room"}}, {"any"}):unwrap()
     S.verb_editor:set_verb_code("get_room", [[
         local object = args[1]
         return object.location
-    ]])
+    ]]):unwrap()
 
     -- EOF verb_editor
 
     S.Root = create(S.nothing, S.nothing):unwrap()
     S.Root.name = "root object"
 
-    S.Root:add_verb({system.uuid, "rx", {"match"}}, {"this", "none", "this"})
+    S.Root:add_verb({system.uuid, "rx", {"match"}}, {"this", "none", "this"}):unwrap()
     S.Root:set_verb_code("match", [[
         local c = this.contents
         return S.string_utils:match(args[1], c, "name", c, "aliases")
-    ]])
+    ]]):unwrap()
 
-    S.Root:add_verb({system.uuid, "r", {"get_name"}}, {"any"})
+    S.Root:add_verb({system.uuid, "r", {"get_name"}}, {"any"}):unwrap()
     S.Root:set_verb_code("get_name", [[
         return this.name
-    ]])
+    ]]):unwrap()
 
-    S.Root:add_verb({system.uuid, "r", {"title"}}, {"any"})
+    S.Root:add_verb({system.uuid, "r", {"title"}}, {"any"}):unwrap()
     S.Root:set_verb_code("title", [[
         local name = this:get_name()
         if is_type(name, "string") and #name > 0 then
             return name
         end
         return this.uuid
-    ]])
+    ]]):unwrap()
 
-    S.Root:add_verb({system.uuid, "r", {"tell"}}, {"any"})
+    S.Root:add_verb({system.uuid, "r", {"tell"}}, {"any"}):unwrap()
     S.Root:set_verb_code("tell", [[
         this:notify(tostr(args))
-    ]])
+    ]]):unwrap()
 
     --- S.Player
     S.Player = create(S.Root, S.nothing):unwrap()
     S.Player.name = "generic player"
 
     -- TODO impl
-    S.Player:add_verb({system.uuid, "rx", {"my_match_object"}}, {"any"})
+    S.Player:add_verb({system.uuid, "rx", {"my_match_object"}}, {"any"}):unwrap()
     S.Player:set_verb_code("my_match_object", [[
         -- :my_match_object(string [,location])
         return S.string_utils:match_object(unpack(
             pl.List(args):append(this.location):slice(1, 2):append(this)
         ))
-    ]])
+    ]]):unwrap()
 
     -- TODO at some point this needs to move to a "generic programmer" object
-    S.Player:add_verb({S.uuid, "rx", {"@edit"}}, {"any", "any", "any"})
+    S.Player:add_verb({S.uuid, "rx", {"@edit"}}, {"any", "any", "any"}):unwrap()
     S.Player:set_verb_code("@edit", [[
 -- Calls the verb editor on verbs, the note editor on properties, and on anything else assumes it's an object for which you want to edit the .description.
 
@@ -446,14 +446,14 @@ return {verbargs, rest};
 --    player.linelen = len
 --end
 --"player.linelen = len;"
-]])
+]]):unwrap()
 
     -- TODO impl
-    S.Player:add_verb({S.uuid, "rx", {"edit_option"}}, {})
+    S.Player:add_verb({S.uuid, "rx", {"edit_option"}}, {}):unwrap()
     -- EOF Player
 
     -- TODO full impl
-    S.Player:add_verb({S.uuid, "rx", {"@program"}}, {"this"})
+    S.Player:add_verb({S.uuid, "rx", {"@program"}}, {"this"}):unwrap()
     S.Player:set_verb_code("@program", [[
 local vref = List(args)
 
@@ -510,42 +510,42 @@ if not S.command_utils:object_match_failed(object, spec[1]) then
     player:tell(toliteral(result:err()))
   end
 end
-    ]])
+    ]]):unwrap()
 
     S.Room = create(S.Root, S.nothing):unwrap()
     S.Room.name = "Prototype:Room"
     S.Room.description = "A nondescript room"
 
-    S.Room:add_verb({system.uuid, "r", {"announce"}}, {"any"})
+    S.Room:add_verb({system.uuid, "r", {"announce"}}, {"any"}):unwrap()
     S.Room:set_verb_code("announce", [[
         for i, target in ipairs(this.contents:without(player)) do
             pcall(target.tell, target, unpack(args))
         end
-    ]])
+    ]]):unwrap()
 
-    S.Room:add_verb({system.uuid, "r", {"announce_all"}}, {"any"})
+    S.Room:add_verb({system.uuid, "r", {"announce_all"}}, {"any"}):unwrap()
     S.Room:set_verb_code("announce_all", [[
         for i, target in ipairs(this.contents) do
             pcall(target.tell, target, unpack(args))
         end
-    ]])
+    ]]):unwrap()
 
-    S.Room:add_verb({system.uuid, "rx", {"say"}}, {"any"})
+    S.Room:add_verb({system.uuid, "rx", {"say"}}, {"any"}):unwrap()
     S.Room:set_verb_code("say", [[
         pcall(function()
             -- TODO player should really be caller here once implemented
             player:tell('You say, "%s"' % {argstr})
             this:announce('$name says, "$msg"' % {name = player.name, msg = argstr})
         end)
-    ]])
+    ]]):unwrap()
 
-    S.Room:add_verb({system.uuid, "rx", {"emote"}}, {"any"})
+    S.Room:add_verb({system.uuid, "rx", {"emote"}}, {"any"}):unwrap()
     S.Room:set_verb_code("emote", [[
         -- TODO player should really be caller here once implemented
         this:announce_all('%s %s' % {player.name, argstr})
-    ]])
+    ]]):unwrap()
 
-    S.Room:add_verb({system.uuid, "rx", {"describe"}}, {})
+    S.Room:add_verb({system.uuid, "rx", {"describe"}}, {}):unwrap()
     S.Room:set_verb_code("describe", [[
         local name = this:title()
         local description = this.description or "You see nothing special."
@@ -557,19 +557,19 @@ end
         end
 
         return msg
-    ]])
+    ]]):unwrap()
 
-    S.Room:add_verb({system.uuid, "rx", {"look"}}, {})
+    S.Room:add_verb({system.uuid, "rx", {"look"}}, {}):unwrap()
     S.Room:set_verb_code("look", [[
         player:notify(this:describe())
-    ]])
+    ]]):unwrap()
 
     S.starting_room = create(S.Room, S.nothing):unwrap()
     S.starting_room.name = "The Void"
     S.starting_room.description = "There is nothing, and you are in it."
 
-    S.starting_room:add_verb({system.uuid, "rx", {"wiggle"}}, {})
+    S.starting_room:add_verb({system.uuid, "rx", {"wiggle"}}, {}):unwrap()
     S.starting_room:set_verb_code("wiggle", [[
         this:announce_all("%s wiggles" % {this.name})
-    ]])
+    ]]):unwrap()
 end)()
