@@ -182,10 +182,10 @@ impl Database {
         Ok(())
     }
 
-    pub fn chparent(&mut self, uuid_child: &Uuid, uuid_parent: &Uuid) -> Result<(), String> {
+    pub fn chparent(&mut self, uuid_child: &Uuid, uuid_parent: &Uuid) -> Result<(), Error> {
         // Remove from old parent, if any
         {
-            let opt_uuid_old_parent = *self.get_old(uuid_child)?.parent();
+            let opt_uuid_old_parent = *self.get(uuid_child)?.parent();
             if let Some(uuid_old_parent) = opt_uuid_old_parent {
                 if let Some(old_parent) = self.objects.get_mut(&uuid_old_parent) {
                     old_parent.remove_child(uuid_child);
@@ -195,13 +195,13 @@ impl Database {
 
         // Set new parent
         {
-            let child = self.get_mut_old(uuid_child)?;
-            child.set_property_old("parent", Some(*uuid_parent))?;
+            let child = self.get_mut(uuid_child)?;
+            child.set_property("parent", Some(*uuid_parent))?;
         }
 
         // Add child to children of new parent
         {
-            let new_parent = self.get_mut_old(uuid_parent)?;
+            let new_parent = self.get_mut(uuid_parent)?;
             new_parent.insert_child(*uuid_child);
         }
 

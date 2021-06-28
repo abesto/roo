@@ -1,5 +1,3 @@
-import pexpect
-
 from .conftest import Connect, Login
 
 

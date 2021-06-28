@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
 use crate::error::ErrorCode::*;
-use crate::result::{err, ok, to_lua_result, Result};
+use crate::result::{err, ok, run_to_lua_result, to_lua_result, Result};
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
 
@@ -135,34 +135,18 @@ impl DatabaseProxy {
 }
 
 impl DatabaseProxy {
-    fn move_object<'lua>(
-        this: &DatabaseProxy,
-        (what, to): (String, String),
-    ) -> Result<LuaValue<'lua>> {
-        let mut lock = this.db.write().unwrap();
+    fn move_object<'lua>(&self, (what, to): (String, String)) -> Result<LuaValue<'lua>> {
+        let mut lock = self.db.write().unwrap();
         lock.move_object(&Self::parse_uuid(&what)?, &Self::parse_uuid(&to)?)
             .map(|_| LuaValue::Nil)
     }
 
-    fn lmove<'lua>(
-        lua: &'lua Lua,
-        this: &DatabaseProxy,
-        args: (String, String),
-    ) -> LuaResult<LuaValue<'lua>> {
-        to_lua_result(lua, Self::move_object(this, args))
-    }
-
-    fn chparent(
-        _lua: &Lua,
-        this: &DatabaseProxy,
-        (child, new_parent): (String, String),
-    ) -> LuaResult<()> {
-        let mut lock = this.db.write().unwrap();
-        lock.chparent(
-            &Self::parse_uuid_old(&child)?,
-            &Self::parse_uuid_old(&new_parent)?,
-        )
-        .map_err(LuaError::external)
+    fn chparent<'lua>(&self, (child, new_parent): (String, String)) -> Result<LuaValue<'lua>> {
+        let mut lock = self.db.write().unwrap();
+        let child_uuid = Self::parse_uuid(&child)?;
+        let new_parent_uuid = Self::parse_uuid(&new_parent)?;
+        lock.chparent(&child_uuid, &new_parent_uuid)
+            .map(|_| LuaValue::Nil)
     }
 }
 
@@ -225,8 +209,12 @@ impl LuaUserData for DatabaseProxy {
             },
         );
 
-        methods.add_method("move", DatabaseProxy::lmove);
-        methods.add_method("chparent", DatabaseProxy::chparent);
+        methods.add_method("move", |lua, this, args: (String, String)| {
+            to_lua_result(lua, this.move_object(args))
+        });
+        methods.add_method("chparent", |lua, this, args: (String, String)| {
+            to_lua_result(lua, this.chparent(args))
+        });
 
         methods.add_method(
             "add_verb",
@@ -339,7 +327,9 @@ impl LuaUserData for DatabaseProxy {
 
             if let Some(parent_uuid) = parent_uuid_opt {
                 for child_uuid in children_uuids {
-                    Self::chparent(lua, this, (child_uuid.to_string(), parent_uuid.to_string()))?;
+                    // TODO drop .map_err when this moves into run_to_lua_result
+                    this.chparent((child_uuid.to_string(), parent_uuid.to_string()))
+                        .map_err(|e| LuaError::external(e.to_string()))?;
                 }
             } else {
                 // TODO do something here :)

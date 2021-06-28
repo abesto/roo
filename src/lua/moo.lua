@@ -147,8 +147,8 @@ end
 ---@return Result<?, ?>
 function chparent(what, new_parent)
     local what_uuid = touuid(what)
-    local new_parent_uuid = touuid(where)
-    return Result.zip(what_uuid, new_parent_uuid):map_method_unpacked(db, 'chparent')
+    local new_parent_uuid = touuid(new_parent)
+    return Result.zip(what_uuid, new_parent_uuid):and_then_method_unpacked(db, 'chparent')
 end
 
 ---@return Result<?, ?>

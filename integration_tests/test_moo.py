@@ -61,3 +61,22 @@ def test_move(login: Login) -> None:
         f";o:move('{p}'):unwrap()",
     )
     client.expect_exact(f"E_PERM ({p} not found)")
+
+
+def test_chparent(login: Login) -> None:
+    client = login()
+
+    client.send(
+        ";o1 = create(S.Root):unwrap()",
+        ";o2 = create(S.Root):unwrap()",
+    )
+
+    # Happy path
+    client.assert_lua_equals("o1:chparent(o2):unwrap()", "nil")
+    client.assert_lua_equals("o1.parent", "o2")
+
+    # Can be reparented to nothing
+    client.assert_lua_equals("o2:chparent(S.nothing):unwrap()", "nil")
+    client.assert_lua_equals("o2.parent", "S.nothing")
+
+    # TODO test errors
