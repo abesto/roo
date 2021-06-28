@@ -101,6 +101,9 @@ class Client(pexpect.fdpexpect.fdspawn):
         self.send(f";{code}")
         self.expect_lua_boolean(True, code)
 
+    def assert_lua_nil(self, code: str):
+        self.assert_lua_equals(code, "nil")
+
 
 @pytest.fixture()
 def connect(server):

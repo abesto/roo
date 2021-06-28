@@ -37,17 +37,17 @@ def test_move(login: Login) -> None:
     r2 = client.lua_create("S.Room")
 
     # Assert the new object doesn't initially have a location
-    client.send(";o = create(S.Root):unwrap()", ";o.location == nil")
-    client.expect_exact("Boolean(true)")
+    client.send(";o = create(S.Root):unwrap()")
+    client.assert_lua_nil("o.location")
 
     # Happy: Move by object reference
-    client.send(f";o:move(db['{r1}']):unwrap() == nil", ";o.location.uuid")
-    client.expect_exact("Boolean(true)")
+    client.assert_lua_nil(f"o:move(db['{r1}']):unwrap()")
+    client.send(";o.location.uuid")
     assert r1 == client.read_uuid()
 
     # Happy: Move by uuid
-    client.send(f";o:move('{r2}'):unwrap() == nil", ";o.location.uuid")
-    client.expect_exact("Boolean(true)")
+    client.assert_lua_nil(f"o:move('{r2}'):unwrap()")
+    client.send(";o.location.uuid")
     assert r2 == client.read_uuid()
 
     # Sad: Move to something that's not a uuid
@@ -72,11 +72,11 @@ def test_chparent(login: Login) -> None:
     )
 
     # Happy path
-    client.assert_lua_equals("o1:chparent(o2):unwrap()", "nil")
+    client.assert_lua_nil("o1:chparent(o2):unwrap()")
     client.assert_lua_equals("o1.parent", "o2")
 
     # Can be reparented to nothing
-    client.assert_lua_equals("o2:chparent(S.nothing):unwrap()", "nil")
+    client.assert_lua_nil("o2:chparent(S.nothing):unwrap()")
     client.assert_lua_equals("o2.parent", "S.nothing")
 
     # TODO test errors
@@ -127,3 +127,9 @@ def test_set_property(login: Login) -> None:
     # Try to set name to wrong type
     client.send(";player.name = 3")
     client.expect_exact("Tried to assign value of wrong type")
+
+
+def test_add_verb(login: Login) -> None:
+    client = login()
+
+    # Simple case
