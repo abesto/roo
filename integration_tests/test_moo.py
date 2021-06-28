@@ -82,6 +82,25 @@ def test_chparent(login: Login) -> None:
     # TODO test errors
 
 
+def test_get_property(login: Login) -> None:
+    client = login()
+
+    # Happy
+    client.assert_lua_equals("player.name", "'test_get_property'")
+
+    # Sad: setup
+    uuid = client.lua_create("S.Root")
+    client.send(
+        f";o = db['{uuid}']",
+        ";o.name = 'testobj'",
+    )
+    client.assert_lua_equals("o.name", "'testobj'")
+
+    # Sad: assert
+    client.send(";o:recycle():unwrap()", ";o.name")
+    client.expect_exact(f"{uuid} not found")
+
+
 def test_set_property(login: Login) -> None:
     client = login()
 

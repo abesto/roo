@@ -41,7 +41,7 @@ function ObjectProxy.__index(t, k)
     end
 
     -- Read the value from the DB
-    local v = db:get_property(t.__uuid, k)
+    local v = db:get_property(t.__uuid, k):unwrap()
     if k == "children" or k == "contents" then
         return List(inflate_uuids(v))
     end

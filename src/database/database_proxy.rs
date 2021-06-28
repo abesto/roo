@@ -209,13 +209,10 @@ impl LuaUserData for DatabaseProxy {
             |lua, this, (uuid, key): (String, String)| {
                 let lock = this.db.read().unwrap();
 
-                if let Some(value) = lock
-                    .get_property(&Self::parse_uuid_old(&uuid)?, &key)
-                    .map_err(LuaError::external)?
-                {
-                    value.clone().to_lua(lua)
-                } else {
-                    Ok(LuaValue::Nil)
+                match lock.get_property(&unwrap!(lua, Self::parse_uuid(&uuid)), &key) {
+                    Ok(None) => ok(lua, LuaValue::Nil),
+                    Ok(Some(value)) => ok(lua, value),
+                    Err(e) => err(lua, e),
                 }
             },
         );

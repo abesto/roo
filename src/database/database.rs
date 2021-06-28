@@ -208,8 +208,8 @@ impl Database {
         Ok(())
     }
 
-    pub fn get_property(&self, uuid: &Uuid, key: &str) -> Result<Option<&PropertyValue>, String> {
-        let object = self.get_old(uuid)?;
+    pub fn get_property(&self, uuid: &Uuid, key: &str) -> Result<Option<&PropertyValue>, Error> {
+        let object = self.get(uuid)?;
 
         if let Some(value) = object.get_property(key) {
             Ok(Some(value))
