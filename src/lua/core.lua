@@ -163,7 +163,7 @@ return {verbargs, rest};
     S.object_utils:add_verb({system.uuid, "r", {"has_verb"}}, {"any"}):unwrap()
     S.object_utils:set_verb_code("has_verb", [[
         local object, verb = table.unpack(args)
-        return db:has_verb_with_name(object.uuid, verb)
+        return db:has_verb_with_name(object.uuid, verb):unwrap()
     ]]):unwrap()
     -- EOF S.object_utils
 

@@ -8,7 +8,7 @@ use mlua::prelude::*;
 use uuid::Uuid;
 
 use crate::database::{Database, Object, PropertyValue, Verb};
-use crate::error::ErrorCode::*;
+use crate::error::ErrorCode::{self, *};
 use crate::result::{err, ok, to_lua_result, Result};
 
 use super::verb::{VerbArgs, VerbDesc, VerbInfo};
@@ -88,28 +88,24 @@ impl DatabaseProxy {
         }
     }
 
-    #[deprecated]
-    fn get_verb_mut_old<'a>(
+    fn get_verb_mut<'a>(
         &self,
         lock: &'a mut RwLockWriteGuard<Database>,
         uuid: &str,
         desc: &VerbDesc,
-    ) -> LuaResult<&'a mut Verb> {
-        #[allow(deprecated)]
-        let object = self.get_object_mut_old(lock, &uuid)?;
+        eobjnotfound: ErrorCode,
+    ) -> Result<&'a mut Verb> {
+        let object = self.get_object_mut(lock, &uuid, eobjnotfound)?;
         match desc {
-            VerbDesc::Index(n) => {
-                let verb = object
-                    .verbs_mut()
-                    .get_mut(n - 1)
-                    .ok_or_else(|| LuaError::external("No such verby birby"))?;
-                Ok(verb)
-            }
+            VerbDesc::Index(n) => object
+                .verbs_mut()
+                .get_mut(n - 1)
+                .ok_or_else(|| E_VERBNF.make(format!("{} has no verb with index {}", uuid, n))),
             VerbDesc::Name(name) => object
                 .verbs_mut()
                 .iter_mut()
                 .find(|v| v.name_matches(name))
-                .ok_or_else(|| LuaError::external("No such verb by name eh")),
+                .ok_or_else(|| E_VERBNF.make(format!("{} has no verb with name {}", uuid, name))),
         }
     }
 
@@ -128,9 +124,9 @@ impl DatabaseProxy {
         &self,
         lock: &'a mut RwLockWriteGuard<Database>,
         uuid: &str,
+        enotfound: ErrorCode,
     ) -> Result<&'a mut Object> {
-        #[allow(deprecated)]
-        lock.get_mut(&Self::parse_uuid(&uuid)?)
+        lock.get_mut(&Self::parse_uuid(&uuid)?, enotfound)
     }
 
     fn make_object_proxy<'lua>(&self, lua: &'lua Lua, uuid: &Uuid) -> LuaResult<LuaTable<'lua>> {
@@ -194,7 +190,7 @@ impl LuaUserData for DatabaseProxy {
                 }
 
                 let mut lock = this.db.write().unwrap();
-                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid));
+                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid, E_PERM));
                 to_lua_result(
                     lua,
                     object
@@ -230,17 +226,20 @@ impl LuaUserData for DatabaseProxy {
                 let mut lock = this.db.write().unwrap();
                 let verb = Verb::new(info, args);
                 unwrap!(lua, lock.get(verb.owner())); // To explode if the owner doesn't exist
-                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid));
+                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid, E_PERM));
                 to_lua_result(lua, object.add_verb(verb).map(|_| LuaValue::Nil))
             },
         );
 
+        // TODO remove this; doesn't exist in the Moo API
         methods.add_method(
             "has_verb_with_name",
-            |_lua, this, (uuid, name): (String, String)| {
+            |lua, this, (uuid, name): (String, String)| {
                 let lock = this.db.read().unwrap();
-                lock.has_verb_with_name(&Self::parse_uuid_old(&uuid)?, &name)
-                    .map_err(LuaError::RuntimeError)
+                to_lua_result(
+                    lua,
+                    lock.has_verb_with_name(&unwrap!(lua, Self::parse_uuid(&uuid)), &name),
+                )
             },
         );
 
@@ -248,14 +247,18 @@ impl LuaUserData for DatabaseProxy {
             "set_verb_code",
             |lua, this, (uuid, desc, code): (String, VerbDesc, Vec<String>)| {
                 // Verify the code is at least mostly sane
-                lua.load(&code.join("\n"))
+                if let Err(e) = lua
+                    .load(&code.join("\n"))
                     .set_name(&format!("validate_verb_code {}:{}", uuid, desc))?
-                    .into_function()?;
+                    .into_function()
+                {
+                    return err(lua, E_INVARG.make(e));
+                }
 
                 // And write it
                 let mut lock = this.db.write().unwrap();
-                this.get_verb_mut_old(&mut lock, &uuid, &desc)?.code = code;
-                Ok(())
+                unwrap!(lua, this.get_verb_mut(&mut lock, &uuid, &desc, E_INVARG)).code = code;
+                ok(lua, LuaValue::Nil)
             },
         );
 
@@ -263,21 +266,31 @@ impl LuaUserData for DatabaseProxy {
             "resolve_verb",
             |lua, this, (uuid, name): (String, String)| {
                 let lock = this.db.read().unwrap();
-                let verb = lock
-                    .resolve_verb(&Self::parse_uuid_old(&uuid)?, &name)
-                    .map_err(LuaError::RuntimeError)?;
-                verb.to_lua(lua)
+                let verb = unwrap!(
+                    lua,
+                    lock.resolve_verb(&unwrap!(lua, Self::parse_uuid(&uuid)), &name)
+                );
+                match verb {
+                    Some(v) => ok(lua, v),
+                    None => err(
+                        lua,
+                        E_VERBNF.make(format!("Failed to resolve verb {} on {}", name, uuid)),
+                    ),
+                }
             },
         );
 
         methods.add_method(
             "set_into_list",
-            |_lua, this, (uuid, key, path, value): (String, String, Vec<usize>, PropertyValue)| {
+            |lua, this, (uuid, key, path, value): (String, String, Vec<usize>, PropertyValue)| {
                 let mut lock = this.db.write().unwrap();
-                let object = this.get_object_mut_old(&mut lock, &uuid)?;
-                object
-                    .set_into_list(&key, path, value)
-                    .map_err(LuaError::RuntimeError)
+                let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid, E_INVARG));
+                to_lua_result(
+                    lua,
+                    object
+                        .set_into_list(&key, path, value)
+                        .map(|_| LuaValue::Nil),
+                )
             },
         );
 

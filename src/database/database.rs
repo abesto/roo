@@ -6,7 +6,12 @@ use std::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{command::Command, database::Object, error::Error, error::ErrorCode::*};
+use crate::{
+    command::Command,
+    database::Object,
+    error::ErrorCode::*,
+    error::{Error, ErrorCode},
+};
 
 use super::{PropertyValue, Verb};
 
@@ -103,10 +108,10 @@ impl Database {
             .ok_or_else(|| format!("{} not found", uuid))
     }
 
-    pub fn get_mut(&mut self, uuid: &Uuid) -> Result<&mut Object, Error> {
+    pub fn get_mut(&mut self, uuid: &Uuid, enotfound: ErrorCode) -> Result<&mut Object, Error> {
         self.objects
             .get_mut(uuid)
-            .ok_or_else(|| E_PERM.make(format!("{} not found", uuid)))
+            .ok_or_else(|| enotfound.make(format!("{} not found", uuid)))
     }
 
     pub fn contains_object(&self, uuid: &Uuid) -> bool {
@@ -151,15 +156,16 @@ impl Database {
         // Remove from contents of the old location, if any
         if let Some(old_location) = *self.get(what_uuid)?.location() {
             println!("remove_content({}, {})", old_location, what_uuid);
-            self.get_mut(&old_location)?.remove_content(what_uuid);
+            self.get_mut(&old_location, E_PERM)?
+                .remove_content(what_uuid);
         }
 
         // Set new location
-        self.get_mut(what_uuid)?
+        self.get_mut(what_uuid, E_PERM)?
             .set_property("location", Some(*to_uuid))?;
 
         // Add to contents of new location
-        self.get_mut(to_uuid)?.insert_content(*what_uuid);
+        self.get_mut(to_uuid, E_PERM)?.insert_content(*what_uuid);
 
         Ok(())
     }
@@ -195,13 +201,13 @@ impl Database {
 
         // Set new parent
         {
-            let child = self.get_mut(uuid_child)?;
+            let child = self.get_mut(uuid_child, E_PERM)?;
             child.set_property("parent", Some(*uuid_parent))?;
         }
 
         // Add child to children of new parent
         {
-            let new_parent = self.get_mut(uuid_parent)?;
+            let new_parent = self.get_mut(uuid_parent, E_PERM)?;
             new_parent.insert_child(*uuid_child);
         }
 
@@ -220,8 +226,8 @@ impl Database {
         }
     }
 
-    pub fn has_verb_with_name(&self, uuid: &Uuid, name: &str) -> Result<bool, String> {
-        let object = self.get_old(uuid)?;
+    pub fn has_verb_with_name(&self, uuid: &Uuid, name: &str) -> Result<bool, Error> {
+        let object = self.get(uuid)?;
 
         if object.has_verb_with_name(name) {
             Ok(true)
@@ -232,8 +238,8 @@ impl Database {
         }
     }
 
-    pub fn resolve_verb(&self, uuid: &Uuid, name: &str) -> Result<Option<&Verb>, String> {
-        let object = self.get_old(uuid)?;
+    pub fn resolve_verb(&self, uuid: &Uuid, name: &str) -> Result<Option<&Verb>, Error> {
+        let object = self.get(uuid)?;
 
         if let Some(verb) = object.resolve_verb(name) {
             Ok(Some(verb))

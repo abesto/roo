@@ -15,6 +15,7 @@ pub enum PropertyValue {
     UuidOpt(Option<Uuid>),
     Uuids(HashSet<Uuid>),
     List(Vec<PropertyValue>),
+    Nil,
 }
 
 impl From<bool> for PropertyValue {
@@ -95,6 +96,7 @@ impl<'lua> FromLua<'lua> for PropertyValue {
                 Ok(PropertyValue::List(values))
             }
             LuaValue::Boolean(b) => Ok(PropertyValue::from(b)),
+            LuaValue::Nil => Ok(PropertyValue::Nil),
             _ => Err(LuaError::external(format!(
                 "Unsupported type for value {:?}",
                 lua_value
@@ -123,6 +125,7 @@ impl<'lua> ToLua<'lua> for &PropertyValue {
                 .collect::<LuaResult<Vec<LuaValue>>>()?
                 .to_lua(lua),
             PropertyValue::Boolean(b) => b.to_lua(lua),
+            PropertyValue::Nil => LuaValue::Nil.to_lua(lua),
         }
     }
 }

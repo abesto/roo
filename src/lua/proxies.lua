@@ -41,8 +41,8 @@ function ObjectProxy.__index(t, k)
 
     -- If it's a verb, return it
     local verb = t:resolve_verb(k)
-    if verb ~= nil then
-        return verb
+    if verb:is_ok() then
+        return verb:unwrap()
     end
 
     -- Read the value from the DB
@@ -124,9 +124,12 @@ end
 
 function ListProxy.__index(t, k)
     local v = t._inner[k]
-    if is_type(v, "string") then
-        v = inflate_uuid(v)
+
+    local obj = toobj(v)
+    if obj:is_ok() then
+        v = obj:unwrap()
     end
+
     if is_indexable(v) and not is_type(v, ObjectProxy) then
         return ListProxy:new(t._uuid, t._prop, ListProxy.path_and(t, k - 1), v)
     end
@@ -134,7 +137,7 @@ function ListProxy.__index(t, k)
 end
 
 function ListProxy.__newindex(t, k, v)
-    return db:set_into_list(t._uuid, t._prop, ListProxy.path_and(t, k - 1), deflate_uuids(v))
+    return db:set_into_list(t._uuid, t._prop, ListProxy.path_and(t, k - 1), deflate_uuids(v)):unwrap()
 end
 
 function ListProxy.__len(t)

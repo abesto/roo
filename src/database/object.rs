@@ -196,7 +196,7 @@ impl Object {
         key: &str,
         path: Vec<usize>,
         from_value: T,
-    ) -> Result<(), String>
+    ) -> Result<(), Error>
     where
         T: Into<PropertyValue>,
     {
@@ -205,24 +205,24 @@ impl Object {
 
         let property = match self.get_property_mut(key) {
             Some(p) => p,
-            None => return Err(format!("{} has no property {}", self.uuid(), key)),
+            None => return Err(E_PROPNF.make(format!("{} has no property {}", self.uuid(), key))),
         };
 
         let mut this_list = match property {
             PropertyValue::List(l) => l,
-            _ => return Err(format!("{}.{} is not a list", self.uuid(), key)),
+            _ => return Err(E_TYPE.make(format!("{}.{} is not a list", self.uuid(), key))),
         };
 
         for &index in &path[..path.len() - 1] {
             let next_value = match this_list.get_mut(index) {
                 Some(v) => v,
-                None => return Err(format!("{} has no index {}", path_so_far, index)),
+                None => return Err(E_RANGE.make(format!("{} has no index {}", path_so_far, index))),
             };
 
-            path_so_far = format!("{}[{}]", path_so_far, index);
+            path_so_far = format!("{}[{}]", path_so_far, index + 1);
             this_list = match next_value {
                 PropertyValue::List(l) => l,
-                _ => return Err(format!("{} is not a list", path_so_far)),
+                _ => return Err(E_TYPE.make(format!("{} is not a list", path_so_far))),
             };
         }
 
@@ -230,7 +230,14 @@ impl Object {
         match set_index.cmp(&this_list.len()) {
             Ordering::Equal => this_list.push(value),
             Ordering::Less => this_list[set_index] = value,
-            _ => return Err(format!("{}.len() < {}", path_so_far, set_index)),
+            _ => {
+                return Err(E_RANGE.make(format!(
+                    "#{} == {} (index out of bounds: {})",
+                    path_so_far,
+                    this_list.len(),
+                    set_index + 1
+                )))
+            }
         }
 
         Ok(())

@@ -40,11 +40,13 @@ function Result:__gc()
 end
 
 function Result:is_ok()
+    assert_class_of(0, self, Result)
     self._checked = true
     return self:is_a(Ok)
 end
 
 function Result:is_err()
+    assert_class_of(0, self, Result)
     self._checked = true
     return self:is_a(Err)
 end
@@ -88,6 +90,19 @@ function Ok:and_then(f)
                                   {pl.types.type(res)})
     end
     self._checked = true
+    return res
+end
+
+function Ok:and_then_method(obj, f, ...)
+    assert_class_of(0, self, Ok)
+    self._checked = true
+    local f = pl.utils.function_arg(1, obj[f])
+    local args = List {self.value}:extend{...}
+    local res = f(obj, unpack(args))
+    if not Result:class_of(res) then
+        return pl.utils.raise("Return value of function passed to Result:and_then must be a Result, found: %s" %
+                                  {pl.types.type(res)})
+    end
     return res
 end
 

@@ -9,9 +9,51 @@ def test_verb_code_by_index(login: Login) -> None:
         ";o = create(S.Root):unwrap()",
         ';o:add_verb({S.uuid, "r", {"testverb"}}, {"any"}):unwrap()',
         ';o:set_verb_code("testverb", "print(99)"):unwrap()',
-        ";pl.tablex.deepcompare(o:verb_code(1):unwrap(), {'print(99)'})",
     )
-    client.expect_exact("Boolean(true)")
+    client.assert_lua_deepequal("o:verb_code(1):unwrap()", "{'print(99)'}")
+
+    # TODO error cases
+
+
+def test_set_verb_code(login: Login) -> None:
+    client = login(interleave_server_logs=True)
+    o = client.lua_create("S.Root", "o")
+
+    # Happy path by name
+    client.send(
+        ';o:add_verb({S.uuid, "r", {"testverb"}}, {"any"}):unwrap()',
+        ';o:set_verb_code("testverb", "print(99)"):unwrap()',
+    )
+    client.assert_lua_deepequal("o:verb_code(1):unwrap()", "{'print(99)'}")
+
+    # Happy path by index
+    client.send(
+        ';o:set_verb_code(1, "print(42)"):unwrap()',
+    )
+    client.assert_lua_deepequal("o:verb_code(1):unwrap()", "{'print(42)'}")
+
+    # Invalid object
+    p = client.lua_create("S.Root", "p")
+    client.send(";p:recycle():unwrap()", ";p:set_verb_code('testverb', {}):unwrap()")
+    client.expect_exact(f"E_INVARG ({p} not found)")
+
+    # Invalid code
+    client.send(
+        ';o:set_verb_code(1, "this is not valid lua code at all"):unwrap()',
+    )
+    client.expect_exact("E_INVARG (syntax error")
+
+    # Verb by name doesn't exist
+    client.send(
+        ';o:set_verb_code("whee", "print(9000)"):unwrap()',
+    )
+    client.expect_exact(f"E_VERBNF ({o} has no verb with name whee)")
+
+    # Verb by index doesn't exist
+    client.send(
+        ';o:set_verb_code(30, "print(9000)"):unwrap()',
+    )
+    client.expect_exact(f"E_VERBNF ({o} has no verb with index 30)")
 
 
 def test_create(login: Login) -> None:
@@ -131,6 +173,42 @@ def test_set_property(login: Login) -> None:
     # Try to set name to wrong type
     client.send(";player.name = 3")
     client.expect_exact("Tried to assign value of wrong type")
+
+
+def test_set_into_list(login: Login) -> None:
+    client = login()
+    o = client.lua_create("S.Root", "o")
+
+    # Create a new list with some default elements
+    client.send(";o.l = {1, 'foo'}")
+    client.assert_lua_deepequal("o.l._inner", "{1, 'foo'}")
+
+    # Overwrite an existing element
+    client.send(";o.l[1] = nil")
+    client.assert_lua_deepequal("o.l._inner", "{nil, 'foo'}")
+
+    # Append in Lua-land inserts into the first `nil` location
+    # Also: UUID gets expanded into object
+    client.send(";table.insert(o.l, o)")
+    client.assert_lua_equals("o.l[1]", "o")
+
+    # Append to the end
+    client.send(";table.insert(o.l, 1212)")
+    client.assert_lua_deepequal("o.l._inner", "{'%s', 'foo', 1212}" % (o,))
+
+    # Test removing items from the list
+    client.send(";o.l = {1, 2, 3, 4, 5}", ";table.remove(o.l)")
+    client.assert_lua_deepequal("o.l._inner", "{1, 2, 3, 4}")
+    client.send(";table.remove(o.l, 2)")
+    client.assert_lua_deepequal("o.l._inner", "{1, 3, 4}")
+
+    # Out of bounds, nested for good measure
+    client.send(";o.l = {1, 2, {3, 4}}", ";o.l[3][4] = 'foo'")
+    client.expect_exact(f"E_RANGE (#{o}.l[3] == 2 (index out of bounds: 4))")
+
+    # TODO missing property
+    # TODO not a list
+    # TODO index list with string
 
 
 def test_add_verb(login: Login) -> None:
