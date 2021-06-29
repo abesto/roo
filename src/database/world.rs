@@ -31,6 +31,18 @@ macro_rules! load_roo_modules {
     }
 }
 
+macro_rules! load_verbs {
+    ($lua:ident, $(($obj:literal, [$($verb:literal),*])),*) => {
+        $($(
+
+            let module_code = include_str!(concat!("../lua/core/", $obj, "/", $verb, ".lua"));
+            let code = format!("{}:set_verb_code('{}', [[\n{}\n]]):unwrap()", $obj, $verb, module_code);
+            let module = concat!("load_verbs:", $obj, ":", $verb);
+            $lua.load(&code).set_name(module).unwrap().exec().unwrap();
+        )*)*
+    }
+}
+
 pub struct World {
     db: Arc<RwLock<Database>>,
     system_uuid: Uuid,
@@ -118,6 +130,14 @@ impl World {
         load_roo_modules!(lua, "init", "result", "moo", "proxies");
         if self.needs_minimal_core {
             load_roo_modules!(lua, "core");
+            load_verbs!(
+                lua,
+                ("system", ["do_login_command"]),
+                (
+                    "S.code_utils",
+                    ["short_prep", "full_prep", "toobj", "parse_verbref"]
+                )
+            );
             self.needs_minimal_core = false;
         }
         load_roo_modules!(lua, "webclient", "final");

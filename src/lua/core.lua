@@ -5,81 +5,14 @@
     S.minimal_core_loaded = true
 
     system:add_verb({system.uuid, "", {"do_login_command"}}, {}):unwrap()
-    system:set_verb_code("do_login_command", [=[
-        local command = assert_string(1, args[1])
-        if command ~= "connect" then
-            player:notify('Only the "connect" command is currently supported during login')
-            return nil
-        end
-
-        local name = assert_string(2, args[2])
-
-        for i, candidate in ipairs(players()) do
-            if candidate.name == name then
-                player:notify("Welcome back, %s" % {name})
-                return candidate.uuid
-            end
-        end
-
-        player:notify("Welcome, %s" % {name}):unwrap()
-        local new = create(S.Player, S.nothing):unwrap()
-        new:set_player_flag(true):unwrap()
-        new.owner = new
-        new:move(S.starting_room):unwrap()
-        new.name = name
-
-        return new.uuid
-        ]=]):unwrap()
 
     --- S.code_utils
     S.code_utils = create(S.nothing, S.nothing):unwrap()
 
-    -- TODO impl
     S.code_utils:add_verb({system.uuid, "rx", {"short_prep"}}, {"any"}):unwrap()
-    S.code_utils:set_verb_code("short_prep", [[
-        return args[1]
-    ]]):unwrap()
-
-    -- TODO impl
     S.code_utils:add_verb({system.uuid, "rx", {"full_prep"}}, {"any"}):unwrap()
-    S.code_utils:set_verb_code("full_prep", [[
-        return nil
-    ]]):unwrap()
-
     S.code_utils:add_verb({system.uuid, "rx", {"toobj"}}, {"any"}):unwrap()
-    S.code_utils:set_verb_code("toobj", [[
-        -- TODO this may need some extra logic
-        return toobj(args[1]):unwrap_unsafe()
-    ]]):unwrap()
-
     S.code_utils:add_verb({system.uuid, "r", {"parse_verbref"}}, {"this", "none", "this"}):unwrap()
-    S.code_utils:set_verb_code("parse_verbref", [[
-        -- S.code_utils:parse_verbref(string)
-        -- Parses string as a MOO-code verb reference, returning {object, verb-name-string} for a successful parse and false otherwise.  It always returns the right object-string to pass to, for example, this-room:match_object().
-        local s = args[1]
-        local colon = string.find(s, ":", 1, true)
-        if colon then
-            local object = string.sub(s, 1, colon - 1)
-            local verbname = string.sub(s, colon + 1)
-            if not (object and verbname) then
-                return 0
-            end
-            if string.sub(object, 0, 2) == "S." then
-                local pname = string.sub(object, 3)
-                local p = S[pname]
-                if not is_type(p, ObjectProxy) then
-                    return 0
-                end
-                object = p.uuid
-            end
-            if object == "S" then
-                object = S.uuid
-            end
-            return {object, verbname}
-        else
-            return 0
-        end
-    ]]):unwrap()
 
     S.code_utils:add_verb({system.uuid, "r", {"parse_argspec"}}, {"any"}):unwrap()
     S.code_utils:set_verb_code("parse_argspec", [[
