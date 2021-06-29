@@ -5,7 +5,7 @@ authors = ["Zoltán Nagy <abesto@abesto.net>"]
 edition = "2018"
 
 [dependencies]
-mlua = { version = "0.5.4", features = ["lua54", "vendored", "serde", "send", "async"] }
+mlua = { version = "0.6.1", features = ["lua54", "vendored", "serde", "send", "async", "macros"] }
 uuid = { version = "0.8.2", features = ["v4", "serde"] }
 tokio = { version = "1.5.0", features = ["full"] }
 glob = "0.3.0"

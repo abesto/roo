@@ -5,6 +5,7 @@ strict = require 'pl.strict'
 strict.make_all_strict(_G)
 pl.utils.import 'pl.func' -- argument placeholders (ie. :map(_1.name))
 pl.utils.on_error("error")
+require'pl.stringx'.import()
 
 -- Selective imports from Lua stdlib into global namespace
 unpack = table.unpack
