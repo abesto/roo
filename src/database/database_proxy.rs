@@ -54,8 +54,13 @@ impl DatabaseProxy {
         self.get_object_by_uuid_old(db, &Self::parse_uuid_old(uuid)?)
     }
 
-    fn get_object<'a>(&self, db: &'a Database, uuid: &str) -> Result<&'a Object> {
-        db.get(&Self::parse_uuid(uuid)?)
+    fn get_object<'a>(
+        &self,
+        db: &'a Database,
+        uuid: &str,
+        enotfound: ErrorCode,
+    ) -> Result<&'a Object> {
+        db.get(&Self::parse_uuid(uuid)?, enotfound)
     }
 
     #[deprecated]
@@ -109,17 +114,6 @@ impl DatabaseProxy {
         }
     }
 
-    #[deprecated]
-    fn get_object_mut_old<'a>(
-        &self,
-        lock: &'a mut RwLockWriteGuard<Database>,
-        uuid: &str,
-    ) -> LuaResult<&'a mut Object> {
-        #[allow(deprecated)]
-        lock.get_mut_old(&Self::parse_uuid_old(&uuid)?)
-            .map_err(LuaError::external)
-    }
-
     fn get_object_mut<'a>(
         &self,
         lock: &'a mut RwLockWriteGuard<Database>,
@@ -161,8 +155,8 @@ impl LuaUserData for DatabaseProxy {
             let (parent, owner) = {
                 // Verify parent, owner exist
                 let lock = this.db.read().unwrap();
-                let parent = unwrap!(lua, this.get_object(&lock, &parent));
-                let owner = unwrap!(lua, this.get_object(&lock, &owner));
+                let parent = unwrap!(lua, this.get_object(&lock, &parent, E_PERM));
+                let owner = unwrap!(lua, this.get_object(&lock, &owner, E_PERM));
                 // TODO verify valid, fertile
                 (*parent.uuid(), *owner.uuid())
             };
@@ -225,7 +219,7 @@ impl LuaUserData for DatabaseProxy {
             |lua, this, (uuid, info, args): (String, VerbInfo, VerbArgs)| {
                 let mut lock = this.db.write().unwrap();
                 let verb = Verb::new(info, args);
-                unwrap!(lua, lock.get(verb.owner())); // To explode if the owner doesn't exist
+                unwrap!(lua, lock.get(verb.owner(), E_PERM)); // To explode if the owner doesn't exist
                 let object = unwrap!(lua, this.get_object_mut(&mut lock, &uuid, E_PERM));
                 to_lua_result(lua, object.add_verb(verb).map(|_| LuaValue::Nil))
             },
@@ -296,13 +290,17 @@ impl LuaUserData for DatabaseProxy {
 
         methods.add_method("valid", |_lua, this, (uuid,): (String,)| {
             let lock = this.db.read().unwrap();
-            Ok(this.get_object_old(&lock, &uuid).is_ok())
+            let object = this.get_object(&lock, &uuid, E_PERM);
+            if object.is_err() {
+                return Ok(1);
+            }
+            Ok(0)
         });
 
-        methods.add_method("verbs", |_lua, this, (uuid,): (String,)| {
+        methods.add_method("verbs", |lua, this, (uuid,): (String,)| {
             let lock = this.db.read().unwrap();
-            let object = this.get_object_old(&lock, &uuid)?;
-            Ok(object.verb_names())
+            let object = unwrap!(lua, this.get_object(&lock, &uuid, E_INVARG));
+            ok(lua, object.verb_names())
         });
 
         methods.add_method(

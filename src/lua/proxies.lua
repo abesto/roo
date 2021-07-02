@@ -99,6 +99,8 @@ ObjectProxy.verb_args = verb_args
 ObjectProxy.is_player = is_player
 ObjectProxy.set_player_flag = set_player_flag
 ObjectProxy.recycle = recycle
+ObjectProxy.valid = valid
+ObjectProxy.verbs = verbs
 
 -- Roo-specific extensions
 

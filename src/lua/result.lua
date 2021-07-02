@@ -107,6 +107,12 @@ function Ok:and_then_method(obj, f, ...)
 end
 
 function Err:and_then(f)
+    assert_class_of(0, self, Err)
+    return self
+end
+
+function Err:and_then_method(obj, f, ...)
+    assert_class_of(0, self, Err)
     return self
 end
 

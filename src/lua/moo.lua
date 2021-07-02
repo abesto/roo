@@ -122,12 +122,12 @@ end
 ---@return boolean
 function valid(object)
     -- TODO full impl
-    return touuid(object):map_method(db, 'valid'):unwrap_or(false)
+    return db:valid(touuid(object):unwrap())
 end
 
 ---@return Result<List<string>, ?>
 function verbs(object)
-    return touuid(object):map_method(db, 'verbs'):map(List)
+    return touuid(object):and_then_method(db, 'verbs'):map(List)
 end
 
 ---@return Result<table, ?>

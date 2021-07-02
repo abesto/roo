@@ -95,10 +95,10 @@ impl Database {
             .ok_or_else(|| format!("{} not found", uuid))
     }
 
-    pub fn get(&self, uuid: &Uuid) -> Result<&Object, Error> {
+    pub fn get(&self, uuid: &Uuid, enotfound: ErrorCode) -> Result<&Object, Error> {
         self.objects
             .get(uuid)
-            .ok_or_else(|| E_PERM.make(format!("{} not found", uuid)))
+            .ok_or_else(|| enotfound.make(format!("{} not found", uuid)))
     }
 
     #[deprecated]
@@ -154,7 +154,7 @@ impl Database {
 
     pub fn move_object(&mut self, what_uuid: &Uuid, to_uuid: &Uuid) -> Result<(), Error> {
         // Remove from contents of the old location, if any
-        if let Some(old_location) = *self.get(what_uuid)?.location() {
+        if let Some(old_location) = *self.get(what_uuid, E_PERM)?.location() {
             println!("remove_content({}, {})", old_location, what_uuid);
             self.get_mut(&old_location, E_PERM)?
                 .remove_content(what_uuid);
@@ -191,7 +191,7 @@ impl Database {
     pub fn chparent(&mut self, uuid_child: &Uuid, uuid_parent: &Uuid) -> Result<(), Error> {
         // Remove from old parent, if any
         {
-            let opt_uuid_old_parent = *self.get(uuid_child)?.parent();
+            let opt_uuid_old_parent = *self.get(uuid_child, E_PERM)?.parent();
             if let Some(uuid_old_parent) = opt_uuid_old_parent {
                 if let Some(old_parent) = self.objects.get_mut(&uuid_old_parent) {
                     old_parent.remove_child(uuid_child);
@@ -215,7 +215,7 @@ impl Database {
     }
 
     pub fn get_property(&self, uuid: &Uuid, key: &str) -> Result<Option<&PropertyValue>, Error> {
-        let object = self.get(uuid)?;
+        let object = self.get(uuid, E_PERM)?;
 
         if let Some(value) = object.get_property(key) {
             Ok(Some(value))
@@ -227,7 +227,7 @@ impl Database {
     }
 
     pub fn has_verb_with_name(&self, uuid: &Uuid, name: &str) -> Result<bool, Error> {
-        let object = self.get(uuid)?;
+        let object = self.get(uuid, E_PERM)?;
 
         if object.has_verb_with_name(name) {
             Ok(true)
@@ -239,7 +239,7 @@ impl Database {
     }
 
     pub fn resolve_verb(&self, uuid: &Uuid, name: &str) -> Result<Option<&Verb>, Error> {
-        let object = self.get(uuid)?;
+        let object = self.get(uuid, E_PERM)?;
 
         if let Some(verb) = object.resolve_verb(name) {
             Ok(Some(verb))

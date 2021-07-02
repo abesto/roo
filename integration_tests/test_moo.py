@@ -183,18 +183,17 @@ def test_set_into_list(login: Login) -> None:
     client.send(";o.l = {1, 'foo'}")
     client.assert_lua_deepequal("o.l._inner", "{1, 'foo'}")
 
-    # Overwrite an existing element
+    # Overwrite an existing element with nil
     client.send(";o.l[1] = nil")
     client.assert_lua_deepequal("o.l._inner", "{nil, 'foo'}")
 
-    # Append in Lua-land inserts into the first `nil` location
-    # Also: UUID gets expanded into object
+    # UUID gets expanded into object
     client.send(";table.insert(o.l, o)")
-    client.assert_lua_equals("o.l[1]", "o")
+    client.assert_lua_equals("o.l[3]", "o")
 
     # Append to the end
     client.send(";table.insert(o.l, 1212)")
-    client.assert_lua_deepequal("o.l._inner", "{'%s', 'foo', 1212}" % (o,))
+    client.assert_lua_deepequal("o.l._inner", "{nil, 'foo', '%s', 1212}" % (o,))
 
     # Test removing items from the list
     client.send(";o.l = {1, 2, 3, 4, 5}", ";table.remove(o.l)")
@@ -238,3 +237,52 @@ def test_add_verb(login: Login) -> None:
     # Mildly invalid verb-info
     client.send(";o:add_verb({missing}, {}):unwrap()")
     client.expect_exact("verb-info table must have exactly three elements")
+
+
+def test_valid(login: Login) -> None:
+    client = login()
+
+    # Happy
+    client.assert_lua_equals("player:valid()", "0")
+    client.assert_lua_equals("valid(player)", "0")
+    client.assert_lua_equals("valid(player.uuid)", "0")
+
+    # Sad
+    client.send(
+        ";o = create(S.Root):unwrap()", ";uuid = o.uuid", ";o:recycle():unwrap()"
+    )
+    client.assert_lua_equals("o:valid()", "1")
+    client.assert_lua_equals("valid(o)", "1")
+    client.assert_lua_equals("valid(uuid)", "1")
+
+    # Wrong type
+    client.send(";valid(23)")
+    client.expect_exact("E_TYPE")
+
+    # Invalid UUID
+    client.send(";valid('totally-not-a-valid-uuid')")
+    client.expect_exact("E_INVARG")
+
+
+def test_verbs(login: Login) -> None:
+    client = login()
+
+    # Setup
+    client.send(";o = create(S.Root):unwrap()")
+    client.assert_lua_nil("o:add_verb({player, 'rx', {'testverb1'}}, {'any'}):unwrap()")
+    client.assert_lua_nil("o:add_verb({player, 'rx', {'testverb2'}}, {'any'}):unwrap()")
+
+    # Happy
+    client.assert_lua_deepequal("o:verbs():unwrap()", "{'testverb1', 'testverb2'}")
+    client.assert_lua_deepequal("verbs(o):unwrap()", "{'testverb1', 'testverb2'}")
+    client.assert_lua_deepequal("verbs(o.uuid):unwrap()", "{'testverb1', 'testverb2'}")
+
+    # Recycled object
+    client.send(";o:recycle():unwrap()")
+    client.assert_lua_equals("o:verbs():err().code", "'E_INVARG'")
+
+    # Not an object
+    client.assert_lua_equals("verbs('foobar'):err().code", "'E_INVARG'")
+
+    # Wrong type
+    client.assert_lua_equals("verbs(88):err().code", "'E_TYPE'")
