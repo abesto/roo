@@ -93,6 +93,10 @@ class Client(pexpect.fdpexpect.fdspawn):
         self.send(code)
         return self.read_uuid()
 
+    def get_uuid(self, obj: str) -> str:
+        self.send(f";{obj}.uuid")
+        return self.read_uuid()
+
     def expect_lua_boolean(self, expected: bool, msg: str = ""):
         idx = self.expect_exact(["Boolean(true)", "Boolean(false)"])
         if expected:

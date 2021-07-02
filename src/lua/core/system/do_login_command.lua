@@ -1,6 +1,6 @@
 local command = assert_string(1, args[1])
 if command ~= "connect" then
-    player:notify('Only the "connect" command is currently supported during login')
+    player:notify('Only the "connect" command is currently supported during login'):unwrap()
     return nil
 end
 
@@ -8,7 +8,7 @@ local name = assert_string(2, args[2])
 
 for i, candidate in ipairs(players()) do
     if candidate.name == name then
-        player:notify("Welcome back, %s" % {name})
+        player:notify("Welcome back, %s" % {name}):unwrap()
         return candidate.uuid
     end
 end

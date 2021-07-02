@@ -39,10 +39,10 @@ if not S.command_utils:object_match_failed(object, spec[1]) then
   if vnum ~= nil then
     code = this:fetch_verb_code(object, vnum)
   else
-    code = E_VERBNF
+    code = E_VERBNF("That object does not define that verb (with those args)")
   end
   if is_error(code) then
-    player:tell((code ~= E_VERBNF) and code or "That object does not define that verb", argspec and " with those args." or ".")
+    player:tell((code.code ~= "E_VERBNF") and code or "That object does not define that verb", argspec and " with those args." or ".")
     return code
   else
     return {object, argspec and {vname, table.unpack(argspec)} or vname, code}
