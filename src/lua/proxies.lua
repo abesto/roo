@@ -24,8 +24,10 @@ end
 ObjectProxy = {
     _name = "ObjectProxy"
 }
-ObjectProxy.class_of = bind(is_type, _1, ObjectProxy)
-assert_object = bind(assert_class_of, _1, _2, ObjectProxy, 4)
+function ObjectProxy:class_of(o)
+    return is_type(o, self)
+end
+assert_object = bind(assert_class_of, _1, _2, ObjectProxy, _3, 4)
 
 function ObjectProxy.__index(t, k)
     -- First check if this is a normal field on ObjectProxy

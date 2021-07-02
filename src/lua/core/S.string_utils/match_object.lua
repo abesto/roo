@@ -7,8 +7,8 @@ if who == nil then
     who = player
 end
 pl.utils.assert_string(1, string)
-assert_class_of(2, here, ObjectProxy)
-assert_class_of(3, who, ObjectProxy)
+assert_object(2, here)
+assert_object(3, who)
 
 local object = this:literal_object(string)
 if S.failed_match ~= object then

@@ -17,5 +17,5 @@ end
 this:local_instruction(name, upload)
 -- :dump_lines() takes care of the final `.' ...
 for i, line in ipairs(S.command_utils:dump_lines(text)) do
-  notify(player, line)
+  notify(player, line):unwrap()
 end

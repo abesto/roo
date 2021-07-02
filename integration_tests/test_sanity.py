@@ -68,3 +68,15 @@ def test_unchecked_result(login: Login) -> None:
         "Value of Result was never checked. Created at: stack traceback:"
     )
     client.expect_exact('[string ";-command"]:1: in main chunk')
+
+
+def test_assert_object(login: Login) -> None:
+    client = login()
+
+    client.assert_lua_deepequal("assert_object(1, player)", "player")
+
+    client.send(";assert_object(2, 42)")
+    client.expect_exact("argument 2 expected a 'table', got a 'number'")
+
+    client.send(";assert_object(3, {})")
+    client.expect("runtime error: argument 3: .* Expected a 'ObjectProxy'")

@@ -31,10 +31,17 @@ assert_arg = pl.utils.assert_arg
 function_arg = pl.utils.function_arg
 
 -- Extensions to pl for commonly used patterns
-function assert_class_of(n, x, C, msg)
+function assert_class_of(n, x, C, msg, level)
+    local msg_suffix = "Expected a '%s'" % {C._name or C}
+    if msg then
+        msg = "%s: %s" % {msg, msg_suffix}
+    else
+        msg = msg_suffix
+    end
+
     return pl.utils.assert_arg(n, x, 'table', function(o)
         return C:class_of(o)
-    end, msg, 3)
+    end, msg, level or 3)
 end
 
 function pl.List:without(item)

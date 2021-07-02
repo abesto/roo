@@ -111,6 +111,7 @@ impl Object {
     props!(
         (uuid, Uuid, Uuid, Uuid::new_v4()),
         (name, String, String, ""),
+        (aliases, List, Vec<PropertyValue>, vec![]),
         (location, UuidOpt, Option<Uuid>, None),
         (contents, Uuids, HashSet<Uuid>, HashSet::new()),
         (parent, UuidOpt, Option<Uuid>, None),
