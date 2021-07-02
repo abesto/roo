@@ -303,12 +303,14 @@ fn execute_verb(
             player = toobj({:?}):unwrap()
             dobjstr = {:?}
             argstr = {:?}
+            verb = {:?}
             local this = toobj({:?}):unwrap()
             this[{:?}]({})
         ",
             player_uuid.to_string(),
             dobjstr,
             argstr,
+            command.verb(),
             this_uuid,
             verb_name,
             this_args.join(", ")

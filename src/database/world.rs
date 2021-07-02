@@ -1,6 +1,10 @@
 // TODO maybe switch to parking_lot::Mutex
-use std::sync::{Arc, RwLock};
+use std::{
+    path::Path,
+    sync::{Arc, RwLock},
+};
 
+use include_dir::{include_dir, Dir};
 use mlua::prelude::*;
 use uuid::Uuid;
 
@@ -8,6 +12,8 @@ use crate::{
     database::{Database, DatabaseProxy},
     saveload::SaveloadConfig,
 };
+
+const VERBS: Dir = include_dir!("src/lua/core");
 
 macro_rules! load_pl_modules {
     ($lua:ident, $($m:literal),*) => {
@@ -127,25 +133,37 @@ impl World {
             "url"
         );
 
-        load_roo_modules!(lua, "init", "result", "moo", "proxies");
+        load_roo_modules!(lua, "init", "result", "moo", "proxies", "final");
         if self.needs_minimal_core {
-            load_roo_modules!(lua, "core");
-            load_verbs!(
-                lua,
-                ("system", ["do_login_command"]),
-                (
-                    "S.code_utils",
-                    ["short_prep", "full_prep", "toobj", "parse_verbref"]
-                )
-            );
+            load_roo_modules!(lua, "webclient", "core");
+            Self::load_verbs(&lua);
             self.needs_minimal_core = false;
         }
-        load_roo_modules!(lua, "webclient", "final");
 
         lua
     }
 
     pub fn db(&self) -> Arc<RwLock<Database>> {
         self.db.clone()
+    }
+
+    fn load_verbs(lua: &Lua) {
+        for dir in VERBS.dirs() {
+            let obj = dir.path().to_str().unwrap();
+            for file in dir.files() {
+                let verb = file.path().file_stem().unwrap().to_str().unwrap();
+                let module_code = file.contents_utf8().unwrap();
+                let code = format!(
+                    "{}:set_verb_code('{}', [[\n{}\n]]):unwrap()",
+                    obj, verb, module_code
+                );
+                let module_name = format!("load_verbs/{}::{}", obj, verb);
+                lua.load(&code)
+                    .set_name(&module_name)
+                    .unwrap()
+                    .exec()
+                    .unwrap();
+            }
+        }
     }
 }
