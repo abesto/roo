@@ -13,9 +13,10 @@ use tokio::{
 
 use crate::{api::ObjectProxy, error::Error};
 
+#[macro_use]
+mod error;
 mod api;
 mod database;
-mod error;
 
 #[tokio::main]
 async fn main() -> Result<()> {

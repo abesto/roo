@@ -112,7 +112,7 @@ def connect(server):
         client = Client(
             t,
             encoding="utf-8",
-            timeout=3,
+            timeout=1,
         )
         client.logfile_send = Prefixed(">> ")
         client.logfile_read = Prefixed("<< ")

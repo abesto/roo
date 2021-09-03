@@ -5,6 +5,7 @@ use rhai::plugin::*;
 pub enum Error {
     E_INVIND,
     E_PROPNF,
+    E_INVARG,
 }
 
 impl std::fmt::Display for Error {
@@ -13,7 +14,16 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl From<Error> for Box<EvalAltResult> {
+pub type RhaiError = Box<EvalAltResult>;
+pub type RhaiResult<T> = Result<T, RhaiError>;
+
+macro_rules! bail {
+    ($e:expr) => {
+        return Err($e.into())
+    };
+}
+
+impl From<Error> for RhaiError {
     fn from(e: Error) -> Self {
         Box::new(EvalAltResult::ErrorRuntime(
             Dynamic::from(e).into_shared(),
