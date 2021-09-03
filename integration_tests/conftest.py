@@ -71,8 +71,9 @@ class Client(pexpect.fdpexpect.fdspawn):
         self.heartbeat_sequence += 1
 
     def expect_lines_exact(self, *lines: str) -> None:
+        #print(f"pexpect] Expect: {lines}")
         for line in lines:
-            self.expect(re.compile(f"^{re.escape(line)}$"))
+            self.expect(re.compile(f"^{re.escape(line)}\r\n"))
 
     def send(self, *lines: str) -> None:
         for line in lines:
@@ -86,8 +87,12 @@ class Client(pexpect.fdpexpect.fdspawn):
                 # self.server.expect_exact(f"eval-done: {chunk_name}")
 
     def cram(self, spec: str) -> None:
+        lines = textwrap.dedent(spec).splitlines()
+        while lines and not lines[0]:
+            lines.pop(0)
+
         expect_lines = []
-        for line in textwrap.dedent(spec).splitlines():
+        for line in lines:
             if line.startswith("$"):
                 self.expect_lines_exact(*expect_lines)
                 expect_lines = []

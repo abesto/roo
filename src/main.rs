@@ -1,26 +1,29 @@
 use anyhow::Result;
+use database::{Database, SharedDatabase};
 use tokio::{self, io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpListener, TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
 use rhai::{Engine, Dynamic, Scope};
 use async_channel::{Sender, Receiver};
 
 mod api;
+mod database;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = listen().await?;
+    let database = Database::default().share();
 
     loop {
         let (socket, _) = listener.accept().await?;
-        handle_connection(socket);
+        handle_connection(socket, database.clone());
     }
 }
 
-fn handle_connection(socket: TcpStream) {
+fn handle_connection(socket: TcpStream, database: SharedDatabase) {
     tokio::spawn(async move {
         let (read, write) = socket.into_split();
 
         let mut engine = Engine::new();
-        api::register_api(&mut engine);
+        api::register_api(&mut engine, database);
 
         let (line_tx, line_rx) = async_channel::unbounded::<String>();
         spawn_read_task(read, line_tx);
@@ -64,12 +67,12 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
                 let maybe_msg = match result {
                     Ok(x) => {
                         if !x.is::<()>() {
-                            Some(format!("{}\n", x))
+                            Some(format!("{}\r\n", x))
                         } else {
                             None
                         }
                     }
-                    Err(e) => Some(format!("{}\n", e))
+                    Err(e) => Some(format!("{}\r\n", e))
                 };
 
                 if let Some(msg) = maybe_msg {

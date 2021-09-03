@@ -36,11 +36,28 @@ def test_rhai_variable_isolation(connect: Connect) -> None:
 
 
 def test_rhai_echo(connect: Connect) -> None:
-    c = connect()
-
-    c.cram(
+    connect().cram(
         """
     $ ;echo("foo bar")
     foo bar
     """
+    )
+
+def test_highest_object_number(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;create()
+        1
+        $ ;create()
+        2
+        $ ;get_highest_object_number()
+        2
+        """
+    )
+
+    connect().cram(
+        """
+        $ ;get_highest_object_number()
+        2
+        """
     )
