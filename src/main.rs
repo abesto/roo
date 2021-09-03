@@ -1,11 +1,21 @@
 use anyhow::Result;
+use async_channel::{Receiver, Sender};
 use database::{Database, SharedDatabase};
-use tokio::{self, io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpListener, TcpStream, tcp::{OwnedReadHalf, OwnedWriteHalf}}};
-use rhai::{Engine, Dynamic, Scope};
-use async_channel::{Sender, Receiver};
+use rhai::{Dynamic, Engine, EvalAltResult, Scope};
+use tokio::{
+    self,
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+    net::{
+        tcp::{OwnedReadHalf, OwnedWriteHalf},
+        TcpListener, TcpStream,
+    },
+};
+
+use crate::{api::ObjectProxy, error::Error};
 
 mod api;
 mod database;
+mod error;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -66,19 +76,31 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
                 let result = engine.eval_with_scope::<Dynamic>(&mut scope, &stripped);
                 let maybe_msg = match result {
                     Ok(x) => {
-                        if !x.is::<()>() {
+                        // TODO shouldn't need to check for ObjectProxy manually here?
+                        if x.is::<ObjectProxy>() {
+                            Some(format!("{}\r\n", x.cast::<ObjectProxy>()))
+                        } else if !x.is::<()>() {
                             Some(format!("{}\r\n", x))
                         } else {
                             None
                         }
                     }
-                    Err(e) => Some(format!("{}\r\n", e))
+                    Err(e) => match e.as_ref() {
+                        EvalAltResult::ErrorRuntime(d, _) => {
+                            if d.is::<Error>() {
+                                Some(format!("{}\r\n", d.clone().cast::<Error>()))
+                            } else {
+                                Some(format!("{}\r\n", d))
+                            }
+                        },
+                        _ => Some(format!("{}\r\n", e))
+                    }
                 };
 
                 if let Some(msg) = maybe_msg {
                     write.write_all(msg.as_bytes()).await.unwrap();
                 }
             }
-        } 
+        }
     });
 }
