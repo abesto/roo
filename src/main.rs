@@ -3,6 +3,8 @@ use tokio::{self, io::{AsyncBufReadExt, AsyncWriteExt, BufReader}, net::{TcpList
 use rhai::{Engine, Dynamic, Scope};
 use async_channel::{Sender, Receiver};
 
+mod api;
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = listen().await?;
@@ -17,7 +19,9 @@ fn handle_connection(socket: TcpStream) {
     tokio::spawn(async move {
         let (read, write) = socket.into_split();
 
-        let engine = Engine::new();
+        let mut engine = Engine::new();
+        api::register_api(&mut engine);
+
         let (line_tx, line_rx) = async_channel::unbounded::<String>();
         spawn_read_task(read, line_tx);
         spawn_processing_task(engine, write, line_rx);
@@ -60,12 +64,12 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
                 let maybe_msg = match result {
                     Ok(x) => {
                         if !x.is::<()>() {
-                            Some(format!("{:?}\n", x))
+                            Some(format!("{}\n", x))
                         } else {
                             None
                         }
                     }
-                    Err(e) => Some(format!("{:?}\n", e))
+                    Err(e) => Some(format!("{}\n", e))
                 };
 
                 if let Some(msg) = maybe_msg {

@@ -6,6 +6,8 @@ import os
 import telnetlib
 from typing import Any, IO, Optional, Protocol, Generator
 import contextlib
+import textwrap
+import re
 
 import pexpect
 import pexpect.fdpexpect
@@ -45,8 +47,8 @@ def build_server() -> None:
 @pytest.fixture
 def server(build_server) -> pexpect.spawn:
     server = pexpect.spawn(
-        #"./target/debug/roo testing",
-        "../target/debug/roo",
+        # "./target/debug/roo testing",
+        "./target/debug/roo",
         encoding="utf-8",
     )
     server.logfile_read = Prefixed("server] ")
@@ -70,7 +72,7 @@ class Client(pexpect.fdpexpect.fdspawn):
 
     def expect_lines_exact(self, *lines: str) -> None:
         for line in lines:
-            self.expect_exact(line)
+            self.expect(re.compile(f"^{re.escape(line)}$"))
 
     def send(self, *lines: str) -> None:
         for line in lines:
@@ -79,9 +81,20 @@ class Client(pexpect.fdpexpect.fdspawn):
             if self.interleave_server_logs:
                 # TODO: Wait for the server to finish executing the command.
                 pass
-                #self.server.expect(r"eval-start: (\S*)")
-                #chunk_name = self.server.match[1]
-                #self.server.expect_exact(f"eval-done: {chunk_name}")
+                # self.server.expect(r"eval-start: (\S*)")
+                # chunk_name = self.server.match[1]
+                # self.server.expect_exact(f"eval-done: {chunk_name}")
+
+    def cram(self, spec: str) -> None:
+        expect_lines = []
+        for line in textwrap.dedent(spec).splitlines():
+            if line.startswith("$"):
+                self.expect_lines_exact(*expect_lines)
+                expect_lines = []
+                self.send(line.lstrip("$ "))
+            else:
+                expect_lines.append(line)
+        self.expect_lines_exact(*expect_lines)
 
 
 @pytest.fixture()
