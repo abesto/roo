@@ -1,12 +1,12 @@
 use parking_lot::RwLock;
-use rhai::Dynamic;
+use rhai::{Array, Dynamic};
 use std::{collections::HashMap, sync::Arc};
 
-use crate::error::{Error, RhaiResult};
+use crate::error::{Error::*, RhaiResult};
 
 pub type ID = rhai::INT;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Database {
     highest_object_number: ID,
     objects: HashMap<ID, Object>,
@@ -15,14 +15,23 @@ pub struct Database {
 pub type SharedDatabase = Arc<RwLock<Database>>;
 
 impl Database {
+    pub fn new() -> Self {
+        let mut objects = HashMap::new();
+        objects.insert(0, Object::new(0, -1, -1));
+        Self {
+            highest_object_number: 0,
+            objects,
+        }
+    }
     pub fn share(self) -> SharedDatabase {
         Arc::new(RwLock::new(self))
     }
 
-    pub fn create(&mut self) -> ID {
+    pub fn create(&mut self, parent: ID, owner: ID) -> ID {
+        // TODO verify owner
         let id = self.highest_object_number + 1;
         self.highest_object_number = id;
-        self.objects.insert(id, Object::new(id));
+        self.objects.insert(id, Object::new(id, parent, owner));
         id
     }
 
@@ -35,17 +44,17 @@ impl Database {
     }
 
     pub fn get_property_dynamic(&self, id: ID, property: &str) -> RhaiResult<Dynamic> {
-        match self.objects.get(&id) {
-            None => bail!(Error::E_INVIND),
-            Some(o) => {
-                if property == "name" {
-                    Ok(o.name.clone().into())
-                } else {
-                    match o.properties.get(property) {
-                        None => bail!(Error::E_PROPNF),
-                        Some(p) => Ok(p.value.clone())
-                    }
-                }
+        if !self.valid(id) {
+            bail!(E_INVIND);
+        }
+        let o = &self.objects[&id];
+
+        if property == "name" {
+            Ok(o.name.clone().into())
+        } else {
+            match o.properties.get(property) {
+                None => bail!(E_PROPNF),
+                Some(p) => Ok(p.value.clone()),
             }
         }
     }
@@ -56,16 +65,15 @@ impl Database {
         property: &str,
         value: Dynamic,
     ) -> RhaiResult<()> {
-        match self.objects.get_mut(&id) {
-            None => bail!(Error::E_INVIND),
-            Some(o) => {
-                if property == "name" {
-                    o.name = value.cast();
-                    Ok(())
-                } else {
-                    bail!(Error::E_PROPNF)
-                }
-            }
+        if !self.valid(id) {
+            bail!(E_INVIND);
+        }
+        let o = self.objects.get_mut(&id).unwrap();
+        if property == "name" {
+            o.name = value.cast();
+            Ok(())
+        } else {
+            bail!(E_PROPNF)
         }
     }
 
@@ -76,19 +84,27 @@ impl Database {
         value: Dynamic,
         info: PropertyInfo,
     ) -> RhaiResult<()> {
-        if !self.objects.contains_key(&info.owner) {
-            bail!(Error::E_INVARG);
+        if !self.valid(info.owner) || !self.valid(id) {
+            bail!(E_INVARG);
         }
-        match self.objects.get_mut(&id) {
-            None => bail!(Error::E_INVARG),
-            Some(o) => {
-                // TODO needs to check parent hierarchy
-                if o.properties.contains_key(name) {
-                    bail!(Error::E_INVARG)
-                }
-                o.properties.insert(name.to_string(), Property::new(info, value));
-                Ok(())
-            }
+        let o = self.objects.get_mut(&id).unwrap();
+
+        // TODO needs to check parent hierarchy
+        if o.properties.contains_key(name) {
+            bail!(E_INVARG)
+        }
+        o.properties
+            .insert(name.to_string(), Property::new(info, value));
+        Ok(())
+    }
+
+    pub fn property_info(&self, id: ID, name: &str) -> RhaiResult<&PropertyInfo> {
+        if !self.valid(id) {
+            bail!(E_INVARG);
+        }
+        match self.objects[&id].properties.get(name) {
+            None => bail!(E_PROPNF),
+            Some(p) => Ok(&p.info),
         }
     }
 }
@@ -96,25 +112,64 @@ impl Database {
 #[derive(Debug, Clone)]
 pub struct Object {
     id: ID,
+
+    // Fundamental Object Attributes
+    // https://www.sindome.org/moo-manual.html#fundamental-object-attributes
+    is_player: bool,
+    parent: ID,
+    children: Vec<ID>,
+
+    // Properties on Objects
+    // https://www.sindome.org/moo-manual.html#properties-on-objects
+    /// the usual name for this object
     name: String,
-    properties: HashMap<String, Property>
+    /// the player who controls access to the object
+    owner: ID,
+    /// where the object is in virtual reality
+    location: ID,
+    /// the inverse of `location`
+    contents: Vec<ID>,
+    /// does the object have programmer rights?
+    programmer: bool,
+    /// does the object have wizard rights?
+    wizard: bool,
+    /// is the object publicly readable?
+    r: bool,
+    /// is the object publicly writable?
+    w: bool,
+    /// is the object fertile?
+    f: bool,
+
+    /// storage for non-built-in properties
+    properties: HashMap<String, Property>,
 }
 
 impl Object {
-    pub fn new(id: ID) -> Self {
+    pub fn new(id: ID, parent: ID, owner: ID) -> Self {
         Self {
             id,
+            is_player: false,
+            parent,
+            children: Vec::new(),
             name: String::new(),
-            properties: HashMap::default()
+            owner,
+            location: -1,
+            contents: Vec::new(),
+            programmer: false,
+            wizard: false,
+            r: false,
+            w: false,
+            f: false,
+            properties: HashMap::new(),
         }
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct PropertyPerms {
-    r: bool,
-    w: bool,
-    c: bool,
+    pub r: bool,
+    pub w: bool,
+    pub c: bool,
 }
 
 impl PropertyPerms {
@@ -125,25 +180,29 @@ impl PropertyPerms {
 
 #[derive(Debug, Clone)]
 pub struct PropertyInfo {
-    owner: ID,
-    perms: PropertyPerms,
-    new_name: Option<String>,
+    pub owner: ID,
+    pub perms: PropertyPerms,
+    pub new_name: Option<String>,
 }
 
 impl PropertyInfo {
     pub fn new(owner: ID, perms: PropertyPerms, new_name: Option<String>) -> Self {
-        Self { owner, perms, new_name }
+        Self {
+            owner,
+            perms,
+            new_name,
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Property {
     info: PropertyInfo,
-    value: Dynamic
+    value: Dynamic,
 }
 
 impl Property {
     fn new(info: PropertyInfo, value: Dynamic) -> Self {
-        Self { info, value}
+        Self { info, value }
     }
 }

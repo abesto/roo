@@ -21,7 +21,7 @@ mod database;
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = listen().await?;
-    let database = Database::default().share();
+    let database = Database::new().share();
 
     loop {
         let (socket, _) = listener.accept().await?;
@@ -66,7 +66,6 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
             let line = match line_rx.recv().await {
                 Ok(l) => l,
                 Err(e) => {
-                    // TODO err logging
                     println!("{}", e);
                     break;
                 }
@@ -74,14 +73,12 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
 
             println!("< {}", line);
             if let Some(stripped) = line.strip_prefix(';') {
+                // TODO this will need to move into the core, and we'll just translate to eval() here
                 let result = engine.eval_with_scope::<Dynamic>(&mut scope, &stripped);
                 let maybe_msg = match result {
                     Ok(x) => {
-                        // TODO shouldn't need to check for ObjectProxy manually here?
-                        if x.is::<ObjectProxy>() {
-                            Some(format!("{}\r\n", x.cast::<ObjectProxy>()))
-                        } else if !x.is::<()>() {
-                            Some(format!("{}\r\n", x))
+                        if !x.is::<()>() {
+                            Some(format!("=> {}\r\n", x))
                         } else {
                             None
                         }
@@ -89,13 +86,13 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
                     Err(e) => match e.as_ref() {
                         EvalAltResult::ErrorRuntime(d, _) => {
                             if d.is::<Error>() {
-                                Some(format!("{}\r\n", d.clone().cast::<Error>()))
+                                Some(format!("=> {}\r\n", d.clone().cast::<Error>()))
                             } else {
                                 Some(format!("{}\r\n", d))
                             }
-                        },
-                        _ => Some(format!("{}\r\n", e))
-                    }
+                        }
+                        _ => Some(format!("{}\r\n", e)),
+                    },
                 };
 
                 if let Some(msg) = maybe_msg {
