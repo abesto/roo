@@ -1,17 +1,25 @@
 use rhai::plugin::*;
+use strum_macros::{Display, EnumIter, EnumString};
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, EnumString, Display, EnumIter)]
 pub enum Error {
-    E_INVIND,
+    E_NONE,
+    E_TYPE,
+    E_DIV,
+    E_PERM,
     E_PROPNF,
+    E_VERBNF,
+    E_VARNF,
+    E_INVIND,
+    E_RECMOVE,
+    E_MAXREC,
+    E_RANGE,
+    E_ARGS,
+    E_NACC,
     E_INVARG,
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{:?}", self))
-    }
+    E_QUOTA,
+    E_FLOAT,
 }
 
 pub type RhaiError = Box<EvalAltResult>;

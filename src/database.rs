@@ -1,5 +1,5 @@
 use parking_lot::RwLock;
-use rhai::{Array, Dynamic};
+use rhai::{Dynamic};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::error::{Error::*, RhaiResult};

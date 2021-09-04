@@ -11,7 +11,7 @@ use tokio::{
     },
 };
 
-use crate::{api::ObjectProxy, error::Error};
+use crate::{error::Error};
 
 #[macro_use]
 mod error;

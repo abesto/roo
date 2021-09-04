@@ -6,6 +6,9 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.43"
 async-channel = "1.6.1"
+derivative = "2.2.0"
 parking_lot = "0.11.2"
 rhai = {version="1.0.3", features=["sync", "no_module"]}
+strum = "0.21.0"
+strum_macros = "0.21.1"
 tokio = {version="1.11.0", features=["full"]}
