@@ -3,7 +3,6 @@ use std::{
     str::FromStr,
 };
 
-use derivative::Derivative;
 use rhai::Array;
 use rhai::{Dynamic, Engine};
 
@@ -48,7 +47,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         // https://www.sindome.org/moo-manual.html#fundamental-operations-on-objects
 
         fn create(parent: O, owner: O) -> O {
-            Ok(O::new(db.clone(), db.write().create(parent.id, owner.id)))
+            Ok(O::new(db.write().create(parent.id, owner.id)))
         }
 
         fn create(parent: O) -> O {
@@ -72,14 +71,14 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
             let lock = db.read();
             let info = lock.property_info(obj.id, name)?;
             Ok(vec![
-                Dynamic::from(O::new(db.clone(), info.owner)),
+                Dynamic::from(O::new(info.owner)),
                 Dynamic::from(info.perms.to_string()),
             ])
         }
 
         // Our version of #42 is O(42)
         fn O(id: ID) -> O {
-            Ok(O::new(db.clone(), id))
+            Ok(O::new(id))
         }
     });
 
@@ -120,21 +119,39 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         // N0 object notation (like #0 in Moo)
         if let Some(id_str) = name.strip_prefix("N") {
             if let Ok(id) = id_str.parse() {
-                return Ok(Some(Dynamic::from(O::new(db.clone(), id))));
+                return Ok(Some(Dynamic::from(O::new(id))));
             }
         }
+        // S
         Ok(None)
     });
 
     // ObjectProxy
-    engine
-        .register_type_with_name::<O>("Object")
-        .register_get_result("name", O::get_name)
-        .register_set_result("name", O::set_name)
-        .register_indexer_get_result(O::get_property)
-        .register_indexer_set_result(O::set_property)
-        .register_fn("to_string", |o: &mut O| format!("{}", o))
-        .register_fn("to_debug", |o: &mut O| format!("{}", o));
+    engine.register_type_with_name::<O>("Object");
+
+    let db = database.clone();
+    engine.register_get_result("name", move |o: &mut O| db.read().get_name(o.id));
+
+    let db = database.clone();
+    engine.register_set_result("name", move |o: &mut O, name: &str| {
+        db.write().set_name(o.id, name)
+    });
+
+    let db = database.clone();
+    engine.register_indexer_get_result(move |o: &mut O, prop: &str| {
+        db.read().get_property_dynamic(o.id, prop)
+    });
+
+    let db = database.clone();
+    engine.register_indexer_set_result(move |o: &mut O, prop: &str, val: Dynamic| {
+        db.write().set_property_dynamic(o.id, prop, val)
+    });
+
+    let db = database.clone();
+    engine.register_fn("to_string", |o: &mut O| format!("{}", o));
+
+    let db = database.clone();
+    engine.register_fn("to_debug", |o: &mut O| format!("{}", o));
     register_operators!(engine, O, ==, !=, <, >, <=, >=);
 
     // Spread assignment
@@ -299,13 +316,8 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         );
 }
 
-#[derive(Debug, Clone, Derivative)]
-#[derivative(PartialEq, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct ObjectProxy {
-    #[derivative(PartialEq = "ignore")]
-    #[derivative(PartialOrd = "ignore")]
-    #[derivative(Ord = "ignore")]
-    db: SharedDatabase,
     id: ID,
 }
 
@@ -313,24 +325,8 @@ pub struct ObjectProxy {
 type O = ObjectProxy;
 
 impl ObjectProxy {
-    fn new(db: SharedDatabase, id: ID) -> Self {
-        Self { db, id }
-    }
-
-    fn get_property(&mut self, key: &str) -> RhaiResult<Dynamic> {
-        self.db.read().get_property_dynamic(self.id, key)
-    }
-
-    fn set_property(&mut self, key: &str, value: Dynamic) -> RhaiResult<()> {
-        self.db.write().set_property_dynamic(self.id, key, value)
-    }
-
-    fn get_name(&mut self) -> RhaiResult<String> {
-        self.db.read().get_name(self.id)
-    }
-
-    fn set_name(&mut self, name: &str) -> RhaiResult<()> {
-        self.db.write().set_name(self.id, name)
+    fn new(id: ID) -> Self {
+        Self { id }
     }
 }
 
