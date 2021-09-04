@@ -73,7 +73,7 @@ class Client(pexpect.fdpexpect.fdspawn):
     def expect_lines_exact(self, *lines: str) -> None:
         #print(f"pexpect] Expect: {lines}")
         for line in lines:
-            self.expect(re.compile(f"^{re.escape(line)}\r\n"))
+            assert self.readline() == line + "\r\n"
 
     def send(self, *lines: str) -> None:
         for line in lines:
@@ -97,6 +97,9 @@ class Client(pexpect.fdpexpect.fdspawn):
                 self.expect_lines_exact(*expect_lines)
                 expect_lines = []
                 self.send(line.lstrip("$ "))
+            elif line.startswith("!!"):
+                code = line[2:].lstrip()
+                assert code in self.readline()
             else:
                 expect_lines.append(line)
         self.expect_lines_exact(*expect_lines)

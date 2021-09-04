@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_channel::{Receiver, Sender};
 use database::{Database, SharedDatabase};
-use rhai::{Dynamic, Engine, EvalAltResult, Scope};
+use rhai::{Engine, EvalAltResult, Scope};
 use tokio::{
     self,
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -11,7 +11,7 @@ use tokio::{
     },
 };
 
-use crate::{error::Error};
+use crate::error::Error;
 
 #[macro_use]
 mod error;
@@ -34,6 +34,7 @@ fn handle_connection(socket: TcpStream, database: SharedDatabase) {
         let (read, write) = socket.into_split();
 
         let mut engine = Engine::new();
+        engine.set_max_expr_depths(64, 64);
         api::register_api(&mut engine, database);
 
         let (line_tx, line_rx) = async_channel::unbounded::<String>();
@@ -74,25 +75,12 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
             println!("< {}", line);
             if let Some(stripped) = line.strip_prefix(';') {
                 // TODO this will need to move into the core, and we'll just translate to eval() here
-                let result = engine.eval_with_scope::<Dynamic>(&mut scope, &stripped);
+                let code = format!("toliteral(eval({:?}))", stripped);
+                let result = engine.eval_with_scope::<String>(&mut scope, &code);
                 let maybe_msg = match result {
-                    Ok(x) => {
-                        if !x.is::<()>() {
-                            Some(format!("=> {}\r\n", x))
-                        } else {
-                            None
-                        }
-                    }
-                    Err(e) => match e.as_ref() {
-                        EvalAltResult::ErrorRuntime(d, _) => {
-                            if d.is::<Error>() {
-                                Some(format!("=> {}\r\n", d.clone().cast::<Error>()))
-                            } else {
-                                Some(format!("{}\r\n", d))
-                            }
-                        }
-                        _ => Some(format!("{}\r\n", e)),
-                    },
+                    Ok(x) if x.len() > 0 => Some(format!("=> {}\r\n", x)),
+                    Ok(_) => None,
+                    Err(e) => Some(format!("{}\r\n", e)),
                 };
 
                 if let Some(msg) = maybe_msg {

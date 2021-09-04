@@ -5,12 +5,15 @@ and basic Rhai integration
 
 from .conftest import Connect
 
+
 def test_simple_rhai(connect: Connect) -> None:
     c = connect()
     c.cram(
         """
     $ ;40 + 2
     => 42
+    $ ;"foo"
+    => "foo"
     """
     )
 
@@ -29,7 +32,7 @@ def test_rhai_variables(connect: Connect) -> None:
 def test_object_N_notation(connect: Connect) -> None:
     connect().cram(
         """
-        $ ;N42.to_string()
+        $ ;N42
         => N42
         """
     )
@@ -39,20 +42,11 @@ def test_rhai_variable_isolation(connect: Connect) -> None:
     c1 = connect()
     c2 = connect()
 
-    c1.send(";x = 'foo'")
+    c1.send(";let x = 'foo'")
     c2.cram(
         """
     $ ;x
-    Variable not found: x (line 1, position 1)
-    """
-    )
-
-
-def test_rhai_echo(connect: Connect) -> None:
-    connect().cram(
-        """
-    $ ;echo("foo bar")
-    => foo bar
+    Variable not found: x (line 1, position 1) in call to function eval (line 1, position 16)
     """
     )
 
@@ -60,7 +54,7 @@ def test_rhai_echo(connect: Connect) -> None:
 def test_object_O_notation(connect: Connect) -> None:
     connect().cram(
         """
-        $ ;O(24).to_string()
+        $ ;O(24)
         => N24
         """
     )
@@ -135,33 +129,34 @@ def test_ordering(connect: Connect) -> None:
 
 def test_spread_assignment(connect: Connect) -> None:
     connect().cram(
-    """
+        """
     $ ;lets [a, b] = [1, 2]
     $ ;a
     => 1
     $ ;b
     => 2
-    """)
+    """
+    )
 
     # TODO the first test should really tell us it's E_INVARG
-    def_f = "fn f(args) { let b = 17; let c = 17; let e = 17; lets [a, OPT_b, c = 8, REST_d, OPT_e = 9, f] = args; [a, b, c, d, e, f]}"
+    do = "let b = 17; let c = 17; let e = 17; lets [a, OPT_b, c = 8, REST_d, OPT_e = 9, f] = args; [a, b, c, d, e, f]"
     connect().cram(
         f"""
-        $ ;{def_f}; f([1])
-        Runtime error: roo::error::Error (line 1, position 50) in call to function f (line 1, position 124)
-        $ ;{def_f}; f([1, 2]).to_string()
+        $ ;let args = [1]; {do}
+        !! E_INVARG
+        $ ;let args = [1, 2]; {do}
         => [1, 17, 8, [], 9, 2]
-        $ ;{def_f}; f([1, 2, 3])
+        $ ;let args = [1, 2, 3]; {do}
         => [1, 2, 8, [], 9, 3]
-        $ ;{def_f}; f([1, 2, 3, 4])
+        $ ;let args = [1, 2, 3, 4]; {do}
         => [1, 2, 3, [], 9, 4]
-        $ ;{def_f}; f([1, 2, 3, 4, 5])
+        $ ;let args = [1, 2, 3, 4, 5]; {do}
         => [1, 2, 3, [], 4, 5]
-        $ ;{def_f}; f([1, 2, 3, 4, 5, 6])
+        $ ;let args = [1, 2, 3, 4, 5, 6]; {do}
         => [1, 2, 3, [4], 5, 6]
-        $ ;{def_f}; f([1, 2, 3, 4, 5, 6, 7])
+        $ ;let args = [1, 2, 3, 4, 5, 6, 7]; {do}
         => [1, 2, 3, [4, 5], 6, 7]
-        $ ;{def_f}; f([1, 2, 3, 4, 5, 6, 7, 8])
+        $ ;let args = [1, 2, 3, 4, 5, 6, 7, 8]; {do}
         => [1, 2, 3, [4, 5, 6], 7, 8]
      """
     )

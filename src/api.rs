@@ -5,6 +5,7 @@ use std::{
 
 use rhai::Array;
 use rhai::{Dynamic, Engine};
+use strum::EnumMessage;
 
 use crate::{
     database::{PropertyInfo, PropertyPerms, SharedDatabase, ID},
@@ -35,12 +36,36 @@ macro_rules! register_operators {
 pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     api_functions!(database, db, engine, {
         // Non-MOO / testing functions
-        fn echo(s: &str) -> String {
-            Ok(s.to_string())
-        }
-
         fn get_highest_object_number() -> ID {
             Ok(db.read().get_highest_object_number())
+        }
+
+        // Manipulating MOO Values / General Operations Applicable to all Values
+        // https://www.sindome.org/moo-manual.html#general-operations-applicable-to-all-values
+
+        fn tostr(x: Array) -> String {
+            Ok(x.iter()
+                .map(|d| {
+                    if d.is::<Array>() {
+                        return Ok("[list]".to_string());
+                    } else if d.is::<String>() {
+                        return Ok(d.clone_cast::<String>());
+                    } else if d.is::<Error>() {
+                        return Ok(d.clone_cast::<Error>().get_message().unwrap().to_string());
+                    } else if d.is::<rhai::Map>() {
+                        let map = d.clone_cast::<rhai::Map>();
+                        if map
+                            .get("error_marker")
+                            .map(|m| m.clone().try_cast::<bool>())
+                            == Some(Some(true))
+                        {
+                            return Ok(map["message"].clone_cast::<String>());
+                        }
+                    }
+                    toliteral(d.clone())
+                })
+                .collect::<RhaiResult<Vec<_>>>()?
+                .join(""))
         }
 
         // Fundamental Operations on Objects
@@ -77,10 +102,35 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         }
 
         // Our version of #42 is O(42)
+        // TODO replace with full toobj implementation
         fn O(id: ID) -> O {
             Ok(O::new(id))
         }
     });
+
+    // toliteral is recursive, so we need a standalone function definition first
+    fn toliteral(x: Dynamic) -> RhaiResult<String> {
+        Ok(if x.is::<O>() {
+            format!("N{}", x.cast::<O>().id)
+        } else if x.is::<String>() {
+            format!("{:?}", x.cast::<String>())
+        } else if x.is::<Error>() {
+            format!("{}", x.cast::<Error>())
+        } else if x.is::<Array>() {
+            format!(
+                "[{}]",
+                x.cast::<Array>()
+                    .iter()
+                    .cloned()
+                    .map(toliteral)
+                    .collect::<RhaiResult<Vec<String>>>()?
+                    .join(", "),
+            )
+        } else {
+            x.to_string()
+        })
+    }
+    engine.register_result_fn("toliteral", toliteral);
 
     // Failed attempt for #0 object notation: custom syntax
     /*
@@ -263,7 +313,6 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 let req_count = vars.iter().filter(|v| !v.optional && !v.rest).count();
                 let opt_count = vars.iter().filter(|v| v.optional && !v.rest).count();
 
-                println!("{:?}", vars);
                 if values.len() < req_count {
                     bail!(Error::E_INVARG);
                 }
@@ -274,13 +323,6 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 let opt_matched = std::cmp::min(opt_count, values.len() - req_count);
                 let mut opt_left = opt_matched;
                 let mut val_i = 0;
-                println!(
-                    "values.len()={} req_count={} opt_count={} opt_matched={}",
-                    values.len(),
-                    req_count,
-                    opt_count,
-                    opt_matched
-                );
 
                 // Fill in all required vars and the optional ones
                 // that got enough arguments / have defaults
