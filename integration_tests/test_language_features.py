@@ -165,3 +165,13 @@ def test_spread_assignment(connect: Connect) -> None:
         => [1, 2, 3, [4, 5, 6], 7, 8]
      """
     )
+
+
+def test_corified_references(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;add_property(N0, "test", 42, [N0, ""])
+        $ ;Ctest
+        => 42
+        """
+    )

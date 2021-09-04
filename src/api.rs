@@ -122,7 +122,10 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 return Ok(Some(Dynamic::from(O::new(id))));
             }
         }
-        // S
+        // Cnothing corified notation (like $nothing in Moo)
+        if let Some(prop) = name.strip_prefix("C") {
+            return db.read().get_property_dynamic(0, prop).map(|v| Some(v));
+        }
         Ok(None)
     });
 
