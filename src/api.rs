@@ -129,6 +129,8 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     // ObjectProxy
     engine
         .register_type_with_name::<O>("Object")
+        .register_get_result("name", O::get_name)
+        .register_set_result("name", O::set_name)
         .register_indexer_get_result(O::get_property)
         .register_indexer_set_result(O::set_property)
         .register_fn("to_string", |o: &mut O| format!("{}", o))
@@ -321,6 +323,14 @@ impl ObjectProxy {
 
     fn set_property(&mut self, key: &str, value: Dynamic) -> RhaiResult<()> {
         self.db.write().set_property_dynamic(self.id, key, value)
+    }
+
+    fn get_name(&mut self) -> RhaiResult<String> {
+        self.db.read().get_name(self.id)
+    }
+
+    fn set_name(&mut self, name: &str) -> RhaiResult<()> {
+        self.db.write().set_name(self.id, name)
     }
 }
 

@@ -1,5 +1,5 @@
 use parking_lot::RwLock;
-use rhai::{Dynamic};
+use rhai::Dynamic;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::error::{Error::*, RhaiResult};
@@ -43,19 +43,29 @@ impl Database {
         self.highest_object_number
     }
 
+    pub fn get_name(&self, id: ID) -> RhaiResult<String> {
+        if !self.valid(id) {
+            bail!(E_INVIND);
+        }
+        Ok(self.objects[&id].name.clone())
+    }
+
+    pub fn set_name(&mut self, id: ID, name: &str) -> RhaiResult<()> {
+        if !self.valid(id) {
+            bail!(E_INVIND);
+        }
+        self.objects.get_mut(&id).unwrap().name = name.to_string();
+        Ok(())
+    }
+
     pub fn get_property_dynamic(&self, id: ID, property: &str) -> RhaiResult<Dynamic> {
         if !self.valid(id) {
             bail!(E_INVIND);
         }
         let o = &self.objects[&id];
-
-        if property == "name" {
-            Ok(o.name.clone().into())
-        } else {
-            match o.properties.get(property) {
-                None => bail!(E_PROPNF),
-                Some(p) => Ok(p.value.clone()),
-            }
+        match o.properties.get(property) {
+            None => bail!(E_PROPNF),
+            Some(p) => Ok(p.value.clone()),
         }
     }
 
@@ -69,11 +79,12 @@ impl Database {
             bail!(E_INVIND);
         }
         let o = self.objects.get_mut(&id).unwrap();
-        if property == "name" {
-            o.name = value.cast();
-            Ok(())
-        } else {
-            bail!(E_PROPNF)
+        match o.properties.get_mut(property) {
+            None => bail!(E_PROPNF),
+            Some(p) => {
+                p.value = value;
+                Ok(())
+            }
         }
     }
 
