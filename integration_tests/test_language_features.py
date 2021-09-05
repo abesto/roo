@@ -51,15 +51,6 @@ def test_rhai_variable_isolation(connect: Connect) -> None:
     )
 
 
-def test_object_O_notation(connect: Connect) -> None:
-    connect().cram(
-        """
-        $ ;O(24)
-        => N24
-        """
-    )
-
-
 def test_equality(connect: Connect) -> None:
     # Differences from Moo:
     #   In Moo `==` is case INsensitive. I have opinions about that, so it's NOT the case here.

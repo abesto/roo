@@ -64,3 +64,52 @@ def test_tostr(connect: Connect) -> None:
         => "3 + 4 = 7"
         """
     )
+
+
+def test_toint(connect: Connect) -> None:
+    # Differences from Moo:
+    #   We don't implement the `tonum` alias
+    #   toint(E_*) raises an E_TYPE
+    connect().cram(
+        """
+        $ ;toint(34.7)
+        => 34
+        $ ;toint(-34.7)
+        => -34
+        $ ;toint(N34)
+        => 34
+        $ ;toint("34")
+        => 34
+        $ ;toint("34.7")
+        => 34
+        $ ;toint(" - 34 ")
+        => -34
+        $ ;toint("foobar")
+        => 0
+        $ ;toint(E_TYPE)
+        !! E_TYPE
+        $ ;toint([123])
+        !! E_TYPE
+        """
+    )
+
+
+def test_toobj(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;toobj("34")
+        => N34
+        $ ;toobj("#34")
+        => N34
+        $ ;toobj(" # 34 ")
+        => N34
+        $ ;toobj(" ## 34")
+        => N0
+        $ ;toobj(34.7)
+        => N34
+        $ ;toobj(E_INVIND)
+        !! E_TYPE
+        $ ;toobj([1, 2])
+        !! E_TYPE
+        """
+    )

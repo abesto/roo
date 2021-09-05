@@ -24,7 +24,7 @@ def test_highest_object_number(connect: Connect) -> None:
 def test_valid(connect: Connect) -> None:
     connect().cram(
         """
-        $ ;valid(O(-1))
+        $ ;valid(toobj(-1))
         => false
         $ ;valid(create(N0, N0))
         => true

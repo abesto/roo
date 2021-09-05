@@ -68,6 +68,25 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 .join(""))
         }
 
+        // toliteral is recursive, so implemented in a standalone function
+        // toint is used in toobj, so implemented in standalone functions
+
+        fn toobj(s: &str) -> O {
+            let trimmed_0 = s.trim_start();
+            let trimmed_1 = trimmed_0.strip_prefix("#").unwrap_or(trimmed_0);
+            let trimmed_2 = trimmed_1.trim_start();
+            str_toint(trimmed_2).map(O::new)
+        }
+        fn toobj(id: rhai::INT) -> O {
+            Ok(O::new(id))
+        }
+        fn toobj(f: rhai::FLOAT) -> O {
+            float_toint(f).map(O::new)
+        }
+        fn toobj(d: Dynamic) -> O {
+            bail!(Error::E_TYPE)
+        }
+
         // Fundamental Operations on Objects
         // https://www.sindome.org/moo-manual.html#fundamental-operations-on-objects
 
@@ -100,12 +119,6 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 Dynamic::from(info.perms.to_string()),
             ])
         }
-
-        // Our version of #42 is O(42)
-        // TODO replace with full toobj implementation
-        fn O(id: ID) -> O {
-            Ok(O::new(id))
-        }
     });
 
     // toliteral is recursive, so we need a standalone function definition first
@@ -131,6 +144,31 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         })
     }
     engine.register_result_fn("toliteral", toliteral);
+
+    // toint implementations, broken out into actual functions
+    // so that they can be used in toobj
+    fn float_toint(f: rhai::FLOAT) -> RhaiResult<rhai::INT> {
+        Ok(f as rhai::INT)
+    }
+    engine.register_result_fn("toint", float_toint);
+
+    fn object_toint(o: O) -> RhaiResult<rhai::INT> {
+        Ok(o.id)
+    }
+    engine.register_result_fn("toint", object_toint);
+
+    fn str_toint(s: &str) -> RhaiResult<rhai::INT> {
+        Ok(s.split_whitespace()
+            .collect::<String>()
+            .parse::<rhai::FLOAT>()
+            .unwrap_or(0.0) as rhai::INT)
+    }
+    engine.register_result_fn("toint", str_toint);
+
+    fn dynamic_toint(d: Dynamic) -> RhaiResult<rhai::INT> {
+        bail!(Error::E_TYPE)
+    }
+    engine.register_result_fn("toint", dynamic_toint);
 
     // Failed attempt for #0 object notation: custom syntax
     /*
@@ -161,7 +199,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
 
     // Custom variable resolvers
     let db = database.clone();
-    engine.on_var(move |name, _, _| {
+    engine.on_var(move |name, _, context| {
         // Error constants (like E_INVARG)
         if let Ok(e) = Error::from_str(name) {
             return Ok(Some(Dynamic::from(e)));

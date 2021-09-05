@@ -8,7 +8,7 @@ def test_get_name(connect: Connect) -> None:
         $ ;let o = create(N0, N0)
         $ ;o.name
         => ""
-        $ ;O(9999).name
+        $ ;N9999.name
         !! E_INVIND
         """
     )
@@ -30,11 +30,9 @@ def test_set_name(connect: Connect) -> None:
     id = c1.readline().strip('=> N"').rstrip().rstrip('"')
     connect().cram(
         f"""
-    $ ;O({id})
-    => N{id}
     $ ;N{id}.name
     => "first"
-    $ ;let o = O({id}); o.name = "second"
+    $ ;let o = toobj({id}); o.name = "second"
     $ ;N{id}.name
     => "second"
     """
@@ -42,7 +40,7 @@ def test_set_name(connect: Connect) -> None:
 
     connect().cram(
         f"""
-    $ ;O({id}).name
+    $ ;N{id}.name
     => "second"
     """
     )
@@ -83,7 +81,7 @@ def test_add_property_invalid_object(connect: Connect) -> None:
     connect().cram(
         """
         $ ;let owner = create(N0, N0)
-        $ ;let o = O(get_highest_object_number() + 1)
+        $ ;let o = toobj(get_highest_object_number() + 1)
         $ ;add_property(o, "testprop", "testval", [owner, ""])
         !! E_INVARG
         """
@@ -94,7 +92,7 @@ def test_add_property_invalid_owner(connect: Connect) -> None:
     connect().cram(
         """
         $ ;let o = create(N0, N0)
-        $ ;let owner = O(get_highest_object_number() + 1)
+        $ ;let owner = toobj(get_highest_object_number() + 1)
         $ ;add_property(o, "testprop", "testval", [owner, ""])
         !! E_INVARG
         """
@@ -165,7 +163,7 @@ def test_add_property_check_property_info(connect: Connect) -> None:
 def test_property_info_invalid_object(connect: Connect) -> None:
     connect().cram(
         """
-    $ ;property_info(O(-1), "whee")
+    $ ;property_info(toobj(-1), "whee")
     !! E_INVARG
     """
     )
