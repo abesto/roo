@@ -7,6 +7,7 @@ edition = "2018"
 anyhow = "1.0.43"
 async-channel = "1.6.1"
 parking_lot = "0.11.2"
+rand = "0.8.4"
 rhai = {version="1.0.3", features=["sync", "no_module"]}
 sha2 = "0.9.6"
 strum = "0.21.0"

@@ -3,14 +3,18 @@ use std::{
     str::FromStr,
 };
 
+use rand::Rng;
 use rhai::Array;
 use rhai::{Dynamic, Engine};
-use strum::EnumMessage;
 use sha2::{Digest, Sha512};
+use strum::EnumMessage;
 
 use crate::{
     database::{PropertyInfo, PropertyPerms, SharedDatabase, ID},
-    error::{Error, RhaiError, RhaiResult},
+    error::{
+        Error::{self, *},
+        RhaiError, RhaiResult,
+    },
 };
 
 macro_rules! api_functions {
@@ -88,7 +92,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
             float_toint(f).map(O::new)
         }
         fn toobj(d: Dynamic) -> O {
-            bail!(Error::E_TYPE)
+            bail!(E_TYPE)
         }
 
         fn tofloat(f: rhai::FLOAT) -> rhai::FLOAT {
@@ -103,7 +107,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         // tofloat(s: &str) implemented in a standalone function because
         // it's used in toint
         fn tofloat(d: Dynamic) -> rhai::FLOAT {
-            bail!(Error::E_TYPE)
+            bail!(E_TYPE)
         }
 
         fn value_bytes(d: Dynamic) -> rhai::INT {
@@ -151,6 +155,78 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 Dynamic::from(O::new(info.owner)),
                 Dynamic::from(info.perms.to_string()),
             ])
+        }
+
+        // Operations on Numbers
+        // https://www.sindome.org/moo-manual.html#operations-on-numbers
+
+        fn random(m: rhai::INT) -> rhai::INT {
+            Ok(rand::thread_rng().gen_range(1..=m))
+        }
+        fn random() -> rhai::INT {
+            Ok(rand::thread_rng().gen_range(1..=rhai::INT::MAX))
+        }
+
+        fn min(ns: Array) -> Dynamic {
+            if ns.is_empty() {
+                bail!(E_INVARG);
+            }
+            if ns[1..].iter().any(|n| n.type_name() != ns[0].type_name()) {
+                bail!(E_TYPE);
+            }
+            if ns[0].is::<rhai::INT>() {
+                Ok(ns
+                    .iter()
+                    .map(|n| n.clone_cast::<rhai::INT>())
+                    .reduce(std::cmp::min)
+                    .unwrap()
+                    .into())
+            } else if ns[0].is::<rhai::FLOAT>() {
+                Ok(ns
+                    .iter()
+                    .map(|n| n.clone_cast::<rhai::FLOAT>())
+                    .reduce(|a, b| a.min(b))
+                    .unwrap()
+                    .into())
+            } else {
+                bail!(E_TYPE)
+            }
+        }
+
+        fn max(ns: Array) -> Dynamic {
+            if ns.is_empty() {
+                bail!(E_INVARG);
+            }
+            if ns[1..].iter().any(|n| n.type_name() != ns[0].type_name()) {
+                bail!(E_TYPE);
+            }
+            if ns[0].is::<rhai::INT>() {
+                Ok(ns
+                    .iter()
+                    .map(|n| n.clone_cast::<rhai::INT>())
+                    .reduce(std::cmp::max)
+                    .unwrap()
+                    .into())
+            } else if ns[0].is::<rhai::FLOAT>() {
+                Ok(ns
+                    .iter()
+                    .map(|n| n.clone_cast::<rhai::FLOAT>())
+                    .reduce(|a, b| a.max(b))
+                    .unwrap()
+                    .into())
+            } else {
+                bail!(E_TYPE)
+            }
+        }
+
+        fn abs(n: rhai::INT) -> rhai::INT {
+            Ok(n.abs())
+        }
+        fn abs(n: rhai::FLOAT) -> rhai::FLOAT {
+            Ok(n.abs())
+        }
+        fn abs(d: Dynamic) -> Dynamic {
+            bail!(E_TYPE)
         }
     });
 
@@ -209,7 +285,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     engine.register_result_fn("toint", str_toint);
 
     fn dynamic_toint(d: Dynamic) -> RhaiResult<rhai::INT> {
-        bail!(Error::E_TYPE)
+        bail!(E_TYPE)
     }
     engine.register_result_fn("toint", dynamic_toint);
 
@@ -403,10 +479,10 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
                 let opt_count = vars.iter().filter(|v| v.optional && !v.rest).count();
 
                 if values.len() < req_count {
-                    bail!(Error::E_INVARG);
+                    bail!(E_INVARG);
                 }
                 if values.len() > req_count + opt_count && rest.is_none() {
-                    bail!(Error::E_INVARG);
+                    bail!(E_INVARG);
                 }
 
                 let opt_matched = std::cmp::min(opt_count, values.len() - req_count);
@@ -475,11 +551,11 @@ impl TryFrom<Array> for PropertyInfo {
 
     fn try_from(value: Array) -> Result<Self, Self::Error> {
         if value.len() < 2 || value.len() > 3 {
-            bail!(Error::E_INVARG);
+            bail!(E_INVARG);
         }
 
         let owner = match value[0].clone().try_cast::<ObjectProxy>() {
-            None => bail!(Error::E_INVARG),
+            None => bail!(E_INVARG),
             Some(obj) => obj.id,
         };
 
@@ -491,7 +567,7 @@ impl TryFrom<Array> for PropertyInfo {
                 if d.is::<String>() {
                     Some(d.clone().as_string()?)
                 } else {
-                    bail!(Error::E_INVARG)
+                    bail!(E_INVARG)
                 }
             }
         };
@@ -505,7 +581,7 @@ impl TryFrom<Dynamic> for PropertyPerms {
 
     fn try_from(value: Dynamic) -> Result<Self, Self::Error> {
         if !value.is::<String>() {
-            bail!(Error::E_INVARG);
+            bail!(E_INVARG);
         }
         Self::from_str(&value.as_string().unwrap())
     }
@@ -523,7 +599,7 @@ impl FromStr for PropertyPerms {
                 'r' => r = true,
                 'w' => w = true,
                 'c' => c = true,
-                _ => bail!(Error::E_INVARG),
+                _ => bail!(E_INVARG),
             }
         }
         Ok(PropertyPerms::new(r, w, c))
