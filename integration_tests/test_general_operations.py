@@ -72,6 +72,8 @@ def test_toint(connect: Connect) -> None:
     #   toint(E_*) raises an E_TYPE
     connect().cram(
         """
+        $ ;toint(34)
+        => 34
         $ ;toint(34.7)
         => 34
         $ ;toint(-34.7)
@@ -97,6 +99,8 @@ def test_toint(connect: Connect) -> None:
 def test_toobj(connect: Connect) -> None:
     connect().cram(
         """
+        $ ;toobj(N20)
+        => N20
         $ ;toobj("34")
         => N34
         $ ;toobj("#34")
@@ -111,5 +115,44 @@ def test_toobj(connect: Connect) -> None:
         !! E_TYPE
         $ ;toobj([1, 2])
         !! E_TYPE
+        """
+    )
+
+
+def test_tofloat(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;tofloat(34)
+        => 34.0
+        $ ;tofloat(34.1)
+        => 34.1
+        $ ;tofloat(N20)
+        => 20.0
+        $ ;tofloat("34")
+        => 34.0
+        $ ;tofloat(" - 34.7  ")
+        => -34.7
+        $ ;tofloat(E_INVARG)
+        !! E_TYPE
+        $ ;tofloat([1, 2])
+        !! E_TYPE
+        """
+    )
+
+
+def test_value_bytes(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;value_bytes(23)
+        => 16
+        """
+    )
+
+
+def test_value_hash(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;value_hash(N20)
+        => "aaace2c4a47ac3aa448caeafc3641418c030b8aee6ed02b074b8747f51e3ca212f937624d9c58515086bc168a4949cdf8c258f7f9c6527b1e5ad645b0301d559"
         """
     )

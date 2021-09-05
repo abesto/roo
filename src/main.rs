@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_channel::{Receiver, Sender};
 use database::{Database, SharedDatabase};
-use rhai::{Engine, EvalAltResult, Scope};
+use rhai::{Engine, Scope};
 use tokio::{
     self,
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -10,8 +10,6 @@ use tokio::{
         TcpListener, TcpStream,
     },
 };
-
-use crate::error::Error;
 
 #[macro_use]
 mod error;

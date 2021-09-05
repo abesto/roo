@@ -6,6 +6,7 @@ use std::{
 use rhai::Array;
 use rhai::{Dynamic, Engine};
 use strum::EnumMessage;
+use sha2::{Digest, Sha512};
 
 use crate::{
     database::{PropertyInfo, PropertyPerms, SharedDatabase, ID},
@@ -71,6 +72,9 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         // toliteral is recursive, so implemented in a standalone function
         // toint is used in toobj, so implemented in standalone functions
 
+        fn toobj(o: O) -> O {
+            Ok(o)
+        }
         fn toobj(s: &str) -> O {
             let trimmed_0 = s.trim_start();
             let trimmed_1 = trimmed_0.strip_prefix("#").unwrap_or(trimmed_0);
@@ -86,6 +90,35 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         fn toobj(d: Dynamic) -> O {
             bail!(Error::E_TYPE)
         }
+
+        fn tofloat(f: rhai::FLOAT) -> rhai::FLOAT {
+            Ok(f)
+        }
+        fn tofloat(i: rhai::INT) -> rhai::FLOAT {
+            Ok(i as rhai::FLOAT)
+        }
+        fn tofloat(o: O) -> rhai::FLOAT {
+            Ok(o.id as rhai::FLOAT)
+        }
+        // tofloat(s: &str) implemented in a standalone function because
+        // it's used in toint
+        fn tofloat(d: Dynamic) -> rhai::FLOAT {
+            bail!(Error::E_TYPE)
+        }
+
+        fn value_bytes(d: Dynamic) -> rhai::INT {
+            Ok(std::mem::size_of_val(&d) as rhai::INT)
+        }
+
+        fn value_hash(d: Dynamic) -> String {
+            let literal = toliteral(d)?;
+            string_hash(&literal)
+        }
+
+        // Manipulating MOO Values / Operations on Strings
+        // https://www.sindome.org/moo-manual.html#operations-on-
+
+        // string_hash broken out to be used in value_hash
 
         // Fundamental Operations on Objects
         // https://www.sindome.org/moo-manual.html#fundamental-operations-on-objects
@@ -145,8 +178,21 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     }
     engine.register_result_fn("toliteral", toliteral);
 
+    fn str_tofloat(s: &str) -> RhaiResult<rhai::FLOAT> {
+        Ok(s.split_whitespace()
+            .collect::<String>()
+            .parse::<rhai::FLOAT>()
+            .unwrap_or(0.0))
+    }
+    engine.register_result_fn("tofloat", str_tofloat);
+
     // toint implementations, broken out into actual functions
     // so that they can be used in toobj
+    fn int_toint(i: rhai::INT) -> RhaiResult<rhai::INT> {
+        Ok(i)
+    }
+    engine.register_result_fn("toint", int_toint);
+
     fn float_toint(f: rhai::FLOAT) -> RhaiResult<rhai::INT> {
         Ok(f as rhai::INT)
     }
@@ -158,10 +204,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     engine.register_result_fn("toint", object_toint);
 
     fn str_toint(s: &str) -> RhaiResult<rhai::INT> {
-        Ok(s.split_whitespace()
-            .collect::<String>()
-            .parse::<rhai::FLOAT>()
-            .unwrap_or(0.0) as rhai::INT)
+        str_tofloat(s).map(|f| f as rhai::INT)
     }
     engine.register_result_fn("toint", str_toint);
 
@@ -189,6 +232,14 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         },
     );
     */
+
+    fn string_hash(s: &str) -> RhaiResult<String> {
+        let mut hasher = Sha512::new();
+        hasher.update(s);
+        let result = hasher.finalize();
+        Ok(format!("{:x}", result))
+    }
+    engine.register_result_fn("string_hash", string_hash);
 
     // Errors
     engine
