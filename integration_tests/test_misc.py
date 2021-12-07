@@ -26,9 +26,19 @@ def test_valid(connect: Connect) -> None:
         """
         $ ;valid(toobj(-1))
         => false
-        $ ;valid(create(N0, N0))
+        """
+    )
+
+    connect().cram(
+        """
+        $ ;valid(N0)
         => true
         """
     )
 
-
+    connect().cram(
+        """
+        $ ;valid(create(N0, N0))
+        => true
+        """
+    )

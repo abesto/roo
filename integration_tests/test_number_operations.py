@@ -12,7 +12,7 @@ def test_random(connect: Connect) -> None:
         c.send(";random(5)")
         n = int(c.readline().lstrip("=> ").strip())
         assert 0 <= n
-        assert n < 5
+        assert n <= 5
 
 
 def test_min(connect: Connect) -> None:

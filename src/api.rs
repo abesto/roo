@@ -81,7 +81,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         }
         fn toobj(s: &str) -> O {
             let trimmed_0 = s.trim_start();
-            let trimmed_1 = trimmed_0.strip_prefix("#").unwrap_or(trimmed_0);
+            let trimmed_1 = trimmed_0.strip_prefix('#').unwrap_or(trimmed_0);
             let trimmed_2 = trimmed_1.trim_start();
             str_toint(trimmed_2).map(O::new)
         }
@@ -129,6 +129,14 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
 
         fn create(parent: O, owner: O) -> O {
             Ok(O::new(db.write().create(parent.id, owner.id)))
+        }
+
+        fn parent(o: O) -> O {
+            Ok(O::new(db.read().parent(o.id)))
+        }
+
+        fn chparent(o: O, parent: O) -> () {
+            db.write().chparent(o.id, parent.id)
         }
 
         fn create(parent: O) -> O {
@@ -332,14 +340,14 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
             return Ok(Some(Dynamic::from(e)));
         }
         // N0 object notation (like #0 in Moo)
-        if let Some(id_str) = name.strip_prefix("N") {
+        if let Some(id_str) = name.strip_prefix('N') {
             if let Ok(id) = id_str.parse() {
                 return Ok(Some(Dynamic::from(O::new(id))));
             }
         }
         // Cnothing corified notation (like $nothing in Moo)
-        if let Some(prop) = name.strip_prefix("C") {
-            return db.read().get_property_dynamic(0, prop).map(|v| Some(v));
+        if let Some(prop) = name.strip_prefix('C') {
+            return db.read().get_property_dynamic(0, prop).map(Some);
         }
         Ok(None)
     });
@@ -368,7 +376,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     let db = database.clone();
     engine.register_fn("to_string", |o: &mut O| format!("{}", o));
 
-    let db = database.clone();
+    let db = database;
     engine.register_fn("to_debug", |o: &mut O| format!("{}", o));
     register_operators!(engine, O, ==, !=, <, >, <=, >=);
 

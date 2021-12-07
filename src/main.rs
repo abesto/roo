@@ -76,7 +76,7 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
                 let code = format!("toliteral(eval({:?}))", stripped);
                 let result = engine.eval_with_scope::<String>(&mut scope, &code);
                 let maybe_msg = match result {
-                    Ok(x) if x.len() > 0 => Some(format!("=> {}\r\n", x)),
+                    Ok(x) if !x.is_empty() => Some(format!("=> {}\r\n", x)),
                     Ok(_) => None,
                     Err(e) => Some(format!("{}\r\n", e)),
                 };

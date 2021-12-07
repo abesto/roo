@@ -1,6 +1,9 @@
 use parking_lot::RwLock;
 use rhai::Dynamic;
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use crate::error::{Error::*, RhaiResult};
 
@@ -27,16 +30,116 @@ impl Database {
         Arc::new(RwLock::new(self))
     }
 
+    fn fertile_or_owner_or_wizard(&self, id: ID) -> bool {
+        /*
+        // TODO owner? wizard?
+        self.objects[&id].f
+        */
+        true // For now, everyone is a wizard
+    }
+
     pub fn create(&mut self, parent: ID, owner: ID) -> ID {
         // TODO verify owner
+
+        // Either the given parent object must be #-1 or valid and fertile (i.e., its f bit must be set) or else the programmer must own parent or be a wizard; otherwise E_PERM is raised.
+        if parent != -1 && (!self.valid(parent) || !self.fertile_or_owner_or_wizard(parent)) {
+            return -1;
+        }
         let id = self.highest_object_number + 1;
         self.highest_object_number = id;
         self.objects.insert(id, Object::new(id, parent, owner));
         id
     }
 
+    fn is_ancestor(&self, ancestor: ID, descendant: ID) -> bool {
+        if ancestor == descendant {
+            return true;
+        }
+        let mut current = descendant;
+        while current != -1 {
+            if current == ancestor {
+                return true;
+            }
+            current = self.objects[&current].parent;
+        }
+        false
+    }
+
+    fn ancestors_and_self(&self, id: ID) -> Vec<ID> {
+        let mut ancestors = Vec::new();
+        let mut current = id;
+        while current != -1 {
+            ancestors.push(current);
+            current = self.objects[&current].parent;
+        }
+        ancestors
+    }
+
+    fn descendants_and_self(&self, id: ID) -> Vec<ID> {
+        let mut descendants = vec![id];
+        for child in self.objects[&id].children.iter() {
+            descendants.append(&mut self.descendants_and_self(*child));
+        }
+        descendants
+    }
+
+    pub fn chparent(&mut self, id: ID, parent: ID) -> RhaiResult<()> {
+        // If object is not valid, or if new-parent is neither valid nor equal to #-1, then E_INVARG is raised.
+        if !self.valid(id) {
+            bail!(E_INVARG);
+        }
+        if !self.valid(parent) && parent != -1 {
+            bail!(E_INVARG);
+        }
+
+        // If the programmer is neither a wizard or the owner of object, or if new-parent is not fertile
+        // (i.e., its f bit is not set) and the programmer is neither the owner of new-parent nor a wizard,
+        // then E_PERM is raised.
+        if !self.fertile_or_owner_or_wizard(id)
+        /* TODO && !owner && !wizard */
+        {
+            bail!(E_PERM);
+        }
+
+        {
+            // If new-parent is equal to object or one of its current ancestors, E_RECMOVE is raised.
+            if parent == id || self.is_ancestor(id, parent) {
+                bail!(E_RECMOVE);
+            }
+
+            // If object or one of its descendants defines a property with the same name as one defined
+            // either on new-parent or on one of its ancestors, then E_INVARG is raised.
+            let ancestor_properties: HashSet<String> = self
+                .ancestors_and_self(parent)
+                .iter()
+                .map(|id| self.objects[id].properties.keys().cloned())
+                .flatten()
+                .collect();
+            for descendant in self.descendants_and_self(id) {
+                for property in self.objects[&descendant].properties.keys() {
+                    if ancestor_properties.contains(property) {
+                        bail!(E_INVARG);
+                    }
+                }
+            }
+
+            // TODO handle adding / removing inherited properties
+        }
+
+        let mut object = self.objects.get_mut(&id).unwrap();
+        object.parent = parent;
+        Ok(())
+    }
+
     pub fn valid(&self, id: ID) -> bool {
         self.objects.contains_key(&id)
+    }
+
+    pub fn parent(&self, id: ID) -> ID {
+        self.objects
+            .get(&id)
+            .map(|object| object.parent)
+            .unwrap_or(-1)
     }
 
     pub fn get_highest_object_number(&self) -> ID {

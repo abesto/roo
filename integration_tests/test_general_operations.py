@@ -5,8 +5,10 @@ https://www.sindome.org/moo-manual.html#properties-on-objects
 
 from .conftest import Connect
 
+
 def test_type_of(connect: Connect) -> None:
-    connect().cram("""
+    connect().cram(
+        """
     $ ;type_of(3)
     => "i64"
     $ ;type_of("foobar")
@@ -21,7 +23,8 @@ def test_type_of(connect: Connect) -> None:
     => "Object"
     $ ;type_of(E_INVARG)
     => "Error"
-    """)
+    """
+    )
 
 
 def test_toliteral(connect: Connect) -> None:
