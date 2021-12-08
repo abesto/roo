@@ -9,5 +9,8 @@
     "python.testing.pytestEnabled": true,
     "cSpell.words": [
         "toobj"
+    ],
+    "cSpell.enableFiletypes": [
+        "!python"
     ]
 }

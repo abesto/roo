@@ -1,5 +1,7 @@
+use anyhow::Result;
 use parking_lot::RwLock;
 use rhai::Dynamic;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
@@ -9,7 +11,7 @@ use crate::error::{Error::*, RhaiResult};
 
 pub type ID = rhai::INT;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Database {
     highest_object_number: ID,
     objects: HashMap<ID, Object>,
@@ -26,8 +28,21 @@ impl Database {
             objects,
         }
     }
+
     pub fn share(self) -> SharedDatabase {
         Arc::new(RwLock::new(self))
+    }
+
+    pub fn load(path: &str) -> Result<Self> {
+        let file = std::fs::File::open(path)?;
+        let db = ron::de::from_reader(file)?;
+        Ok(db)
+    }
+
+    pub fn save(&self, path: &str) -> Result<()> {
+        let file = std::fs::File::create(path)?;
+        ron::ser::to_writer(file, &self)?;
+        Ok(())
     }
 
     fn fertile_or_owner_or_wizard(&self, id: ID) -> bool {
@@ -223,7 +238,7 @@ impl Database {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Object {
     id: ID,
 
@@ -279,7 +294,7 @@ impl Object {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PropertyPerms {
     pub r: bool,
     pub w: bool,
@@ -292,7 +307,7 @@ impl PropertyPerms {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PropertyInfo {
     pub owner: ID,
     pub perms: PropertyPerms,
@@ -309,7 +324,7 @@ impl PropertyInfo {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Property {
     info: PropertyInfo,
     value: Dynamic,
