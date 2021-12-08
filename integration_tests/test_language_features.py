@@ -32,7 +32,7 @@ def test_rhai_variables(connect: Connect) -> None:
 def test_object_N_notation(connect: Connect) -> None:
     connect().cram(
         """
-        $ ;N42
+        $ ;#42
         => N42
         """
     )

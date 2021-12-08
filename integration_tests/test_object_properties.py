@@ -46,6 +46,20 @@ def test_set_name(connect: Connect) -> None:
     )
 
 
+def test_set_fertile(connect: Connect) -> None:
+    connect().cram(
+        """
+        $ ;create(N0, N0)
+        => N2
+        $ ;N2.f
+        => false
+        $ ;N2.f = true
+        $ ;N2.f
+        => true
+        """
+    )
+
+
 def test_set_missing_property(connect: Connect) -> None:
     connect().cram(
         """

@@ -1,3 +1,4 @@
+use crate::task_context::{SharedTaskContext, TaskContext, TASK_CONTEXT};
 use anyhow::Result;
 use async_channel::{Receiver, Sender};
 use database::{Database, SharedDatabase};
@@ -16,6 +17,7 @@ use tokio::{
 mod error;
 mod api;
 mod database;
+mod task_context;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -25,20 +27,6 @@ struct Opt {
     #[structopt(default_value = "8888")]
     port: u16,
 }
-
-struct Context {
-    exit_tx: ExitSender,
-}
-
-impl Context {
-    #[must_use]
-    fn new(exit_tx: ExitSender) -> Self {
-        Self { exit_tx }
-    }
-}
-
-type ExitSender = tokio::sync::mpsc::UnboundedSender<()>;
-type SharedContext = std::sync::Arc<parking_lot::RwLock<Context>>;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -59,17 +47,14 @@ async fn main() -> Result<()> {
 
     let _dump_database_on_drop = DumpDatabaseOnDrop::new(database.clone(), &opt.output_db_file);
 
-    // TODO: push this Context down somehow so that we can exit from a command
     let (exit_tx, mut exit_rx) = tokio::sync::mpsc::unbounded_channel::<()>();
-    let context: SharedContext =
-        std::sync::Arc::new(parking_lot::RwLock::new(Context::new(exit_tx)));
+
+    // Register Ctrl-C handler
     {
-        let handler_context = context.clone();
+        let handler_exit_tx = exit_tx.clone();
         ctrlc::set_handler(move || {
             eprintln!("Caught Ctrl-C");
-            handler_context
-                .write()
-                .exit_tx
+            handler_exit_tx
                 .send(())
                 .expect("Failed to send exit signal");
         })
@@ -83,7 +68,10 @@ async fn main() -> Result<()> {
                 break;
             },
             Ok((socket, _)) = listener.accept() => {
-                handle_connection(socket, database.clone());
+                // TODO login logic goes roughly here
+                let player_id = 1;  // In sync with the wizard object created in Database::new()
+                let context = TaskContext::new(exit_tx.clone(), player_id);
+                handle_connection(socket, database.clone(), context);
             }
         }
     }
@@ -118,17 +106,18 @@ impl Drop for DumpDatabaseOnDrop {
     }
 }
 
-fn handle_connection(socket: TcpStream, database: SharedDatabase) {
+fn handle_connection(socket: TcpStream, database: SharedDatabase, context: TaskContext) {
     tokio::spawn(async move {
         let (read, write) = socket.into_split();
 
+        // MAYBE we can get away with a single engine instance across all the connections?
         let mut engine = Engine::new();
         engine.set_max_expr_depths(64, 64);
         api::register_api(&mut engine, database);
 
         let (line_tx, line_rx) = async_channel::unbounded::<String>();
         spawn_read_task(read, line_tx);
-        spawn_processing_task(engine, write, line_rx);
+        spawn_processing_task(engine, write, line_rx, context);
     });
 }
 
@@ -149,9 +138,16 @@ fn spawn_read_task(read: OwnedReadHalf, line_tx: Sender<String>) {
     });
 }
 
-fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Receiver<String>) {
+fn spawn_processing_task(
+    engine: Engine,
+    mut write: OwnedWriteHalf,
+    line_rx: Receiver<String>,
+    context: TaskContext,
+) {
     tokio::spawn(async move {
         let mut scope = Scope::new();
+        let shared_context = context.shared();
+
         loop {
             let line = match line_rx.recv().await {
                 Ok(l) => l,
@@ -165,7 +161,9 @@ fn spawn_processing_task(engine: Engine, mut write: OwnedWriteHalf, line_rx: Rec
             if let Some(stripped) = line.strip_prefix(';') {
                 // TODO this will need to move into the core, and we'll just translate to eval() here
                 let code = format!("toliteral(eval({:?}))", stripped);
-                let result = engine.eval_with_scope::<String>(&mut scope, &code);
+                let result = TASK_CONTEXT.sync_scope(shared_context.clone(), || {
+                    engine.eval_with_scope::<String>(&mut scope, &code)
+                });
                 let maybe_msg = match result {
                     Ok(x) if !x.is_empty() => Some(format!("=> {}\r\n", x)),
                     Ok(_) => None,

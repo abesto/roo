@@ -48,7 +48,7 @@ def build_server() -> None:
 def server(build_server) -> pexpect.spawn:
     server = pexpect.spawn(
         # "./target/debug/roo testing",
-        "./target/debug/roo",
+        "./target/debug/roo /dev/null /dev/null",
         encoding="utf-8",
     )
     server.logfile_read = Prefixed("server] ")
@@ -71,7 +71,7 @@ class Client(pexpect.fdpexpect.fdspawn):
         self.heartbeat_sequence += 1
 
     def expect_lines_exact(self, *lines: str) -> None:
-        #print(f"pexpect] Expect: {lines}")
+        # print(f"pexpect] Expect: {lines}")
         for line in lines:
             assert self.readline() == line + "\r\n"
 

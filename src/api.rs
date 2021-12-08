@@ -15,6 +15,7 @@ use crate::{
         Error::{self, *},
         RhaiError, RhaiResult,
     },
+    task_context::TASK_CONTEXT,
 };
 
 macro_rules! api_functions {
@@ -128,7 +129,19 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         // https://www.sindome.org/moo-manual.html#fundamental-operations-on-objects
 
         fn create(parent: O, owner: O) -> O {
-            Ok(O::new(db.write().create(parent.id, owner.id)))
+            let id = TASK_CONTEXT.with(|context| {
+                db.write()
+                    .create(parent.id, Some(owner.id), context.read().task_perms)
+            })?;
+            Ok(O::new(id))
+        }
+
+        fn create(parent: O) -> O {
+            let id = TASK_CONTEXT.with(|context| {
+                db.write()
+                    .create(parent.id, None, context.read().task_perms)
+            })?;
+            Ok(O::new(id))
         }
 
         fn parent(o: O) -> O {
@@ -136,12 +149,10 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         }
 
         fn chparent(o: O, parent: O) -> () {
-            db.write().chparent(o.id, parent.id)
-        }
-
-        fn create(parent: O) -> O {
-            // TODO default owner to the programmer, once we have a concept of "logged in player"
-            Err("Not implemented yet".into())
+            TASK_CONTEXT.with(|context| {
+                db.write()
+                    .chparent(o.id, parent.id, context.read().task_perms)
+            })
         }
 
         fn valid(obj: O) -> bool {
@@ -236,6 +247,16 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         fn abs(d: Dynamic) -> Dynamic {
             bail!(E_TYPE)
         }
+
+        // Built-in Functions / Manipulating Objects / MOO-Code Evaluation and Task Manipulation
+        // https://www.sindome.org/moo-manual.html#moo-code-evaluation-and-task-management
+
+        fn set_task_perms(who: O) -> () {
+            TASK_CONTEXT.with(|context| {
+                context.write().task_perms = who.id;
+            });
+            Ok(())
+        }
     });
 
     // toliteral is recursive, so we need a standalone function definition first
@@ -298,6 +319,8 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     engine.register_result_fn("toint", dynamic_toint);
 
     // Failed attempt for #0 object notation: custom syntax
+    // Problem 1: Rhai refuses # as the first token of a custom syntax tree
+    // Problem 2: even if we change it to N, a space is required between N and the number (e.g. "N 1", not "N1")
     /*
     let db = database.clone();
     engine.register_custom_syntax_raw(
@@ -310,7 +333,6 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         false,
         move |_, inputs| {
             Ok(Dynamic::from(O::new(
-                db.clone(),
                 inputs[0].get_literal_value().unwrap(),
             )))
         },
@@ -339,12 +361,15 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
         if let Ok(e) = Error::from_str(name) {
             return Ok(Some(Dynamic::from(e)));
         }
-        // N0 object notation (like #0 in Moo)
+        // Failed attempt at N0 object notation (like #0 in Moo)
+        // Problem: returned value is constant, and even its fields are read-only, so you can't N2.f = true
+        /*
         if let Some(id_str) = name.strip_prefix('N') {
             if let Ok(id) = id_str.parse() {
                 return Ok(Some(Dynamic::from(O::new(id))));
             }
         }
+        */
         // Cnothing corified notation (like $nothing in Moo)
         if let Some(prop) = name.strip_prefix('C') {
             return db.read().get_property_dynamic(0, prop).map(Some);
@@ -355,24 +380,35 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     // ObjectProxy
     engine.register_type_with_name::<O>("Object");
 
+    // TODO: generate built-in property accessors with a macro
+
+    // built-in property: name
     let db = database.clone();
     engine.register_get_result("name", move |o: &mut O| db.read().get_name(o.id));
-
     let db = database.clone();
     engine.register_set_result("name", move |o: &mut O, name: &str| {
         db.write().set_name(o.id, name)
     });
 
+    // built-in property: f
+    let db = database.clone();
+    engine.register_get_result("f", move |o: &mut O| db.read().is_fertile(o.id));
+    let db = database.clone();
+    engine.register_set_result("f", move |o: &mut O, f: bool| {
+        db.write().set_fertile(o.id, f)
+    });
+
+    // non-built-in properties
     let db = database.clone();
     engine.register_indexer_get_result(move |o: &mut O, prop: &str| {
         db.read().get_property_dynamic(o.id, prop)
     });
-
     let db = database.clone();
     engine.register_indexer_set_result(move |o: &mut O, prop: &str, val: Dynamic| {
         db.write().set_property_dynamic(o.id, prop, val)
     });
 
+    // Other helper functions
     let db = database.clone();
     engine.register_fn("to_string", |o: &mut O| format!("{}", o));
 
@@ -543,7 +579,8 @@ pub struct ObjectProxy {
 type O = ObjectProxy;
 
 impl ObjectProxy {
-    fn new(id: ID) -> Self {
+    #[must_use]
+    pub fn new(id: ID) -> Self {
         Self { id }
     }
 }

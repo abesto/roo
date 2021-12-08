@@ -5,18 +5,18 @@ def test_highest_object_number(connect: Connect) -> None:
     connect().cram(
         """
         $ ;create(N0, N0)
-        => N1
-        $ ;create(N0, N0)
         => N2
+        $ ;create(N0, N0)
+        => N3
         $ ;get_highest_object_number()
-        => 2
+        => 3
         """
     )
 
     connect().cram(
         """
         $ ;get_highest_object_number()
-        => 2
+        => 3
         """
     )
 
