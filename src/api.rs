@@ -262,7 +262,7 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     // toliteral is recursive, so we need a standalone function definition first
     fn toliteral(x: Dynamic) -> RhaiResult<String> {
         Ok(if x.is::<O>() {
-            format!("N{}", x.cast::<O>().id)
+            format!("#{}", x.cast::<O>().id)
         } else if x.is::<String>() {
             format!("{:?}", x.cast::<String>())
         } else if x.is::<Error>() {
@@ -318,26 +318,52 @@ pub fn register_api(engine: &mut Engine, database: SharedDatabase) {
     }
     engine.register_result_fn("toint", dynamic_toint);
 
-    // Failed attempt for #0 object notation: custom syntax
-    // Problem 1: Rhai refuses # as the first token of a custom syntax tree
-    // Problem 2: even if we change it to N, a space is required between N and the number (e.g. "N 1", not "N1")
-    /*
+    // #0 object notation
     let db = database.clone();
+    engine.register_custom_operator("#", 255).unwrap();
     engine.register_custom_syntax_raw(
         "#",
-        |symbols, _| match symbols.len() {
+        |symbols, lookahead| match symbols.len() {
+            1 if lookahead == "-" => Ok(Some("$symbol$".into())),
             1 => Ok(Some("$int$".into())),
+            2 if symbols[1] == "-" => Ok(Some("$int$".into())),
+            2 => Ok(None),
+            3 => Ok(None),
+            _ => unreachable!(),
+        },
+        false,
+        move |_, inputs| {
+            let id = if inputs.len() == 2 {
+                assert_eq!(
+                    inputs[0]
+                        .get_literal_value::<rhai::ImmutableString>()
+                        .unwrap(),
+                    "-"
+                );
+                -inputs[1].get_literal_value::<ID>().unwrap()
+            } else {
+                inputs[0].get_literal_value::<ID>().unwrap()
+            };
+            Ok(Dynamic::from(O::new(id)))
+        },
+    );
+
+    // $nothing corified references
+    let db = database.clone();
+    engine.register_custom_operator("$", 160).unwrap();
+    engine.register_custom_syntax_raw(
+        "$",
+        |symbols, _| match symbols.len() {
+            1 => Ok(Some("$ident$".into())),
             2 => Ok(None),
             _ => unreachable!(),
         },
         false,
         move |_, inputs| {
-            Ok(Dynamic::from(O::new(
-                inputs[0].get_literal_value().unwrap(),
-            )))
+            let prop = inputs[0].get_variable_name().unwrap();
+            db.read().get_property_dynamic(0, prop)
         },
     );
-    */
 
     fn string_hash(s: &str) -> RhaiResult<String> {
         let mut hasher = Sha512::new();

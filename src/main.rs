@@ -28,6 +28,29 @@ struct Opt {
     port: u16,
 }
 
+/*
+fn main() {
+    let mut engine = Engine::new();
+
+    engine
+        .register_custom_operator("$", 255)
+        .unwrap()
+        .register_custom_syntax_raw(
+            "$",
+            |symbols, _lookahead| match symbols.len() {
+                1 => Ok(Some("$ident$".into())),
+                2 => Ok(None),
+                _ => unreachable!(),
+            },
+            false,
+            |_context, inputs| Ok(inputs[0].get_variable_name().unwrap().into()),
+        );
+
+    let result: String = engine.eval("$foobar").unwrap();
+    println!("{}", result);
+}
+*/
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let opt = Opt::from_args();

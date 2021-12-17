@@ -9,7 +9,7 @@ async-channel = "1.6.1"
 ctrlc = "3.2.1"
 parking_lot = "0.11.2"
 rand = "0.8.4"
-rhai = {version="1.0.3", features=["sync", "no_module", "serde"]}
+rhai = {git = "https://github.com/schungx/rhai.git", rev = "dc6896fbe2e26134b0558bba8c7c2dcb58a408a4", features=["sync", "no_module", "serde"]}
 ron = "0.7.0"
 serde = {version="1.0.130", features=["derive"]}
 sha2 = "0.9.6"
